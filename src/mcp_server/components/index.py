@@ -50,3 +50,23 @@ class DocumentIndex:
         for doc in self._documents.values():
             all_top_sections.extend(doc.sections)
         return all_top_sections
+
+    def search_sections(self, query: str) -> List[Section]:
+        """
+        Searches for sections whose title or content contains the query string.
+        """
+        matching_sections: List[Section] = []
+        query_lower = query.lower()
+
+        for section in self._sections.values():
+            # Check title
+            if query_lower in section.title.lower():
+                matching_sections.append(section)
+                continue # Avoid checking content if title already matches
+            
+            # Check content
+            for line in section.content:
+                if query_lower in line.lower():
+                    matching_sections.append(section)
+                    break # Found in content, move to next section
+        return matching_sections

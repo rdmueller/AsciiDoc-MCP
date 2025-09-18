@@ -5,9 +5,12 @@ from mcp_server.components.index import DocumentIndex
 from pathlib import Path
 from typing import List
 import os
-from contextlib import asynccontextmanager # New import
+from contextlib import asynccontextmanager
+import logging
 
-document_index: DocumentIndex = None
+logger = logging.getLogger(__name__) # Moved to top
+
+document_index: DocumentIndex = None # Now after logger
 
 @asynccontextmanager # New decorator
 async def lifespan(app: FastAPI): # New function signature
@@ -35,7 +38,7 @@ async def lifespan(app: FastAPI): # New function signature
     yield # This is where the application starts serving requests
 
     # Cleanup code can go here if needed for shutdown events
-    print("Application shutdown event.")
+    logger.info("Application shutdown event.") # Changed print to logger.info
 
 
 app = FastAPI(
@@ -86,3 +89,14 @@ def get_section(path: str):
         raise HTTPException(status_code=404, detail=f"Section not found: {path}")
     
     return section
+
+@app.get("/search_content", response_model=List[Section])
+def search_content(query: str):
+    """
+    Searches for sections whose title or content contains the query string.
+    """
+    if document_index is None:
+        raise HTTPException(status_code=503, detail="Document index not initialized.")
+    
+    matching_sections = document_index.search_sections(query)
+    return matching_sections

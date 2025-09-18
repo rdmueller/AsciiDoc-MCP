@@ -72,3 +72,24 @@ def test_get_section_endpoint(monkeypatch):
         response = client.get("/get_section?path=non-existent-section")
         assert response.status_code == 404
 
+def test_search_content_endpoint(monkeypatch):
+    """Tests the /search_content endpoint to retrieve sections matching a query."""
+    monkeypatch.setenv("MCP_DOC_ROOT", str(FIXTURE_DIR))
+
+    with TestClient(app) as client:
+        # Test with a query that should find results
+        response = client.get("/search_content?query=content")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) > 0
+        assert any("Level 1 Title" in s["title"] for s in data)
+        assert any("Level 2 Title" in s["title"] for s in data)
+
+        # Test with a query that should find no results
+        response = client.get("/search_content?query=nonexistentword")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 0
+
