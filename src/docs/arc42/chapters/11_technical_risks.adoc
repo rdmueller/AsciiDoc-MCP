@@ -1,8 +1,20 @@
-== 11. Risks and Technical Debts
+:jbake-title: Risks and Technical Debts
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 11
+:filename: /chapters/11_technical_risks.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-technical-risks]]
+== Risks and Technical Debts
 
 This chapter documents known risks and technical debts.
 
-=== 11.1 Known Risks
+=== Known Risks
+
 This list is taken from the PRD's risk assessment.
 
 .Risk Assessment
@@ -15,7 +27,8 @@ This list is taken from the PRD's risk assessment.
 | **Medium** | **Format Variations**: Different dialects of AsciiDoc/Markdown could be parsed incorrectly. | The custom parser will focus on a well-defined, common subset of the languages. Comprehensive testing with real-world documents is required.
 |===
 
-=== 11.2 Technical Debts
+=== Technical Debts
+
 Technical debt consists of design or implementation choices that are expedient in the short term but may lead to future costs.
 
 .Technical Debt

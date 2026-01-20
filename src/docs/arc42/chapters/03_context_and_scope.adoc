@@ -1,8 +1,19 @@
-== 3. System Scope and Context
+:jbake-title: Context and Scope
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 3
+:filename: /chapters/03_context_and_scope.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-context-and-scope]]
+== Context and Scope
 
 This chapter describes the system's boundaries, its users, and its interactions with external systems.
 
-=== 3.1 Business Context
+=== Business Context
 
 From a business perspective, the MCP Documentation Server acts as a specialized middleware that enables technical users to interact with documentation projects more effectively. It abstracts away the complexity of file-based document structures.
 
@@ -27,7 +38,7 @@ Rel_Back(mcp_server, doc_project, "Reads from and writes to")
 @enduml
 ----
 
-=== 3.2 Technical Context
+=== Technical Context
 
 On a technical level, the system is accessed by an MCP-compliant client. It interacts directly with the file system to read documentation source files and write back modifications. It is also aware of the version control system (Git) to ensure workflow compatibility.
 

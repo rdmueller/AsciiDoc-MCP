@@ -1,14 +1,25 @@
-== 7. Deployment View
+:jbake-title: Deployment View
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 7
+:filename: /chapters/07_deployment_view.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-deployment-view]]
+== Deployment View
 
 This chapter describes the infrastructure and environment for the MCP Documentation Server.
 
-=== 7.1 Deployment Strategy
+=== Deployment Strategy
 
 The application is designed to be lightweight and self-contained, in line with its constraints (no external services). The recommended deployment strategy is to package the Python application and its dependencies into a Docker container.
 
 The Web Interface (SPA) is a set of static files (HTML, CSS, JS) that can be served by any web server or even directly by the FastAPI backend for simplicity.
 
-=== 7.2 Production Environment
+=== Production Environment
 
 The production environment is envisioned as a single virtual or physical machine running Docker.
 

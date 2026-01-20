@@ -1,0 +1,201 @@
+:jbake-title: Architecture Decisions
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 9
+:filename: /chapters/09_architecture_decisions.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-design-decisions]]
+== Architecture Decisions
+
+This chapter records the most important architectural decisions using the ADR format by Michael Nygard.
+
+=== ADR-001: File-System as Single Source of Truth
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The PRD requires that the system integrates with existing Git workflows, that files remain human-readable, and that there are no database dependencies. We need a simple, robust way to store the documentation content that honors these constraints.
+
+*Decision:*
+The file system will be treated as the single source of truth. The server will not have its own persistent state. All content and structure information is derived directly from the `.adoc` and `.md` files within the project directory.
+
+*Consequences:*
+
+* Simplifies the architecture immensely. No database schema migrations or data synchronization logic needed.
+* Inherently compatible with Git and other version control systems.
+* Developers can still use their favorite text editors.
+* Queries that are not based on the document's natural hierarchy may be inefficient to answer.
+* The system's performance is tied to file system performance.
+
+==== Pugh Matrix: Storage Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | File System (Baseline) | SQLite | Key-Value Store
+
+| Git Integration | 0 | - | -
+| Human-Readable Files | 0 | - | -
+| No Database Dependency | 0 | - | -
+| Query Flexibility | 0 | + | +
+| Implementation Simplicity | 0 | - | -
+| **Total** | **0** | **-3** | **-2**
+|===
+
+_Legend: + better than baseline, 0 same as baseline, - worse than baseline_
+
+---
+
+=== ADR-002: In-Memory Index for Performance
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The quality goal PERF-1 requires API calls to respond in under 2 seconds. Reading and parsing text files from disk on every request would be too slow for large projects, as identified in the runtime analysis.
+
+*Decision:*
+On startup, the server will perform a one-time scan of the entire project directory. It will parse all documentation files and build an "In-Memory Structure Index". This index will hold metadata about each document, including section names, hierarchical paths, and the start/end line numbers for each section in its source file. Read requests will consult this index to find the exact byte range to read from a file.
+
+*Consequences:*
+
+* Read operations (`get_section`) are extremely fast, as they become simple dictionary lookups followed by a targeted file read.
+* Enables efficient implementation of structure-aware APIs like `get_structure`.
+* Increased memory consumption, proportional to the size of the documentation project.
+* Slower server startup time due to the initial indexing phase.
+* A mechanism to detect external file changes (file watching) is needed to keep the index from becoming stale.
+
+==== Pugh Matrix: Indexing Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | In-Memory Index (Baseline) | No Index | Persistent Disk Index
+
+| Read Performance | 0 | - - | 0
+| Startup Time | 0 | + | +
+| Memory Efficiency | 0 | + | +
+| Implementation Simplicity | 0 | + | -
+| Stateless Design | 0 | + | -
+| Cache Invalidation | 0 | + | -
+| **Total** | **0** | **+2** | **-2**
+|===
+
+_Note: Despite scoring lower, In-Memory Index was chosen because read performance is the critical quality goal (PERF-1). The "No Index" approach would violate performance requirements._
+
+---
+
+=== ADR-003: Technology Stack (Python/FastAPI)
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+A programming language and web framework are needed to build the MCP API Server. The choice must align with the need for rapid development, strong text-processing capabilities, and high performance for an I/O-bound application.
+
+*Decision:*
+The backend will be implemented in **Python**. The **FastAPI** framework will be used to build the web server and API endpoints.
+
+*Consequences:*
+
+* Python has an exceptional ecosystem for text processing and data manipulation.
+* FastAPI provides high performance for I/O-bound tasks, data validation, and automatic OpenAPI/Swagger documentation, which helps achieve USAB-1 and USAB-2.
+* The large talent pool for Python simplifies maintenance.
+* Python's GIL can be a limitation for CPU-bound tasks, but this application is primarily I/O-bound (reading files, network requests).
+
+==== Pugh Matrix: Technology Stack
+
+[cols="3,1,1,1,1"]
+|===
+| Criterion | Python/FastAPI (Baseline) | Node.js/Express | Go/Gin | Java/Spring
+
+| Text Processing | 0 | 0 | - | 0
+| Development Speed | 0 | 0 | - | -
+| I/O Performance | 0 | 0 | + | 0
+| Auto API Documentation | 0 | - | - | 0
+| Ecosystem Maturity | 0 | 0 | 0 | +
+| Memory Footprint | 0 | 0 | + | -
+| Talent Pool | 0 | 0 | - | +
+| **Total** | **0** | **-1** | **-2** | **0**
+|===
+
+_Python/FastAPI chosen for its balanced strengths in text processing, rapid development, and automatic API documentation generation._
+
+---
+
+=== ADR-004: Atomic Writes via Temporary Files
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The quality goal REL-1 (Atomic Writes) is critical to prevent file corruption during `update` operations. A failure (e.g., disk full, application crash) during a file write could leave a document in an unrecoverable, partially-written state.
+
+*Decision:*
+The `File System Handler` component will implement atomic writes using a backup-and-replace strategy:
+
+1. Create a backup of the original file (e.g., `doc.adoc` -> `doc.adoc.bak`).
+2. Write all intended changes to a new temporary file (e.g., `doc.adoc.tmp`).
+3. If the write is successful, atomically rename/move the temporary file to replace the original file.
+4. Delete the backup file.
+5. If any step fails, restore the original file from the backup and delete the temporary file.
+
+*Consequences:*
+
+* Guarantees that the primary file is never in a corrupted state.
+* Relatively simple to implement and understand.
+* Slightly higher I/O overhead for each write operation (copy, write, move). This is an acceptable trade-off for the gain in reliability.
+
+==== Pugh Matrix: Write Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | Temp File + Backup (Baseline) | Journaling | In-Place with Locking
+
+| Crash Safety | 0 | + | -
+| Implementation Simplicity | 0 | - - | +
+| I/O Overhead | 0 | - | +
+| Power Loss Protection | 0 | + | -
+| Debugging/Recovery | 0 | - | 0
+| **Total** | **0** | **-2** | **0**
+|===
+
+_Temp File + Backup chosen for its balance of reliability and implementation simplicity. In-Place with Locking was rejected due to crash/power loss vulnerability._
+
+---
+
+=== ADR-005: Custom Parser for Include Resolution
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+A core feature is the ability to map a hierarchical path (e.g., `chapter-1.section-2`) to a precise location in a source file. This is complicated by AsciiDoc's `include::[]` directive, as content from multiple files is logically part of one document. Existing parsers often flatten the document, losing this critical source-map information.
+
+*Decision:*
+A custom document parser will be developed. This parser will be responsible for:
+
+1. Parsing the AsciiDoc/Markdown syntax.
+2. Recognizing and recursively resolving `include::[]` directives.
+3. Building an Abstract Syntax Tree (AST) that retains the original file path and line numbers for every single element of the document.
+
+*Consequences:*
+
+* Provides full control over the parsing process, ensuring the crucial source-map information is preserved.
+* Allows for tailored error handling of malformed documents or circular includes.
+* Significant development and maintenance effort compared to using an off-the-shelf library. This is the most complex component of the system.
+
+==== Pugh Matrix: Parsing Strategy
+
+[cols="3,1,1"]
+|===
+| Criterion | Custom Parser (Baseline) | Existing Library (e.g., asciidoctor.py)
+
+| Source-Map Preservation | 0 | - -
+| Include Resolution Control | 0 | -
+| Circular Include Detection | 0 | -
+| Development Effort | 0 | +
+| Maintenance Effort | 0 | +
+| Community Support | 0 | +
+| **Total** | **0** | **0**
+|===
+
+_Despite equal scoring, Custom Parser was chosen because source-map preservation is a hard requirement. Existing libraries fundamentally cannot provide this capability, making them unsuitable regardless of other benefits._

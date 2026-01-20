@@ -1,8 +1,19 @@
-== 5. Building Block View
+:jbake-title: Building Block View
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 5
+:filename: /chapters/05_building_block_view.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-building-block-view]]
+== Building Block View
 
 This chapter describes the static decomposition of the system into its key building blocks. We use the C4 model to illustrate the structure at different levels of detail.
 
-=== 5.1 Level 2: System Containers
+=== Level 2: System Containers
 
 The MCP Documentation Server system is composed of two main containers: a web-based user interface and the back-end API server. The file system acts as the system's database.
 
@@ -31,7 +42,7 @@ Rel(api, file_system, "Reads/Writes", "File System API")
 @enduml
 ----
 
-=== 5.2 Level 3: Components of the MCP API Server
+=== Level 3: Components of the MCP API Server
 
 We now zoom into the `MCP API Server` container. It is composed of several components, each with a distinct responsibility, reflecting a classic layered architecture.
 

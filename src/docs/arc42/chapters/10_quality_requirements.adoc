@@ -1,8 +1,19 @@
-== 10. Quality Requirements
+:jbake-title: Quality Requirements
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 10
+:filename: /chapters/10_quality_requirements.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-quality-scenarios]]
+== Quality Requirements
 
 This chapter defines the most important quality requirements for the system. Each requirement is specified as a concrete, measurable scenario.
 
-=== 10.1 Performance
+=== Performance
 
 The system must provide fast access to documentation content, even in large projects.
 
@@ -15,7 +26,7 @@ The system must provide fast access to documentation content, even in large proj
 | PERF-3 | Low Overhead | While the server is idle, it shall consume minimal system resources. | CPU usage < 5% and a stable, non-growing memory footprint.
 |===
 
-=== 10.2 Reliability and Data Integrity
+=== Reliability and Data Integrity
 
 The system must be robust and guarantee that no data is lost or corrupted.
 
@@ -28,7 +39,7 @@ The system must be robust and guarantee that no data is lost or corrupted.
 | REL-3 | Data Integrity | After a series of 100 random but valid modification operations, the document structure remains valid and no content is lost. | A validation check (`validate_structure()`) run after the operations reports zero errors.
 |===
 
-=== 10.3 Usability
+=== Usability
 
 The system must be easy to use for its target audience of developers and architects.
 
@@ -41,7 +52,7 @@ The system must be easy to use for its target audience of developers and archite
 | USAB-3 | Feedback | When a section is modified via the web UI, the changes are immediately visible. | The UI displays a red/green diff of the changes within 1 second of the modification API call completing.
 |===
 
-=== 10.4 Scalability
+=== Scalability
 
 The system must be able to handle large documentation projects.
 

@@ -1,8 +1,19 @@
-== 2. Architecture Constraints
+:jbake-title: Architecture Constraints
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 2
+:filename: /chapters/02_architecture_constraints.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-architecture-constraints]]
+== Architecture Constraints
 
 This chapter outlines the constraints that shape the architecture of the MCP Documentation Server.
 
-=== 2.1 Technical Constraints
+=== Technical Constraints
 
 The system must adhere to the following technical constraints, derived directly from the PRD:
 
@@ -16,7 +27,7 @@ The system must adhere to the following technical constraints, derived directly 
 | **Version Control Integration** | All operations must be compatible with standard Git workflows, ensuring that file changes can be tracked, committed, and reverted.
 |===
 
-=== 2.2 Organizational and Process Constraints
+=== Organizational and Process Constraints
 
 .Organizational Constraints
 [cols="1,3"]
@@ -27,7 +38,7 @@ The system must adhere to the following technical constraints, derived directly 
 | **Phased Development** | The project will be developed in phases (Core Engine, MCP Integration, Web Interface), requiring a modular architecture that supports incremental delivery.
 |===
 
-=== 2.3 Conventions
+=== Conventions
 
 To ensure consistency and quality, the following conventions will be followed:
 

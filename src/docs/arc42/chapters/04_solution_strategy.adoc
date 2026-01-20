@@ -1,8 +1,19 @@
-== 4. Solution Strategy
+:jbake-title: Solution Strategy
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 4
+:filename: /chapters/04_solution_strategy.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-solution-strategy]]
+== Solution Strategy
 
 This chapter outlines the fundamental architectural decisions and strategies to meet the requirements defined in the previous chapters.
 
-=== 4.1 Core Architectural Approach: In-Memory Index with File-System-as-Truth
+=== Core Architectural Approach: In-Memory Index with File-System-as-Truth
 
 The core of the architecture is a dual approach:
 
@@ -10,7 +21,7 @@ The core of the architecture is a dual approach:
 
 2.  **File System as the Single Source of Truth**: The system is stateless. The file system holds the definitive state of the documentation at all times. All modifications are written directly back to the source files. This approach satisfies the constraints of **Human-Readable Files** and **Version Control Integration**. It also simplifies the architecture by avoiding the need for a database (Constraint: **File-System Based**).
 
-=== 4.2 Technology Decisions
+=== Technology Decisions
 
 To implement this strategy, the following technology stack is proposed. The choices are guided by the need for strong text processing capabilities, a robust ecosystem, and fast development.
 
@@ -24,7 +35,7 @@ To implement this strategy, the following technology stack is proposed. The choi
 | **Diff Engine** | **difflib** | Python's standard library for generating diffs, sufficient for providing real-time feedback in the web UI (**Usability**, USAB-3).
 |===
 
-=== 4.3 Achieving Key Quality Goals
+=== Achieving Key Quality Goals
 
 The architectural strategy directly addresses the top quality goals defined in Chapter 10.
 

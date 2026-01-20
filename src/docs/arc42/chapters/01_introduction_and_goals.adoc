@@ -1,6 +1,17 @@
+:jbake-title: Introduction and Goals
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 1
+:filename: /chapters/01_introduction_and_goals.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-introduction-and-goals]]
 == Introduction and Goals
 
-=== 1.1 Requirements Overview
+=== Requirements Overview
 
 Large Language Models (LLMs) face significant challenges when interacting with extensive documentation projects. The primary issues are:
 
@@ -11,7 +22,7 @@ Large Language Models (LLMs) face significant challenges when interacting with e
 
 The **MCP Documentation Server** aims to solve these problems by providing a structured, content-aware API for interacting with AsciiDoc and Markdown projects. This enables efficient navigation, reading, and modification of complex documentation.
 
-=== 1.2 Quality Goals
+=== Quality Goals
 
 The architecture will prioritize the following key quality goals, derived from the non-functional requirements:
 
@@ -25,17 +36,17 @@ The architecture will prioritize the following key quality goals, derived from t
 | **Scalability** | The server must handle large documentation projects of up to 600 pages without significant performance degradation.
 |===
 
-=== 1.3 Stakeholders
+=== Stakeholders
 
 The primary stakeholders of the MCP Documentation Server are:
 
 .Stakeholders
-[cols="1,2a"]
+[cols="1,2,2"]
 |===
-| Stakeholder | Role & Interest
-| **Software Developer** | Uses the server to analyze and maintain code documentation with LLM assistance.
-| **Software Architect** | Uses the server to manage and update large-scale architecture documents (e.g., arc42) with LLMs.
-| **Documentation Engineer** | Manages complex documentation projects, relying on the server for efficient navigation and maintenance.
+| Role/Name | Contact | Expectations
+| **Software Developer** | Development Team | Uses the server to analyze and maintain code documentation with LLM assistance.
+| **Software Architect** | Architecture Team | Uses the server to manage and update large-scale architecture documents (e.g., arc42) with LLMs.
+| **Documentation Engineer** | Documentation Team | Manages complex documentation projects, relying on the server for efficient navigation and maintenance.
 |===
 
 [plantuml, stakeholder-overview, svg]

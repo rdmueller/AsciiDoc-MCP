@@ -1,8 +1,19 @@
-== 6. Runtime View
+:jbake-title: Runtime View
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 6
+:filename: /chapters/06_runtime_view.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-runtime-view]]
+== Runtime View
 
 This chapter illustrates how the system's components collaborate at runtime to fulfill key use cases.
 
-=== 6.1 Scenario: Reading a Document Section
+=== Scenario: Reading a Document Section
 
 This is the most common read operation. A client requests the content of a specific section using its hierarchical path.
 
@@ -34,7 +45,7 @@ deactivate Server
 @enduml
 ----
 
-=== 6.2 Scenario: Updating a Document Section
+=== Scenario: Updating a Document Section
 
 This scenario shows the critical write operation. The process must be atomic to ensure data integrity, as required by quality goal REL-1. This is achieved by writing to a temporary file first.
 
@@ -74,7 +85,7 @@ deactivate Server
 @enduml
 ----
 
-=== 6.3 Scenario: Server Initialization
+=== Scenario: Server Initialization
 
 When the server starts, it needs to parse the entire documentation project to build an in-memory index of the structure. This enables fast lookups for subsequent requests.
 

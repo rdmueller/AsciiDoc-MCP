@@ -1,19 +1,35 @@
-== 8. Cross-cutting Concepts
+:jbake-title: Cross-cutting Concepts
+:jbake-type: page_toc
+:jbake-status: published
+:jbake-menu: arc42
+:jbake-order: 8
+:filename: /chapters/08_concepts.adoc
+ifndef::imagesdir[:imagesdir: ../../images]
+
+:toc:
+
+[[section-concepts]]
+== Cross-cutting Concepts
 
 This chapter describes concepts that are relevant across multiple parts of the architecture.
 
-=== 8.1 Security
+=== Security
+
 Security is addressed through standard, well-understood mechanisms.
+
 *   **Transport Security**: All communication with the server (API and Web UI) must be secured with HTTPS.
 *   **Execution Environment**: The server is assumed to run in a trusted, non-hostile environment. It has direct file system access, which is a powerful capability. Access to the server should be controlled by network rules.
 *   **Authentication/Authorization**: The PRD does not specify any multi-user or authentication requirements. The server is treated as a single-tenant system. If needed in the future, standard token-based authentication (e.g., API keys, OAuth2) could be added at the API gateway level or within FastAPI.
 
-=== 8.2 Error Handling
+=== Error Handling
+
 The error handling strategy is designed to be robust and developer-friendly, supporting the quality goals of Reliability and Usability.
+
 *   **API Errors**: Invalid requests (e.g., bad paths, malformed content) will result in standard HTTP error codes (4xx) with a descriptive JSON body, as required by USAB-2.
 *   **Server Errors**: Unexpected internal errors will result in HTTP 5xx codes. All such errors will be logged with a full stack trace for debugging.
 *   **Data Integrity**: File corruption is prevented through the atomic write mechanism detailed in ADR-004.
 
-=== 8.3 Logging and Monitoring
+=== Logging and Monitoring
+
 *   **Logging**: The application will use structured logging (e.g., JSON format) and log to `stdout`. This allows for easy integration with modern log aggregation tools like the ELK stack, Splunk, or cloud-based logging services. Log levels (DEBUG, INFO, WARN, ERROR) will be used to control verbosity.
 *   **Monitoring**: FastAPI can be easily instrumented with Prometheus middleware to expose key metrics (e.g., request latency, error rates, memory usage of the index). This allows for proactive monitoring and alerting.
