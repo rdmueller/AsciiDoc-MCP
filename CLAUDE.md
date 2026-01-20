@@ -77,6 +77,33 @@ src/docs/
     └── 04_markdown_parser.adoc    # Markdown parser component spec
 ```
 
+## Specification Conventions
+
+### Use Cases (`01_use_cases.adoc`)
+- PlantUML Activity Diagrams for each use case
+- Structure: Akteure, Vorbedingungen, Ablauf, Nachbedingungen, Fehlerszenarien
+
+### API Specification (`02_api_specification.adoc`)
+- OpenAPI-style in AsciiDoc format
+- Data models as JSON schemas with descriptions
+- Endpoints grouped by API category (Navigation, Content Access, Manipulation, Meta-Information)
+
+### Acceptance Criteria (`03_acceptance_criteria.adoc`)
+- Gherkin format (Given-When-Then)
+- Grouped by feature/use case
+- German language
+
+### Component Specifications (e.g., `04_markdown_parser.adoc`)
+- Scope and limitations (what it does NOT do)
+- Data models as Python dataclasses
+- Acceptance criteria with Gherkin scenarios
+- Interface definition
+
+### Architecture Decision Records (ADRs)
+- **Nygard format**: Status, Context, Decision, Consequences
+- **Pugh Matrix** for each decision comparing alternatives
+- Located in `src/docs/arc42/chapters/09_architecture_decisions.adoc`
+
 ## Key Architecture Decisions (ADRs)
 
 Located in `src/docs/arc42/chapters/09_architecture_decisions.adoc`:
