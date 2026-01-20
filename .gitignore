@@ -2,7 +2,7 @@
 *.pdf
 
 # Zone Identifier files from Windows
-:Zone.Identifier
+*:Zone.Identifier
 
 # Virtual environment
 .venv/
@@ -10,3 +10,27 @@
 # Python cache
 __pycache__/
 *.pyc
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+secrets.*
+
+# Local configuration
+.mcp.json
+settings.json
+
+# Gradle
+.gradle/
+
+# Serena/Vibe working directories
+.serena/
+.vibe/
