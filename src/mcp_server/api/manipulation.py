@@ -5,6 +5,8 @@ Provides endpoints for modifying document content:
 - POST /section/{path}/insert - Insert content relative to a section
 """
 
+from pathlib import Path as FilePath
+
 from fastapi import APIRouter, HTTPException, Path
 
 from mcp_server.api.models import (
@@ -17,6 +19,7 @@ from mcp_server.api.models import (
     UpdateSectionResponse,
 )
 from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteError
+from mcp_server.models import Section
 from mcp_server.structure_index import StructureIndex
 
 router = APIRouter(prefix="/api/v1", tags=["Manipulation"])
@@ -49,47 +52,28 @@ def get_index() -> StructureIndex:
     return _index
 
 
-def _find_section_end_line(index: StructureIndex, section_path: str) -> int:
-    """Find the end line of a section's direct content.
+def _get_section_end_line(section: Section, file_path: FilePath) -> int:
+    """Get the end line of a section.
 
-    Since SourceLocation only has a start line, we estimate the end line by:
-    1. Finding the next section's (child or sibling) start line - 1, giving us
-       the end of this section's direct content
-    2. Or using a reasonable default if no later section exists
+    Uses the end_line from SourceLocation (populated by parsers).
+    Falls back to reading file length if end_line is not set.
 
-    This is a simplified implementation - proper end_line tracking
-    should be added to the parser (see tech-debt).
+    Args:
+        section: The section to get end line for
+        file_path: Path to the file containing the section
+
+    Returns:
+        The end line number (1-based)
     """
-    section = index.get_section(section_path)
-    if section is None:
-        return -1
+    if section.source_location.end_line is not None:
+        return section.source_location.end_line
 
-    start_line = section.source_location.line
-    file_path = section.source_location.file
-
-    # Find all sections in the same file, sorted by line number
-    all_sections = []
-    for path, sec in index._path_to_section.items():
-        if sec.source_location.file == file_path:
-            all_sections.append((sec.source_location.line, path))
-
-    all_sections.sort()
-
-    # Find the section after this one
-    for i, (line, path) in enumerate(all_sections):
-        if path == section_path:
-            if i + 1 < len(all_sections):
-                # Next section starts at this line, our section ends before
-                return all_sections[i + 1][0] - 1
-            else:
-                # This is the last section, read to end of file
-                try:
-                    content = _file_handler.read_file(file_path)
-                    return len(content.splitlines())
-                except FileReadError:
-                    return start_line + 10  # Fallback
-
-    return start_line + 10  # Fallback
+    # Fallback: read file to get total lines
+    try:
+        content = _file_handler.read_file(file_path)
+        return len(content.splitlines())
+    except FileReadError:
+        return section.source_location.line + 10  # Last resort fallback
 
 
 @router.put(
@@ -127,7 +111,7 @@ def update_section(
 
     file_path = section.source_location.file
     start_line = section.source_location.line
-    end_line = _find_section_end_line(index, normalized_path)
+    end_line = _get_section_end_line(section, file_path)
 
     # Prepare content
     new_content = request.content
@@ -211,7 +195,7 @@ def insert_content(
 
     file_path = section.source_location.file
     start_line = section.source_location.line
-    end_line = _find_section_end_line(index, normalized_path)
+    end_line = _get_section_end_line(section, file_path)
 
     # Determine insert position
     content = request.content
