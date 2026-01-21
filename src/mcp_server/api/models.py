@@ -4,6 +4,8 @@ These models define the JSON response structure for the Navigation API
 and Content Access API as specified in 02_api_specification.adoc.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 # Valid element types for GET /elements endpoint
@@ -157,7 +159,9 @@ class UpdateSectionResponse(BaseModel):
 class InsertContentRequest(BaseModel):
     """Request body for POST /section/{path}/insert endpoint."""
 
-    position: str = Field(description="Insert position: 'before', 'after', or 'append'")
+    position: Literal["before", "after", "append"] = Field(
+        description="Insert position: 'before', 'after', or 'append'"
+    )
     content: str = Field(description="Content to insert")
 
 

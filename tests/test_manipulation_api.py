@@ -305,7 +305,7 @@ class TestInsertContent:
         assert "Additional paragraph at end" in file_content
 
     def test_insert_invalid_position(self, client: TestClient):
-        """UC-09: Invalid position returns 400."""
+        """UC-09: Invalid position returns 422 (validation error)."""
         response = client.post(
             "/api/v1/section/introduction/insert",
             json={
@@ -314,9 +314,7 @@ class TestInsertContent:
             },
         )
 
-        assert response.status_code == 400
-        data = response.json()
-        assert data["detail"]["error"]["code"] == "INVALID_POSITION"
+        assert response.status_code == 422  # Pydantic validation error
 
     def test_insert_section_not_found(self, client: TestClient):
         """UC-09: Returns 404 for non-existent section."""
