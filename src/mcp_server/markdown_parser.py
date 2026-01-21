@@ -140,7 +140,16 @@ class MarkdownParser:
 
         Returns:
             FolderDocument with all parsed files
+
+        Raises:
+            FileNotFoundError: If the folder path does not exist
+            NotADirectoryError: If the path is not a directory
         """
+        if not folder_path.exists():
+            raise FileNotFoundError(f"Folder not found: {folder_path}")
+
+        if not folder_path.is_dir():
+            raise NotADirectoryError(f"Path is not a directory: {folder_path}")
         documents: list[MarkdownDocument] = []
 
         # Collect all markdown files recursively
