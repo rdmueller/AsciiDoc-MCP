@@ -503,11 +503,17 @@ class AsciidocParser:
                             line=line_num,
                             resolved_from=resolved_from,
                         )
+                        # Only add attributes if they are not None
+                        attributes = {}
+                        if name is not None:
+                            attributes["name"] = name
+                        if fmt is not None:
+                            attributes["format"] = fmt
                         elements.append(
                             Element(
                                 type="plantuml",
                                 source_location=source_location,
-                                attributes={"name": name, "format": fmt},
+                                attributes=attributes,
                                 parent_section=current_section_path,
                             )
                         )

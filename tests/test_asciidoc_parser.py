@@ -357,6 +357,46 @@ class TestElementExtraction:
         assert plantuml_elements[0].attributes.get("name") == "sequenz-diagramm"
         assert plantuml_elements[0].attributes.get("format") == "svg"
 
+    def test_plantuml_block_without_optional_attributes(self):
+        """Test that PlantUML block without name/format does not have None values."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+        from pathlib import Path
+        import tempfile
+
+        # Create a temporary test file with PlantUML block without attributes
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+[plantuml]
+----
+@startuml
+Alice -> Bob: Test
+@enduml
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            plantuml_elements = [e for e in doc.elements if e.type == "plantuml"]
+            assert len(plantuml_elements) == 1
+            
+            # Ensure no None values in attributes
+            attrs = plantuml_elements[0].attributes
+            assert None not in attrs.values()
+            # The attributes dict should be empty if no name/format were provided
+            assert "name" not in attrs or attrs["name"] is not None
+            assert "format" not in attrs or attrs["format"] is not None
+        finally:
+            # Clean up temp file
+            temp_file.unlink()
+
 
 class TestCrossReferences:
     """Tests for cross-reference extraction (AC-ADOC-08)."""
