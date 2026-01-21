@@ -536,6 +536,36 @@ puts "hello"
         assert len(doc.elements) == 1
         assert doc.elements[0].attributes["language"] == "ruby"
 
+    def test_unclosed_code_block_logs_warning(self, caplog):
+        """Unclosed code block at end of file logs a warning."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Code
+
+```python
+def hello():
+    print("Hello")
+"""  # Note: Missing closing fence
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            
+            import logging
+            with caplog.at_level(logging.WARNING):
+                doc = parser.parse_file(Path(f.name))
+
+        # Code block should not be created
+        assert len(doc.elements) == 0
+        
+        # Warning should be logged
+        assert "Unclosed code block" in caplog.text
+        assert "line 3" in caplog.text
+        assert "will be ignored" in caplog.text
+
 
 class TestTableRecognition:
     """AC-MD-04: GFM tables are recognized as blocks."""

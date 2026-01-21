@@ -401,6 +401,14 @@ class MarkdownParser:
                     )
                 )
 
+        # Handle unclosed code block at end of file
+        if in_code_block:
+            logger.warning(
+                f"Unclosed code block at end of file {file_path} "
+                f"(started at line {code_block_start_line}). "
+                f"Code block will be ignored."
+            )
+
         # Handle table at end of file
         if in_table and has_separator:
             elements.append(
