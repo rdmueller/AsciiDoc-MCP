@@ -463,3 +463,86 @@ class TestIndexRebuildAfterWrite:
             if section.get("children"):
                 paths.extend(self._extract_all_paths(section["children"]))
         return paths
+
+
+class TestOptimisticLocking:
+    """Tests for optimistic locking with hash values."""
+
+    async def test_update_section_returns_hash_values(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """update_section returns previous_hash and new_hash."""
+        result = await mcp_client.call_tool(
+            "update_section",
+            arguments={
+                "path": "introduction",
+                "content": "== Introduction\n\nUpdated for hash test.\n",
+            },
+        )
+
+        assert result.data["success"] is True
+        assert "previous_hash" in result.data
+        assert "new_hash" in result.data
+        assert result.data["previous_hash"] != result.data["new_hash"]
+
+    async def test_update_section_with_expected_hash_success(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """update_section succeeds when expected_hash matches."""
+        # First get the current hash by doing an update
+        first_result = await mcp_client.call_tool(
+            "update_section",
+            arguments={
+                "path": "introduction",
+                "content": "== Introduction\n\nFirst update.\n",
+            },
+        )
+        current_hash = first_result.data["new_hash"]
+
+        # Now update with correct expected_hash
+        second_result = await mcp_client.call_tool(
+            "update_section",
+            arguments={
+                "path": "introduction",
+                "content": "== Introduction\n\nSecond update.\n",
+                "expected_hash": current_hash,
+            },
+        )
+
+        assert second_result.data["success"] is True
+        assert second_result.data["previous_hash"] == current_hash
+
+    async def test_update_section_with_wrong_expected_hash_fails(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """update_section fails when expected_hash doesn't match (conflict)."""
+        result = await mcp_client.call_tool(
+            "update_section",
+            arguments={
+                "path": "introduction",
+                "content": "== Introduction\n\nConflicting update.\n",
+                "expected_hash": "wrong_hash_value",
+            },
+        )
+
+        # Should return error indicating conflict
+        assert result.data.get("success") is not True
+        error_msg = result.data.get("error", "").lower()
+        assert "conflict" in error_msg or "hash" in error_msg
+
+    async def test_insert_content_returns_hash_values(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """insert_content returns previous_hash and new_hash."""
+        result = await mcp_client.call_tool(
+            "insert_content",
+            arguments={
+                "path": "introduction",
+                "position": "after",
+                "content": "== Hash Test Section\n\nContent.\n",
+            },
+        )
+
+        assert result.data["success"] is True
+        assert "previous_hash" in result.data
+        assert "new_hash" in result.data

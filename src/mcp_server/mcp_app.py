@@ -12,6 +12,7 @@ Tools:
     - insert_content: Insert content relative to a section
 """
 
+import hashlib
 import logging
 import sys
 from pathlib import Path
@@ -272,6 +273,7 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         path: str,
         content: str,
         preserve_title: bool = True,
+        expected_hash: str | None = None,
     ) -> dict:
         """Update the content of a section.
 
@@ -285,9 +287,13 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                      doesn't start with a heading, the original title is preserved.
             preserve_title: Whether to preserve the original section title
                             (default: True). Set to False to replace everything.
+            expected_hash: Optional hash for optimistic locking. If provided,
+                          the update will fail if the current content hash
+                          doesn't match (indicating a conflicting modification).
 
         Returns:
-            Success status with 'success', 'path', and 'location'.
+            Success status with 'success', 'path', 'location', 'previous_hash',
+            and 'new_hash' for optimistic locking support.
         """
         # The index uses paths without leading slash
         normalized_path = path.lstrip("/")
@@ -299,6 +305,27 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         file_path = section.source_location.file
         start_line = section.source_location.line
         end_line = _get_section_end_line(section, file_path, file_handler)
+
+        # Read current content and compute hash for optimistic locking
+        try:
+            file_content = file_handler.read_file(file_path)
+            lines = file_content.splitlines(keepends=True)
+            current_content = "".join(lines[start_line - 1 : end_line])
+            previous_hash = hashlib.md5(current_content.encode("utf-8")).hexdigest()[:8]
+        except FileReadError:
+            previous_hash = ""
+            current_content = ""
+
+        # Check for conflict if expected_hash is provided
+        if expected_hash is not None and expected_hash != previous_hash:
+            return {
+                "success": False,
+                "error": (
+                    f"Hash conflict: expected '{expected_hash}', "
+                    f"but current is '{previous_hash}'"
+                ),
+                "current_hash": previous_hash,
+            }
 
         # Prepare content
         new_content = content
@@ -320,6 +347,9 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         if not new_content.endswith("\n"):
             new_content += "\n"
 
+        # Compute new hash
+        new_hash = hashlib.md5(new_content.encode("utf-8")).hexdigest()[:8]
+
         # Perform update
         try:
             file_handler.update_section(
@@ -337,6 +367,8 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                     "file": str(file_path),
                     "line": start_line,
                 },
+                "previous_hash": previous_hash,
+                "new_hash": new_hash,
             }
         except FileWriteError as e:
             return {
@@ -391,6 +423,9 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
 
         try:
             file_content = file_handler.read_file(file_path)
+            # Compute hash of file before modification
+            previous_hash = hashlib.md5(file_content.encode("utf-8")).hexdigest()[:8]
+
             lines = file_content.splitlines(keepends=True)
 
             if position == "before":
@@ -404,6 +439,9 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                 new_lines = lines[: end_line - 1] + [insert_content] + lines[end_line - 1 :]
 
             new_file_content = "".join(new_lines)
+            # Compute hash of file after modification
+            new_hash = hashlib.md5(new_file_content.encode("utf-8")).hexdigest()[:8]
+
             file_handler.write_file(file_path, new_file_content)
 
             # Rebuild index to reflect file changes
@@ -415,6 +453,8 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                     "file": str(file_path),
                     "line": insert_line,
                 },
+                "previous_hash": previous_hash,
+                "new_hash": new_hash,
             }
         except (FileReadError, FileWriteError) as e:
             return {"success": False, "error": f"Failed to insert content: {e}"}

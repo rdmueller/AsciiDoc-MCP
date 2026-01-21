@@ -15,6 +15,11 @@ MCP Documentation Server - enables LLM interaction with large AsciiDoc/Markdown 
 - **Web Framework:** FastAPI
 - **MCP SDK:** mcp[cli]
 
+## Conventions
+
+- Documentation, Issues, Pull-Requests etc. is always written in english
+- use responsible-vibe-mcp wherever suitable
+
 ## Commands
 
 ```bash
@@ -127,3 +132,4 @@ Located in `src/docs/arc42/chapters/09_architecture_decisions.adoc`:
 - Sorting: `index.md`/`README.md` first, then alphabetic with numeric prefix support
 - Extracts: headings (structure), code blocks, tables, images (as addressable blocks)
 - YAML frontmatter support for metadata
+
