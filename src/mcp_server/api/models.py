@@ -1,10 +1,13 @@
 """Pydantic models for API responses.
 
 These models define the JSON response structure for the Navigation API
-as specified in 02_api_specification.adoc.
+and Content Access API as specified in 02_api_specification.adoc.
 """
 
 from pydantic import BaseModel, Field
+
+# Valid element types for GET /elements endpoint
+VALID_ELEMENT_TYPES = frozenset(["diagram", "table", "code", "list", "image"])
 
 
 class LocationResponse(BaseModel):
@@ -68,6 +71,64 @@ class ErrorResponse(BaseModel):
     """Standardized error response."""
 
     error: ErrorDetail
+
+
+# ============================================================================
+# Content Access API Models
+# ============================================================================
+
+
+class SearchRequest(BaseModel):
+    """Request body for POST /search endpoint."""
+
+    query: str = Field(min_length=1, description="Search query string")
+    scope: str | None = Field(default=None, description="Restrict search to path prefix")
+    case_sensitive: bool = Field(default=False, description="Case-sensitive search")
+    max_results: int = Field(default=50, ge=1, le=1000, description="Maximum results")
+
+
+class SearchResultItem(BaseModel):
+    """A single search result."""
+
+    path: str = Field(description="Section path where match was found")
+    line: int = Field(description="Line number of the match")
+    context: str = Field(description="Context text around the match")
+    score: float = Field(ge=0, le=1, description="Relevance score (0-1)")
+
+
+class SearchResponse(BaseModel):
+    """Response for POST /search endpoint."""
+
+    query: str = Field(description="The search query that was executed")
+    results: list[SearchResultItem]
+    total_results: int = Field(description="Total number of matches found")
+    search_time_ms: int = Field(description="Search execution time in milliseconds")
+
+
+class ElementLocation(BaseModel):
+    """Location of an element with line range."""
+
+    file: str = Field(description="Relative path to the file")
+    start_line: int = Field(description="1-based starting line number")
+    end_line: int = Field(description="1-based ending line number")
+
+
+class ElementItem(BaseModel):
+    """A single element in the response."""
+
+    type: str = Field(description="Element type (diagram, table, code, list, image)")
+    path: str = Field(description="Section path containing this element")
+    index: int = Field(description="Index of element within its section")
+    location: ElementLocation
+    preview: str | None = Field(default=None, description="Preview text of the element")
+
+
+class ElementsResponse(BaseModel):
+    """Response for GET /elements endpoint."""
+
+    type: str = Field(description="Requested element type")
+    elements: list[ElementItem]
+    count: int = Field(description="Number of elements returned")
 
 
 # Allow forward references
