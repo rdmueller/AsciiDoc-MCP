@@ -163,6 +163,72 @@ class StructureIndex:
         """
         return self._file_to_sections.get(file_path, [])
 
+    def get_suggestions(
+        self, requested_path: str, max_suggestions: int = 5
+    ) -> list[str]:
+        """Get path suggestions for a non-existent path.
+
+        Finds similar paths using prefix and suffix matching.
+        Useful for providing helpful suggestions in 404 error responses.
+
+        Args:
+            requested_path: The requested path that was not found
+            max_suggestions: Maximum number of suggestions to return
+
+        Returns:
+            List of similar existing paths, sorted by relevance
+        """
+        if not requested_path:
+            return []
+
+        suggestions: list[tuple[int, str]] = []  # (score, path)
+
+        for existing_path in self._path_to_section.keys():
+            score = self._calculate_path_similarity(requested_path, existing_path)
+            if score > 0:
+                suggestions.append((score, existing_path))
+
+        # Sort by score descending, then by path alphabetically
+        suggestions.sort(key=lambda x: (-x[0], x[1]))
+
+        return [path for _, path in suggestions[:max_suggestions]]
+
+    def _calculate_path_similarity(self, requested: str, existing: str) -> int:
+        """Calculate similarity score between two paths.
+
+        Args:
+            requested: The requested path
+            existing: An existing path to compare
+
+        Returns:
+            Similarity score (higher = more similar), 0 = no match
+        """
+        requested_parts = requested.split(".")
+        existing_parts = existing.split(".")
+        score = 0
+
+        # Prefix matching: paths sharing the same parent
+        if len(requested_parts) > 1 and len(existing_parts) > 1:
+            # Check if parent path matches
+            requested_parent = ".".join(requested_parts[:-1])
+            existing_parent = ".".join(existing_parts[:-1])
+            if requested_parent == existing_parent:
+                score += 10  # Strong match for same parent
+
+        # Suffix matching: paths with similar last segment
+        requested_last = requested_parts[-1].lower()
+        existing_last = existing_parts[-1].lower()
+        if requested_last == existing_last:
+            score += 5  # Exact last segment match
+        elif requested_last in existing_last or existing_last in requested_last:
+            score += 3  # Partial last segment match
+
+        # First segment matching (same top-level section)
+        if requested_parts[0] == existing_parts[0]:
+            score += 2
+
+        return score
+
     def get_elements(
         self,
         element_type: str | None = None,
