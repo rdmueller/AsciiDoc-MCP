@@ -1,0 +1,15 @@
+= Dokument mit Cross-References
+
+[[intro]]
+== Einleitung
+
+Dies ist die Einleitung. Siehe auch <<details>> für weitere Informationen.
+
+[[details]]
+== Details
+
+Mehr Details hier. Zurück zur <<intro,Einleitung>>.
+
+== Zusammenfassung
+
+Wie in <<intro>> und <<details,den Details>> beschrieben.

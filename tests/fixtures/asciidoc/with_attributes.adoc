@@ -1,0 +1,14 @@
+:author: Max Mustermann
+:project: MCP Server
+:version: 1.0.0
+:imagesdir: ./images
+
+= {project} Dokumentation
+
+Autor: {author}
+
+Version: {version}
+
+== Einführung
+
+Dieses Dokument beschreibt das {project} Projekt.

@@ -1,0 +1,11 @@
+= Hauptdokument
+
+== Erstes Kapitel
+
+Inhalt des ersten Kapitels.
+
+include::include_partial.adoc[]
+
+== Letztes Kapitel
+
+Inhalt des letzten Kapitels.
