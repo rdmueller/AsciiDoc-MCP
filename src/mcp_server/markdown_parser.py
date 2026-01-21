@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Regex patterns from spec
 HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)(?:\s+#+)?$")
-FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*(?:\n|$)", re.DOTALL)
 CODE_FENCE_PATTERN = re.compile(r"^(`{3,}|~{3,})([a-zA-Z0-9_+-]*)?\s*$")
 TABLE_ROW_PATTERN = re.compile(r"^\|(.+)\|$")
 TABLE_SEPARATOR_PATTERN = re.compile(r"^\|[\s:|-]+\|$")
