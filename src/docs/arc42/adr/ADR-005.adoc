@@ -1,0 +1,36 @@
+=== ADR-005: Custom Parser for Include Resolution
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+A core feature is the ability to map a hierarchical path (e.g., `chapter-1.section-2`) to a precise location in a source file. This is complicated by AsciiDoc's `include::[]` directive, as content from multiple files is logically part of one document. Existing parsers often flatten the document, losing this critical source-map information.
+
+*Decision:*
+A custom document parser will be developed. This parser will be responsible for:
+
+1. Parsing the AsciiDoc/Markdown syntax.
+2. Recognizing and recursively resolving `include::[]` directives.
+3. Building an Abstract Syntax Tree (AST) that retains the original file path and line numbers for every single element of the document.
+
+*Consequences:*
+
+* Provides full control over the parsing process, ensuring the crucial source-map information is preserved.
+* Allows for tailored error handling of malformed documents or circular includes.
+* Significant development and maintenance effort compared to using an off-the-shelf library. This is the most complex component of the system.
+
+==== Pugh Matrix: Parsing Strategy
+
+[cols="3,1,1"]
+|===
+| Criterion | Custom Parser (Baseline) | Existing Library (e.g., asciidoctor.py)
+
+| Source-Map Preservation | 0 | - -
+| Include Resolution Control | 0 | -
+| Circular Include Detection | 0 | -
+| Development Effort | 0 | +
+| Maintenance Effort | 0 | +
+| Community Support | 0 | +
+| **Total** | **0** | **0**
+|===
+
+_Despite equal scoring, Custom Parser was chosen because source-map preservation is a hard requirement. Existing libraries fundamentally cannot provide this capability, making them unsuitable regardless of other benefits._

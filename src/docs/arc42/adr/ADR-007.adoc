@@ -1,0 +1,37 @@
+=== ADR-007: dataclasses for Data Models
+
+*Status:* Accepted (2026-01-20)
+
+*Context:*
+The core data models (SourceLocation, Section, Element, CrossReference, Document) need to be defined for the parser and API layers. These models must be serializable to JSON for API responses and should be type-safe. Two main options exist in the Python ecosystem: Python's built-in `dataclasses` module and the third-party `pydantic` library.
+
+*Decision:*
+Use **Python's built-in dataclasses** for all core data models. JSON serialization will be achieved using `dataclasses.asdict()` combined with custom serialization for `Path` objects.
+
+*Consequences:*
+
+* Zero additional dependencies (dataclasses is part of the standard library since Python 3.7).
+* Consistent with the specification documents which use dataclasses in all examples.
+* Simpler, more lightweight implementation.
+* Type hints are supported and enforced by IDE/mypy.
+* Manual validation required (no automatic validation like Pydantic provides).
+* Custom serialization needed for non-JSON-native types (Path, datetime).
+* If advanced validation becomes necessary, migration to Pydantic is straightforward since both use similar patterns.
+
+==== Pugh Matrix: Data Model Implementation
+
+[cols="3,1,1,1"]
+|===
+| Criterion | dataclasses (Baseline) | Pydantic | attrs
+
+| Standard Library | 0 | - | -
+| Spec Conformity | 0 | - | -
+| JSON Serialization | 0 | + | 0
+| Automatic Validation | 0 | + | 0
+| Learning Curve | 0 | - | -
+| Runtime Overhead | 0 | - | 0
+| FastAPI Integration | 0 | + | -
+| **Total** | **0** | **0** | **-2**
+|===
+
+_dataclasses chosen for simplicity, zero dependencies, and spec conformity. Pydantic scored equally but adds complexity not needed for the current scope. Migration to Pydantic remains possible if advanced validation becomes necessary._

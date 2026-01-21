@@ -1,0 +1,34 @@
+=== ADR-002: In-Memory Index for Performance
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The quality goal PERF-1 requires API calls to respond in under 2 seconds. Reading and parsing text files from disk on every request would be too slow for large projects, as identified in the runtime analysis.
+
+*Decision:*
+On startup, the server will perform a one-time scan of the entire project directory. It will parse all documentation files and build an "In-Memory Structure Index". This index will hold metadata about each document, including section names, hierarchical paths, and the start/end line numbers for each section in its source file. Read requests will consult this index to find the exact byte range to read from a file.
+
+*Consequences:*
+
+* Read operations (`get_section`) are extremely fast, as they become simple dictionary lookups followed by a targeted file read.
+* Enables efficient implementation of structure-aware APIs like `get_structure`.
+* Increased memory consumption, proportional to the size of the documentation project.
+* Slower server startup time due to the initial indexing phase.
+* A mechanism to detect external file changes (file watching) is needed to keep the index from becoming stale.
+
+==== Pugh Matrix: Indexing Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | In-Memory Index (Baseline) | No Index | Persistent Disk Index
+
+| Read Performance | 0 | - - | 0
+| Startup Time | 0 | + | +
+| Memory Efficiency | 0 | + | +
+| Implementation Simplicity | 0 | + | -
+| Stateless Design | 0 | + | -
+| Cache Invalidation | 0 | + | -
+| **Total** | **0** | **+2** | **-2**
+|===
+
+_Note: Despite scoring lower, In-Memory Index was chosen because read performance is the critical quality goal (PERF-1). The "No Index" approach would violate performance requirements._

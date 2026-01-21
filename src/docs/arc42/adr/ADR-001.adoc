@@ -1,0 +1,33 @@
+=== ADR-001: File-System as Single Source of Truth
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The PRD requires that the system integrates with existing Git workflows, that files remain human-readable, and that there are no database dependencies. We need a simple, robust way to store the documentation content that honors these constraints.
+
+*Decision:*
+The file system will be treated as the single source of truth. The server will not have its own persistent state. All content and structure information is derived directly from the `.adoc` and `.md` files within the project directory.
+
+*Consequences:*
+
+* Simplifies the architecture immensely. No database schema migrations or data synchronization logic needed.
+* Inherently compatible with Git and other version control systems.
+* Developers can still use their favorite text editors.
+* Queries that are not based on the document's natural hierarchy may be inefficient to answer.
+* The system's performance is tied to file system performance.
+
+==== Pugh Matrix: Storage Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | File System (Baseline) | SQLite | Key-Value Store
+
+| Git Integration | 0 | - | -
+| Human-Readable Files | 0 | - | -
+| No Database Dependency | 0 | - | -
+| Query Flexibility | 0 | + | +
+| Implementation Simplicity | 0 | - | -
+| **Total** | **0** | **-3** | **-2**
+|===
+
+_Legend: + better than baseline, 0 same as baseline, - worse than baseline_

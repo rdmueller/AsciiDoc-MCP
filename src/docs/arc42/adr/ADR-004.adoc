@@ -1,0 +1,37 @@
+=== ADR-004: Atomic Writes via Temporary Files
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+The quality goal REL-1 (Atomic Writes) is critical to prevent file corruption during `update` operations. A failure (e.g., disk full, application crash) during a file write could leave a document in an unrecoverable, partially-written state.
+
+*Decision:*
+The `File System Handler` component will implement atomic writes using a backup-and-replace strategy:
+
+1. Create a backup of the original file (e.g., `doc.adoc` -> `doc.adoc.bak`).
+2. Write all intended changes to a new temporary file (e.g., `doc.adoc.tmp`).
+3. If the write is successful, atomically rename/move the temporary file to replace the original file.
+4. Delete the backup file.
+5. If any step fails, restore the original file from the backup and delete the temporary file.
+
+*Consequences:*
+
+* Guarantees that the primary file is never in a corrupted state.
+* Relatively simple to implement and understand.
+* Slightly higher I/O overhead for each write operation (copy, write, move). This is an acceptable trade-off for the gain in reliability.
+
+==== Pugh Matrix: Write Strategy
+
+[cols="3,1,1,1"]
+|===
+| Criterion | Temp File + Backup (Baseline) | Journaling | In-Place with Locking
+
+| Crash Safety | 0 | + | -
+| Implementation Simplicity | 0 | - - | +
+| I/O Overhead | 0 | - | +
+| Power Loss Protection | 0 | + | -
+| Debugging/Recovery | 0 | - | 0
+| **Total** | **0** | **-2** | **0**
+|===
+
+_Temp File + Backup chosen for its balance of reliability and implementation simplicity. In-Place with Locking was rejected due to crash/power loss vulnerability._

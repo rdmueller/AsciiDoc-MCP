@@ -1,0 +1,34 @@
+=== ADR-003: Technology Stack (Python/FastAPI)
+
+*Status:* Accepted (2025-09-18)
+
+*Context:*
+A programming language and web framework are needed to build the MCP API Server. The choice must align with the need for rapid development, strong text-processing capabilities, and high performance for an I/O-bound application.
+
+*Decision:*
+The backend will be implemented in **Python**. The **FastAPI** framework will be used to build the web server and API endpoints.
+
+*Consequences:*
+
+* Python has an exceptional ecosystem for text processing and data manipulation.
+* FastAPI provides high performance for I/O-bound tasks, data validation, and automatic OpenAPI/Swagger documentation, which helps achieve USAB-1 and USAB-2.
+* The large talent pool for Python simplifies maintenance.
+* Python's GIL can be a limitation for CPU-bound tasks, but this application is primarily I/O-bound (reading files, network requests).
+
+==== Pugh Matrix: Technology Stack
+
+[cols="3,1,1,1,1"]
+|===
+| Criterion | Python/FastAPI (Baseline) | Node.js/Express | Go/Gin | Java/Spring
+
+| Text Processing | 0 | 0 | - | 0
+| Development Speed | 0 | 0 | - | -
+| I/O Performance | 0 | 0 | + | 0
+| Auto API Documentation | 0 | - | - | 0
+| Ecosystem Maturity | 0 | 0 | 0 | +
+| Memory Footprint | 0 | 0 | + | -
+| Talent Pool | 0 | 0 | - | +
+| **Total** | **0** | **-1** | **-2** | **0**
+|===
+
+_Python/FastAPI chosen for its balanced strengths in text processing, rapid development, and automatic API documentation generation._

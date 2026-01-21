@@ -1,0 +1,35 @@
+=== ADR-006: uv for Python Package Management
+
+*Status:* Accepted (2026-01-20)
+
+*Context:*
+Python projects require dependency management for reproducible builds. Traditional tools like pip, pipenv, and poetry have limitations in speed, reliability, or lock file handling. The project needs fast dependency resolution for efficient CI/CD and a deterministic lock file for reproducible deployments.
+
+*Decision:*
+Use **uv** (https://github.com/astral-sh/uv) as the Python package manager and virtual environment tool. All dependencies are defined in `pyproject.toml` and locked in `uv.lock`.
+
+*Consequences:*
+
+* 10-100x faster dependency resolution compared to pip/poetry.
+* Deterministic `uv.lock` ensures identical environments across development, CI, and production.
+* Integrated virtual environment management (`uv sync` creates venv automatically).
+* Compatible with standard `pyproject.toml` format.
+* Relatively new tool (2024), but rapidly maturing with strong community adoption.
+* Requires uv installation on developer machines and CI environments.
+
+==== Pugh Matrix: Package Manager
+
+[cols="3,1,1,1,1"]
+|===
+| Criterion | uv (Baseline) | pip + venv | Poetry | Pipenv
+
+| Resolution Speed | 0 | - - | - | -
+| Lock File Quality | 0 | - - | 0 | 0
+| Reproducibility | 0 | - | 0 | 0
+| pyproject.toml Support | 0 | - | 0 | -
+| Ecosystem Maturity | 0 | + | + | 0
+| CI/CD Integration | 0 | 0 | 0 | -
+| **Total** | **0** | **-5** | **0** | **-2**
+|===
+
+_uv chosen for its superior speed and deterministic builds. Poetry is a viable alternative but slower._
