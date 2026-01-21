@@ -254,12 +254,12 @@ def insert_content(
                 + lines[end_line:]
             )
         else:  # append
-            # Append content at end of section (before next section)
+            # Append content at end of section (before the last line/children)
             insert_line = end_line
             new_lines = (
-                lines[:end_line]
+                lines[: end_line - 1]
                 + [content]
-                + lines[end_line:]
+                + lines[end_line - 1 :]
             )
 
         new_file_content = "".join(new_lines)
