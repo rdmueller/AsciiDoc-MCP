@@ -388,15 +388,19 @@ class MarkdownParser:
             # Handle images
             image_match = IMAGE_PATTERN.search(line)
             if image_match:
+                image_attributes = {
+                    "alt": image_match.group(1),
+                    "src": image_match.group(2),
+                }
+                title = image_match.group(3)
+                if title is not None:
+                    image_attributes["title"] = title
+
                 elements.append(
                     Element(
                         type="image",
                         source_location=SourceLocation(file=file_path, line=line_num),
-                        attributes={
-                            "alt": image_match.group(1),
-                            "src": image_match.group(2),
-                            "title": image_match.group(3),
-                        },
+                        attributes=image_attributes,
                         parent_section=current_section_path,
                     )
                 )
