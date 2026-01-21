@@ -66,6 +66,14 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
     # Build initial index
     _build_index(docs_root, index, asciidoc_parser, markdown_parser)
 
+    def rebuild_index() -> None:
+        """Rebuild the index after file modifications.
+
+        This ensures the index reflects the current state of the file system
+        after write operations like update_section or insert_content.
+        """
+        _build_index(docs_root, index, asciidoc_parser, markdown_parser)
+
     # Register tools
     @mcp.tool()
     def get_structure(max_depth: int | None = None) -> dict:
@@ -311,6 +319,8 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                 end_line=end_line,
                 new_content=new_content,
             )
+            # Rebuild index to reflect file changes
+            rebuild_index()
             return {
                 "success": True,
                 "path": normalized_path,
@@ -386,6 +396,9 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
 
             new_file_content = "".join(new_lines)
             file_handler.write_file(file_path, new_file_content)
+
+            # Rebuild index to reflect file changes
+            rebuild_index()
 
             return {
                 "success": True,

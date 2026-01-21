@@ -341,3 +341,125 @@ class TestInsertContent:
 
         assert result.data["success"] is False
         assert "error" in result.data
+
+
+# =============================================================================
+# Index Rebuild After Write Tests
+# =============================================================================
+
+
+class TestIndexRebuildAfterWrite:
+    """Tests for index rebuild after write operations."""
+
+    async def test_index_updated_after_insert_content(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """New section should be findable in index after insert_content."""
+        # Insert a new section
+        result = await mcp_client.call_tool(
+            "insert_content",
+            arguments={
+                "path": "test-document.constraints",
+                "position": "after",
+                "content": "== Brand New Section\n\nThis is brand new content.\n",
+            },
+        )
+        assert result.data["success"] is True
+
+        # The new section should be in the index
+        structure = await mcp_client.call_tool("get_structure", arguments={})
+        all_paths = self._extract_all_paths(structure.data["sections"])
+
+        assert "test-document.brand-new-section" in all_paths
+
+    async def test_index_updated_after_update_section(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """Section location should be correct after update_section."""
+        # First, get the original structure
+        original_structure = await mcp_client.call_tool("get_structure", arguments={})
+        original_count = original_structure.data["total_sections"]
+
+        # Update a section with additional content (but same structure)
+        result = await mcp_client.call_tool(
+            "update_section",
+            arguments={
+                "path": "test-document.introduction",
+                "content": "Updated introduction with more text.\n\nAnother paragraph.\n",
+                "preserve_title": True,
+            },
+        )
+        assert result.data["success"] is True
+
+        # The section count should remain the same
+        new_structure = await mcp_client.call_tool("get_structure", arguments={})
+        assert new_structure.data["total_sections"] == original_count
+
+        # The section should still be accessible
+        section = await mcp_client.call_tool(
+            "get_section", arguments={"path": "test-document.introduction"}
+        )
+        assert "error" not in section.data
+        assert "Updated introduction" in section.data["content"]
+
+    async def test_get_sections_at_level_updated_after_insert(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """get_sections_at_level should reflect newly inserted sections."""
+        # Get initial level-1 section count
+        initial = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 1}
+        )
+        initial_count = initial.data["count"]
+
+        # Insert a new level-1 section
+        result = await mcp_client.call_tool(
+            "insert_content",
+            arguments={
+                "path": "test-document.constraints",
+                "position": "after",
+                "content": "== Another Chapter\n\nChapter content.\n",
+            },
+        )
+        assert result.data["success"] is True
+
+        # Level-1 sections should now include the new section
+        updated = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 1}
+        )
+        assert updated.data["count"] == initial_count + 1
+
+        titles = [s["title"] for s in updated.data["sections"]]
+        assert "Another Chapter" in titles
+
+    async def test_search_finds_newly_inserted_section(
+        self, mcp_client: Client, temp_doc_dir: Path
+    ):
+        """Search should find sections inserted after index build."""
+        # Insert a section with unique title
+        result = await mcp_client.call_tool(
+            "insert_content",
+            arguments={
+                "path": "test-document.introduction",
+                "position": "after",
+                "content": "== Zephyr Unique Title\n\nSome content.\n",
+            },
+        )
+        assert result.data["success"] is True
+
+        # Search should find it
+        search_result = await mcp_client.call_tool(
+            "search", arguments={"query": "Zephyr"}
+        )
+        assert search_result.data["total_results"] > 0
+        paths = [r["path"] for r in search_result.data["results"]]
+        assert any("zephyr" in p for p in paths)
+
+    def _extract_all_paths(self, sections: list) -> list[str]:
+        """Recursively extract all paths from section tree."""
+        paths = []
+        for section in sections:
+            paths.append(section["path"])
+            if section.get("children"):
+                paths.extend(self._extract_all_paths(section["children"]))
+        return paths
