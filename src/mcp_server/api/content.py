@@ -99,7 +99,12 @@ def search_content(request: SearchRequest) -> SearchResponse:
     )
 
     # Calculate search time in milliseconds
-    search_time_ms = int((time.time() - start_time) * 1000)
+    elapsed = time.time() - start_time
+    elapsed_ms = elapsed * 1000
+    if elapsed_ms <= 0:
+        search_time_ms = 0
+    else:
+        search_time_ms = max(1, int(round(elapsed_ms)))
 
     # Convert to response model
     result_items = [
