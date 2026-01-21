@@ -26,13 +26,15 @@ class SourceLocation:
 
     Attributes:
         file: Path to the source file
-        line: 1-based line number in the source file
+        line: 1-based line number (start line)
+        end_line: 1-based end line number (inclusive), None if unknown
         resolved_from: If this content was included from another file,
                        the path to that file (None if not included)
     """
 
     file: Path
     line: int
+    end_line: int | None = None
     resolved_from: Path | None = None
 
 

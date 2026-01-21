@@ -226,6 +226,9 @@ class AsciidocParser:
             expanded_lines, file_path, attributes
         )
 
+        # Calculate end_line for all sections
+        self._compute_end_lines(sections, expanded_lines)
+
         # Parse elements with section context
         elements = self._parse_elements(expanded_lines, sections, attributes)
 
@@ -438,6 +441,74 @@ class AsciidocParser:
                     section_stack.append(section)
 
         return sections, document_title
+
+    def _compute_end_lines(
+        self,
+        sections: list[Section],
+        lines: list[tuple[str, Path, int, SourceLocation | None]],
+    ) -> None:
+        """Compute end_line for all sections.
+
+        For each section, end_line is set to the line before the next section
+        starts in the same file, or the last line of the file.
+
+        Args:
+            sections: List of parsed sections (modified in place)
+            lines: Expanded lines with source info
+        """
+        # Collect all sections with their file paths and start lines
+        all_sections: list[Section] = []
+        self._collect_all_sections(sections, all_sections)
+
+        if not all_sections:
+            return
+
+        # Group sections by file
+        sections_by_file: dict[Path, list[Section]] = {}
+        for section in all_sections:
+            file_path = section.source_location.file
+            if file_path not in sections_by_file:
+                sections_by_file[file_path] = []
+            sections_by_file[file_path].append(section)
+
+        # Count lines per file from expanded lines
+        lines_per_file: dict[Path, int] = {}
+        for _, source_file, line_num, _ in lines:
+            if source_file not in lines_per_file:
+                lines_per_file[source_file] = line_num
+            else:
+                lines_per_file[source_file] = max(lines_per_file[source_file], line_num)
+
+        # For each file, sort sections by start line and compute end_line
+        for file_path, file_sections in sections_by_file.items():
+            # Sort by start line
+            file_sections.sort(key=lambda s: s.source_location.line)
+
+            # Get max line number for this file
+            max_line = lines_per_file.get(file_path, 0)
+
+            # Compute end_line for each section
+            for i, section in enumerate(file_sections):
+                if i + 1 < len(file_sections):
+                    # Next section starts, our section ends one line before
+                    next_start = file_sections[i + 1].source_location.line
+                    section.source_location.end_line = next_start - 1
+                else:
+                    # Last section in file, ends at file end
+                    section.source_location.end_line = max_line
+
+    def _collect_all_sections(
+        self, sections: list[Section], result: list[Section]
+    ) -> None:
+        """Recursively collect all sections into a flat list.
+
+        Args:
+            sections: List of sections to process
+            result: List to append sections to (modified in place)
+        """
+        for section in sections:
+            result.append(section)
+            self._collect_all_sections(section.children, result)
 
     def _parse_elements(
         self,

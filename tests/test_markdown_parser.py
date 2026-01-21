@@ -234,6 +234,60 @@ class TestSourceLocation:
         chapter = root.children[0]
         assert chapter.source_location.line == 3
 
+    def test_section_has_end_line(self):
+        """Sections have end_line calculated."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+Some content.
+
+## Chapter
+
+Chapter content.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        assert root.source_location.end_line is not None
+
+    def test_section_end_line_is_before_next_section(self):
+        """Section end_line is correctly calculated."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+## Chapter 1
+
+Content 1.
+
+## Chapter 2
+
+Content 2.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        chapter1 = root.children[0]
+        chapter2 = root.children[1]
+
+        # Chapter 1 ends just before Chapter 2 starts
+        assert chapter1.source_location.end_line == chapter2.source_location.line - 1
+
 
 class TestFrontmatterParsing:
     """AC-MD-02: YAML Frontmatter is correctly parsed."""

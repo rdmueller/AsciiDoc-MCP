@@ -119,6 +119,10 @@ class MarkdownParser:
             lines, file_path, line_offset=frontmatter_lines
         )
 
+        # Calculate end_line for all sections
+        total_lines = len(content.splitlines())
+        self._compute_end_lines(sections, file_path, total_lines)
+
         # Parse elements (code blocks, tables, images)
         elements = self._parse_elements(
             lines, file_path, sections, line_offset=frontmatter_lines
@@ -287,6 +291,54 @@ class MarkdownParser:
             section_stack.append(section)
 
         return sections, document_title
+
+    # NOTE: `file_path` is accepted for API compatibility with the AsciiDoc
+    # parser but is not used by the Markdown implementation.
+    def _compute_end_lines(
+        self, sections: list[Section], file_path: Path, total_lines: int
+    ) -> None:
+        """Compute end_line for all sections.
+
+        For each section, end_line is set to the line before the next section
+        starts, or the last line of the file.
+
+        Args:
+            sections: List of parsed sections (modified in place)
+            file_path: Source file path
+            total_lines: Total number of lines in the file
+        """
+        # Collect all sections into a flat list
+        all_sections: list[Section] = []
+        self._collect_all_sections(sections, all_sections)
+
+        if not all_sections:
+            return
+
+        # Sort by start line
+        all_sections.sort(key=lambda s: s.source_location.line)
+
+        # Compute end_line for each section
+        for i, section in enumerate(all_sections):
+            if i + 1 < len(all_sections):
+                # Next section starts, our section ends one line before
+                next_start = all_sections[i + 1].source_location.line
+                section.source_location.end_line = next_start - 1
+            else:
+                # Last section ends at file end
+                section.source_location.end_line = total_lines
+
+    def _collect_all_sections(
+        self, sections: list[Section], result: list[Section]
+    ) -> None:
+        """Recursively collect all sections into a flat list.
+
+        Args:
+            sections: List of sections to process
+            result: List to append sections to (modified in place)
+        """
+        for section in sections:
+            result.append(section)
+            self._collect_all_sections(section.children, result)
 
     def _parse_elements(
         self,

@@ -340,6 +340,7 @@ class StructureIndex:
             "location": {
                 "file": str(section.source_location.file),
                 "line": section.source_location.line,
+                "end_line": section.source_location.end_line,
             },
         }
 

@@ -120,6 +120,7 @@ def get_section(
         location=LocationResponse(
             file=file_path,
             line=section.source_location.line,
+            end_line=section.source_location.end_line,
         ),
         format=format_type,
     )
@@ -164,6 +165,7 @@ def _section_dict_to_response(section_dict: dict) -> SectionResponse:
         location=LocationResponse(
             file=section_dict["location"]["file"],
             line=section_dict["location"]["line"],
+            end_line=section_dict["location"].get("end_line"),
         ),
         children=children,
     )

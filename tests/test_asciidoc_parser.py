@@ -170,6 +170,30 @@ class TestSourceLocation:
         kapitel1 = root.children[0]
         assert kapitel1.source_location.line == 3  # "== Kapitel 1" is on line 3
 
+    def test_section_has_end_line(self):
+        """Test that sections have end_line calculated."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        root = doc.sections[0]
+        assert root.source_location.end_line is not None
+
+    def test_section_end_line_is_before_next_section(self):
+        """Test that section end_line is correctly calculated."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        root = doc.sections[0]
+        kapitel1 = root.children[0]
+        kapitel2 = root.children[1]
+
+        # Kapitel 1 ends just before Kapitel 2 starts
+        assert kapitel1.source_location.end_line == kapitel2.source_location.line - 1
+
 
 class TestDocumentAttributes:
     """Tests for document attribute parsing (AC-ADOC-02)."""
