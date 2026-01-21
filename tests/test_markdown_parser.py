@@ -553,14 +553,14 @@ def hello():
         ) as f:
             f.write(content)
             f.flush()
-            
+
             import logging
             with caplog.at_level(logging.WARNING):
                 doc = parser.parse_file(Path(f.name))
 
         # Code block should not be created
         assert len(doc.elements) == 0
-        
+
         # Warning should be logged
         assert "Unclosed code block" in caplog.text
         assert "line 3" in caplog.text
