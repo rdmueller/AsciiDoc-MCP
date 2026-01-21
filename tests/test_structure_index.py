@@ -1179,3 +1179,188 @@ The runtime also uses atomic operations.
         # Should find architecture but not runtime
         assert "architecture" in paths
         assert "runtime" not in paths
+
+
+class TestGetSuggestions:
+    """Tests for get_suggestions() method.
+
+    This method provides path suggestions when a requested path is not found,
+    useful for 404 error responses.
+    """
+
+    def test_get_suggestions_returns_similar_paths(self):
+        """get_suggestions returns paths similar to the requested path."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("test.adoc"),
+            title="Test",
+            sections=[
+                Section(
+                    title="Introduction",
+                    level=1,
+                    path="introduction",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=1),
+                    children=[
+                        Section(
+                            title="Goals",
+                            level=2,
+                            path="introduction.goals",
+                            source_location=SourceLocation(
+                                file=Path("test.adoc"), line=5
+                            ),
+                        ),
+                        Section(
+                            title="Quality Goals",
+                            level=2,
+                            path="introduction.quality-goals",
+                            source_location=SourceLocation(
+                                file=Path("test.adoc"), line=10
+                            ),
+                        ),
+                        Section(
+                            title="Stakeholders",
+                            level=2,
+                            path="introduction.stakeholders",
+                            source_location=SourceLocation(
+                                file=Path("test.adoc"), line=15
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request non-existent path "introduction.goal" (missing 's')
+        suggestions = index.get_suggestions("introduction.goal")
+        assert len(suggestions) > 0
+        # Should suggest "introduction.goals" as it's very similar
+        assert "introduction.goals" in suggestions
+
+    def test_get_suggestions_prefix_match(self):
+        """get_suggestions finds paths with matching prefix."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("test.adoc"),
+            title="Test",
+            sections=[
+                Section(
+                    title="Architecture",
+                    level=1,
+                    path="architecture",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=1),
+                    children=[
+                        Section(
+                            title="Building Blocks",
+                            level=2,
+                            path="architecture.building-blocks",
+                            source_location=SourceLocation(
+                                file=Path("test.adoc"), line=5
+                            ),
+                        ),
+                        Section(
+                            title="Runtime View",
+                            level=2,
+                            path="architecture.runtime",
+                            source_location=SourceLocation(
+                                file=Path("test.adoc"), line=10
+                            ),
+                        ),
+                    ],
+                ),
+                Section(
+                    title="Quality",
+                    level=1,
+                    path="quality",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=20),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request non-existent "architecture.overview"
+        suggestions = index.get_suggestions("architecture.overview")
+        # Should suggest other architecture.* paths
+        assert any(s.startswith("architecture.") for s in suggestions)
+        # Should NOT suggest unrelated paths like "quality"
+        assert "quality" not in suggestions
+
+    def test_get_suggestions_suffix_match(self):
+        """get_suggestions finds paths with matching last segment."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("test.adoc"),
+            title="Test",
+            sections=[
+                Section(
+                    title="Introduction Goals",
+                    level=1,
+                    path="introduction.goals",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=1),
+                ),
+                Section(
+                    title="Quality Goals",
+                    level=1,
+                    path="quality.goals",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=10),
+                ),
+                Section(
+                    title="Architecture",
+                    level=1,
+                    path="architecture",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=20),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request non-existent "project.goals"
+        suggestions = index.get_suggestions("project.goals")
+        # Should suggest paths ending with ".goals"
+        assert any(s.endswith(".goals") for s in suggestions)
+
+    def test_get_suggestions_limits_results(self):
+        """get_suggestions returns at most max_suggestions results."""
+        index = StructureIndex()
+        # Create many similar sections
+        sections = []
+        for i in range(10):
+            sections.append(
+                Section(
+                    title=f"Section {i}",
+                    level=1,
+                    path=f"chapter.section-{i}",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=i * 5),
+                )
+            )
+        doc = Document(
+            file_path=Path("test.adoc"),
+            title="Test",
+            sections=sections,
+        )
+        index.build_from_documents([doc])
+
+        # Request non-existent path with same prefix
+        suggestions = index.get_suggestions("chapter.section-unknown", max_suggestions=3)
+        assert len(suggestions) <= 3
+
+    def test_get_suggestions_returns_empty_for_no_matches(self):
+        """get_suggestions returns empty list when no similar paths exist."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("test.adoc"),
+            title="Test",
+            sections=[
+                Section(
+                    title="Architecture",
+                    level=1,
+                    path="architecture",
+                    source_location=SourceLocation(file=Path("test.adoc"), line=1),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request completely unrelated path
+        suggestions = index.get_suggestions("xyz.completely.different.path")
+        assert len(suggestions) == 0

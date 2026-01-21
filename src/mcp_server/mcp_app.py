@@ -115,7 +115,17 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
 
         section = index.get_section(normalized_path)
         if section is None:
-            return {"error": "Section not found", "path": normalized_path}
+            suggestions = index.get_suggestions(normalized_path)
+            return {
+                "error": {
+                    "code": "PATH_NOT_FOUND",
+                    "message": f"Section '{normalized_path}' not found",
+                    "details": {
+                        "requested_path": normalized_path,
+                        "suggestions": suggestions,
+                    },
+                }
+            }
 
         # Read actual content from file
         try:
