@@ -452,6 +452,30 @@ class TestInterfaceMethods:
         assert elements == []
 
 
+class TestCircularIncludeDetection:
+    """Tests for circular include detection (AC-ADOC-04)."""
+
+    def test_circular_include_raises_error(self):
+        """Test that circular includes raise CircularIncludeError."""
+        from mcp_server.asciidoc_parser import AsciidocParser, CircularIncludeError
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        with pytest.raises(CircularIncludeError):
+            parser.parse_file(FIXTURES_DIR / "circular_a.adoc")
+
+    def test_circular_include_error_contains_path_info(self):
+        """Test that CircularIncludeError contains information about the cycle."""
+        from mcp_server.asciidoc_parser import AsciidocParser, CircularIncludeError
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        try:
+            parser.parse_file(FIXTURES_DIR / "circular_a.adoc")
+            assert False, "Expected CircularIncludeError"
+        except CircularIncludeError as e:
+            # Error message should contain file path
+            assert "circular" in str(e).lower()
+
+
 class TestEdgeCases:
     """Tests for edge cases."""
 

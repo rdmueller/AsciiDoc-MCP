@@ -34,6 +34,22 @@ ADMONITION_PATTERN = re.compile(r"^(NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s*(.*)$
 XREF_PATTERN = re.compile(r"<<([^,>]+)(?:,([^>]+))?>>", re.MULTILINE)
 
 
+class CircularIncludeError(Exception):
+    """Raised when a circular include is detected."""
+
+    def __init__(self, file_path: Path, include_chain: list[Path]):
+        """Initialize the error.
+
+        Args:
+            file_path: The file that caused the circular reference
+            include_chain: The chain of includes that led to the cycle
+        """
+        self.file_path = file_path
+        self.include_chain = include_chain
+        chain_str = " -> ".join(str(p.name) for p in include_chain)
+        super().__init__(f"Circular include detected: {chain_str} -> {file_path.name}")
+
+
 def _title_to_slug(title: str) -> str:
     """Convert a section title to a URL-friendly slug.
 
@@ -155,22 +171,39 @@ class AsciidocParser:
         return [e for e in doc.elements if e.type == element_type]
 
     def parse_file(
-        self, file_path: Path, _depth: int = 0
+        self,
+        file_path: Path,
+        _depth: int = 0,
+        _include_chain: list[Path] | None = None,
     ) -> AsciidocDocument:
         """Parse an AsciiDoc file.
 
         Args:
             file_path: Path to the AsciiDoc file
             _depth: Internal parameter for tracking include depth
+            _include_chain: Internal parameter for tracking include chain
 
         Returns:
             Parsed AsciidocDocument
 
         Raises:
             FileNotFoundError: If the file does not exist
+            CircularIncludeError: If a circular include is detected
         """
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Initialize or copy include chain
+        if _include_chain is None:
+            _include_chain = []
+
+        # Check for circular include
+        resolved_path = file_path.resolve()
+        if resolved_path in [p.resolve() for p in _include_chain]:
+            raise CircularIncludeError(file_path, _include_chain)
+
+        # Add current file to include chain
+        current_chain = _include_chain + [file_path]
 
         content = file_path.read_text(encoding="utf-8")
         lines = content.splitlines()
@@ -180,7 +213,7 @@ class AsciidocParser:
 
         # Expand includes and collect include info
         expanded_lines, includes = self._expand_includes(
-            lines, file_path, _depth
+            lines, file_path, _depth, current_chain
         )
 
         # Parse sections with attribute substitution
@@ -209,6 +242,7 @@ class AsciidocParser:
         lines: list[str],
         file_path: Path,
         depth: int,
+        include_chain: list[Path],
     ) -> tuple[list[tuple[str, Path, int, SourceLocation | None]], list[IncludeInfo]]:
         """Expand include directives in lines.
 
@@ -216,9 +250,13 @@ class AsciidocParser:
             lines: Document lines
             file_path: Path to the source file
             depth: Current include depth
+            include_chain: Chain of files for circular include detection
 
         Returns:
             Tuple of (expanded lines with source info, list of IncludeInfo)
+
+        Raises:
+            CircularIncludeError: If a circular include is detected
         """
         expanded: list[tuple[str, Path, int, SourceLocation | None]] = []
         includes: list[IncludeInfo] = []
@@ -240,6 +278,10 @@ class AsciidocParser:
                 # Resolve include path relative to current file
                 target_path = (file_path.parent / include_path).resolve()
 
+                # Check for circular include
+                if target_path in [p.resolve() for p in include_chain]:
+                    raise CircularIncludeError(target_path, include_chain)
+
                 # Record include info
                 include_info = IncludeInfo(
                     source_location=SourceLocation(file=file_path, line=line_num),
@@ -256,10 +298,18 @@ class AsciidocParser:
                     # Create resolved_from reference
                     resolved_from = SourceLocation(file=file_path, line=line_num)
 
-                    for inc_line_num, inc_line in enumerate(included_lines, start=1):
-                        expanded.append(
-                            (inc_line, target_path, inc_line_num, resolved_from)
-                        )
+                    # Recursively expand includes in the included file
+                    new_chain = include_chain + [target_path]
+                    nested_expanded, nested_includes = self._expand_includes(
+                        included_lines, target_path, depth + 1, new_chain
+                    )
+                    includes.extend(nested_includes)
+
+                    # Add expanded lines with resolved_from info
+                    for inc_line, inc_file, inc_line_num, inc_resolved in nested_expanded:
+                        # Preserve original resolved_from or use current include location
+                        final_resolved = inc_resolved if inc_resolved else resolved_from
+                        expanded.append((inc_line, inc_file, inc_line_num, final_resolved))
             else:
                 expanded.append((line, file_path, line_num, None))
 

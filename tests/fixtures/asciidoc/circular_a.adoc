@@ -1,0 +1,3 @@
+= Dokument A
+
+include::circular_b.adoc[]
