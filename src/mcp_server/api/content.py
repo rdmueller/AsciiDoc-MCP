@@ -204,8 +204,11 @@ def get_elements(
                 location=ElementLocation(
                     file=str(elem.source_location.file),
                     start_line=elem.source_location.line,
-                    # end_line not in current SourceLocation model
-                    end_line=elem.source_location.line,  # Placeholder
+                    # Note: SourceLocation currently exposes only a single line field.
+                    # Until an explicit end_line is available, we intentionally set
+                    # end_line to the same value as start_line.
+                    # TODO: Update this when SourceLocation includes an end_line range.
+                    end_line=elem.source_location.line,
                 ),
                 preview=preview,
             )
