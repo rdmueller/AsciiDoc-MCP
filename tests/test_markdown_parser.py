@@ -388,3 +388,294 @@ title: Test
 
         # Heading is on line 5 (after frontmatter)
         assert doc.sections[0].source_location.line == 5
+
+
+class TestCodeBlockExtraction:
+    """AC-MD-03: Fenced code blocks are extracted."""
+
+    def test_extracts_code_block_with_language(self):
+        """Code block with language is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Code Examples
+
+```python
+def hello():
+    print("Hello, World!")
+```
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 1
+        code_block = doc.elements[0]
+        assert code_block.type == "code"
+        assert code_block.attributes["language"] == "python"
+
+    def test_code_block_source_location(self):
+        """Code block has correct source location."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+```javascript
+console.log("test");
+```
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        code_block = doc.elements[0]
+        assert code_block.source_location.line == 3  # Line of opening fence
+        assert code_block.source_location.file == Path(f.name)
+
+    def test_code_block_without_language(self):
+        """Code block without language has empty language attribute."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Code
+
+```
+plain text
+```
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 1
+        assert doc.elements[0].attributes.get("language") is None
+
+    def test_code_block_parent_section(self):
+        """Code block has correct parent section."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Root
+
+## Code Section
+
+```python
+code
+```
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        code_block = doc.elements[0]
+        assert code_block.parent_section == "/root/code-section"
+
+    def test_multiple_code_blocks(self):
+        """Multiple code blocks are extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Examples
+
+```python
+python code
+```
+
+```javascript
+javascript code
+```
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 2
+        assert doc.elements[0].attributes["language"] == "python"
+        assert doc.elements[1].attributes["language"] == "javascript"
+
+    def test_code_block_with_tilde_fence(self):
+        """Code block with tilde fence is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Code
+
+~~~ruby
+puts "hello"
+~~~
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 1
+        assert doc.elements[0].attributes["language"] == "ruby"
+
+
+class TestTableRecognition:
+    """AC-MD-04: GFM tables are recognized as blocks."""
+
+    def test_extracts_simple_table(self):
+        """Simple table is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Data
+
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 1
+        table = doc.elements[0]
+        assert table.type == "table"
+        assert table.attributes["columns"] == 3
+
+    def test_table_row_count(self):
+        """Table has correct row count (excluding header)."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Data
+
+| A | B |
+|---|---|
+| 1 | 2 |
+| 3 | 4 |
+| 5 | 6 |
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        table = doc.elements[0]
+        assert table.attributes["rows"] == 3
+
+    def test_table_source_location(self):
+        """Table has correct source location."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+Some text.
+
+| A | B |
+|---|---|
+| 1 | 2 |
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        table = doc.elements[0]
+        assert table.source_location.line == 5  # First line of table
+
+
+class TestImageExtraction:
+    """Test image element extraction."""
+
+    def test_extracts_image(self):
+        """Image is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Images
+
+![Alt text](path/to/image.png)
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert len(doc.elements) == 1
+        image = doc.elements[0]
+        assert image.type == "image"
+        assert image.attributes["alt"] == "Alt text"
+        assert image.attributes["src"] == "path/to/image.png"
+
+    def test_image_with_title(self):
+        """Image with title is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Images
+
+![Diagram](diagram.png "A diagram")
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        image = doc.elements[0]
+        assert image.attributes["title"] == "A diagram"
+
+    def test_image_source_location(self):
+        """Image has correct source location."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+![img](test.png)
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        image = doc.elements[0]
+        assert image.source_location.line == 3

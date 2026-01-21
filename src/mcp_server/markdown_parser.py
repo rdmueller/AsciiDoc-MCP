@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 # Regex patterns from spec
 HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)(?:\s+#+)?$")
 FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+CODE_FENCE_PATTERN = re.compile(r"^(`{3,}|~{3,})(\w*)?\s*$")
+TABLE_ROW_PATTERN = re.compile(r"^\|(.+)\|$")
+TABLE_SEPARATOR_PATTERN = re.compile(r"^\|[\s:|-]+\|$")
+IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"([^\"]*)\")?\)")
 
 
 def slugify(text: str) -> str:
@@ -112,6 +116,11 @@ class MarkdownParser:
             lines, file_path, line_offset=frontmatter_lines
         )
 
+        # Parse elements (code blocks, tables, images)
+        elements = self._parse_elements(
+            lines, file_path, sections, line_offset=frontmatter_lines
+        )
+
         # Title priority: frontmatter > first H1 > empty
         title = frontmatter.get("title", heading_title)
 
@@ -120,7 +129,7 @@ class MarkdownParser:
             title=title,
             frontmatter=frontmatter,
             sections=sections,
-            elements=[],
+            elements=elements,
         )
 
     def parse_folder(self, folder_path: Path) -> FolderDocument:
@@ -247,6 +256,167 @@ class MarkdownParser:
             section_stack.append(section)
 
         return sections, document_title
+
+    def _parse_elements(
+        self,
+        lines: list[str],
+        file_path: Path,
+        sections: list[Section],
+        line_offset: int = 0,
+    ) -> list[Element]:
+        """Parse extractable elements from document.
+
+        Args:
+            lines: Document lines
+            file_path: Source file path
+            sections: Parsed sections for parent context
+            line_offset: Line offset from frontmatter
+
+        Returns:
+            List of extracted elements
+        """
+        elements: list[Element] = []
+        current_section_path = ""
+        in_code_block = False
+        code_fence_char = ""
+        code_fence_count = 0
+        code_block_start_line = 0
+        code_block_language: str | None = None
+
+        # Track table state
+        in_table = False
+        table_start_line = 0
+        table_columns = 0
+        table_rows = 0
+        has_separator = False
+
+        for line_num, line in enumerate(lines, start=1 + line_offset):
+            # Track current section
+            heading_match = HEADING_PATTERN.match(line)
+            if heading_match and not in_code_block:
+                title = heading_match.group(2).strip()
+                current_section_path = self._find_section_path(sections, title)
+                continue
+
+            # Handle code blocks
+            fence_match = CODE_FENCE_PATTERN.match(line)
+            if fence_match:
+                fence_char = fence_match.group(1)[0]
+                fence_count = len(fence_match.group(1))
+
+                if not in_code_block:
+                    # Opening fence
+                    in_code_block = True
+                    code_fence_char = fence_char
+                    code_fence_count = fence_count
+                    code_block_start_line = line_num
+                    code_block_language = fence_match.group(2) or None
+                elif fence_char == code_fence_char and fence_count >= code_fence_count:
+                    # Closing fence
+                    elements.append(
+                        Element(
+                            type="code",
+                            source_location=SourceLocation(
+                                file=file_path, line=code_block_start_line
+                            ),
+                            attributes={"language": code_block_language},
+                            parent_section=current_section_path,
+                        )
+                    )
+                    in_code_block = False
+                continue
+
+            # Skip content inside code blocks
+            if in_code_block:
+                continue
+
+            # Handle tables
+            table_row_match = TABLE_ROW_PATTERN.match(line)
+            if table_row_match:
+                if not in_table:
+                    # Start of table
+                    in_table = True
+                    table_start_line = line_num
+                    # Count columns from header row
+                    cells = table_row_match.group(1).split("|")
+                    table_columns = len(cells)
+                    table_rows = 0
+                    has_separator = False
+                elif TABLE_SEPARATOR_PATTERN.match(line):
+                    has_separator = True
+                elif has_separator:
+                    # Data row after separator
+                    table_rows += 1
+                continue
+            elif in_table:
+                # End of table (non-table line)
+                if has_separator:
+                    elements.append(
+                        Element(
+                            type="table",
+                            source_location=SourceLocation(
+                                file=file_path, line=table_start_line
+                            ),
+                            attributes={
+                                "columns": table_columns,
+                                "rows": table_rows,
+                            },
+                            parent_section=current_section_path,
+                        )
+                    )
+                in_table = False
+
+            # Handle images
+            image_match = IMAGE_PATTERN.search(line)
+            if image_match:
+                elements.append(
+                    Element(
+                        type="image",
+                        source_location=SourceLocation(file=file_path, line=line_num),
+                        attributes={
+                            "alt": image_match.group(1),
+                            "src": image_match.group(2),
+                            "title": image_match.group(3),
+                        },
+                        parent_section=current_section_path,
+                    )
+                )
+
+        # Handle table at end of file
+        if in_table and has_separator:
+            elements.append(
+                Element(
+                    type="table",
+                    source_location=SourceLocation(
+                        file=file_path, line=table_start_line
+                    ),
+                    attributes={
+                        "columns": table_columns,
+                        "rows": table_rows,
+                    },
+                    parent_section=current_section_path,
+                )
+            )
+
+        return elements
+
+    def _find_section_path(self, sections: list[Section], title: str) -> str:
+        """Find section path by title.
+
+        Args:
+            sections: Sections to search
+            title: Title to find
+
+        Returns:
+            Section path or empty string
+        """
+        for section in sections:
+            if section.title == title:
+                return section.path
+            found = self._find_section_path(section.children, title)
+            if found:
+                return found
+        return ""
 
     def _build_path(
         self, section_stack: list[Section], title: str, level: int
