@@ -73,7 +73,10 @@ class FolderDocument:
     Attributes:
         root_path: Path to the root folder
         documents: List of parsed Markdown documents (sorted)
-        structure: Combined hierarchical structure
+        structure: Combined hierarchical structure from all documents.
+            NOTE: This field is not yet implemented and will always be empty.
+            Future implementation will merge section hierarchies from all
+            documents into a unified structure respecting folder boundaries.
     """
 
     root_path: Path
@@ -169,7 +172,7 @@ class MarkdownParser:
         return FolderDocument(
             root_path=folder_path,
             documents=documents,
-            structure=[],  # TODO: Build combined structure
+            structure=[],  # Not yet implemented - see class docstring
         )
 
     def get_section(
