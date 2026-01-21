@@ -184,9 +184,9 @@ class TestUpdateSection:
         doc_file = temp_doc_dir / "test.adoc"
         original_content = doc_file.read_text(encoding="utf-8")
 
-        # Mock FileSystemHandler to raise an error
+        # Mock file handler instance to raise an error
         with patch(
-            "mcp_server.api.manipulation.FileSystemHandler.update_section"
+            "mcp_server.api.manipulation._file_handler.update_section"
         ) as mock_update:
             from mcp_server.file_handler import FileWriteError
 
