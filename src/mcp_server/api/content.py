@@ -41,7 +41,6 @@ API_TYPE_TO_ELEMENT = {
     "code": ["code"],
     "table": ["table"],
     "image": ["image"],
-    "list": [],  # Not in current model
 }
 
 
