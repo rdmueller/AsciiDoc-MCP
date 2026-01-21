@@ -23,6 +23,16 @@ def hello():
 
 image::diagram.png[Ein Diagramm]
 
+== Diagramme
+
+[plantuml,sequenz-diagramm,svg]
+----
+@startuml
+Alice -> Bob: Hello
+Bob --> Alice: Hi
+@enduml
+----
+
 == Hinweise
 
 NOTE: Dies ist ein wichtiger Hinweis.

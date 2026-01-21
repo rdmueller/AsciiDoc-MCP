@@ -336,6 +336,27 @@ class TestElementExtraction:
         admonition_elements = [e for e in doc.elements if e.type == "admonition"]
         assert len(admonition_elements) == 2  # NOTE and WARNING
 
+    def test_plantuml_block_is_extracted(self):
+        """Test that PlantUML blocks are extracted as elements (AC-ADOC-06)."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        plantuml_elements = [e for e in doc.elements if e.type == "plantuml"]
+        assert len(plantuml_elements) == 1
+
+    def test_plantuml_block_has_attributes(self):
+        """Test that PlantUML block has name and format attributes."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        plantuml_elements = [e for e in doc.elements if e.type == "plantuml"]
+        assert plantuml_elements[0].attributes.get("name") == "sequenz-diagramm"
+        assert plantuml_elements[0].attributes.get("format") == "svg"
+
 
 class TestCrossReferences:
     """Tests for cross-reference extraction (AC-ADOC-08)."""

@@ -25,6 +25,9 @@ INCLUDE_PATTERN = re.compile(r"^include::(.+?)\[(.*)\]$")
 
 # Element patterns
 CODE_BLOCK_START_PATTERN = re.compile(r"^\[source(?:,([a-zA-Z0-9_+-]+))?\]$")
+PLANTUML_BLOCK_START_PATTERN = re.compile(
+    r"^\[plantuml(?:,([a-zA-Z0-9_-]+))?(?:,([a-zA-Z0-9_]+))?\]$"
+)
 LISTING_DELIMITER_PATTERN = re.compile(r"^-{4,}$")
 TABLE_DELIMITER_PATTERN = re.compile(r"^\|===$")
 IMAGE_PATTERN = re.compile(r"^image::(.+?)\[(.*)?\]$")
@@ -451,7 +454,9 @@ class AsciidocParser:
         elements: list[Element] = []
         current_section_path = ""
         pending_code_language: str | None = None
+        pending_plantuml_info: tuple[str | None, str | None] | None = None
         in_code_block = False
+        in_plantuml_block = False
         in_table = False
 
         for line_text, source_file, line_num, resolved_from in lines:
@@ -468,28 +473,58 @@ class AsciidocParser:
                 pending_code_language = code_attr_match.group(1)
                 continue
 
+            # Detect plantuml block attribute [plantuml,name,format]
+            plantuml_attr_match = PLANTUML_BLOCK_START_PATTERN.match(line_text)
+            if plantuml_attr_match:
+                name = plantuml_attr_match.group(1)
+                fmt = plantuml_attr_match.group(2)
+                pending_plantuml_info = (name, fmt)
+                continue
+
             # Detect listing delimiter ----
             if LISTING_DELIMITER_PATTERN.match(line_text):
-                if not in_code_block and pending_code_language is not None:
-                    # Start of code block
-                    in_code_block = True
-                    source_location = SourceLocation(
-                        file=source_file,
-                        line=line_num,
-                        resolved_from=resolved_from,
-                    )
-                    elements.append(
-                        Element(
-                            type="code",
-                            source_location=source_location,
-                            attributes={"language": pending_code_language},
-                            parent_section=current_section_path,
+                if not in_code_block and not in_plantuml_block:
+                    if pending_plantuml_info is not None:
+                        # Start of plantuml block
+                        in_plantuml_block = True
+                        name, fmt = pending_plantuml_info
+                        source_location = SourceLocation(
+                            file=source_file,
+                            line=line_num,
+                            resolved_from=resolved_from,
                         )
-                    )
+                        elements.append(
+                            Element(
+                                type="plantuml",
+                                source_location=source_location,
+                                attributes={"name": name, "format": fmt},
+                                parent_section=current_section_path,
+                            )
+                        )
+                        pending_plantuml_info = None
+                    elif pending_code_language is not None:
+                        # Start of code block
+                        in_code_block = True
+                        source_location = SourceLocation(
+                            file=source_file,
+                            line=line_num,
+                            resolved_from=resolved_from,
+                        )
+                        elements.append(
+                            Element(
+                                type="code",
+                                source_location=source_location,
+                                attributes={"language": pending_code_language},
+                                parent_section=current_section_path,
+                            )
+                        )
                     pending_code_language = None
                 elif in_code_block:
                     # End of code block
                     in_code_block = False
+                elif in_plantuml_block:
+                    # End of plantuml block
+                    in_plantuml_block = False
                 continue
 
             # Detect table delimiter |===
