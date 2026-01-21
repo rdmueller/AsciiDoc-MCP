@@ -63,6 +63,7 @@ class TestToolDiscovery:
         expected_tools = {
             "get_structure",
             "get_section",
+            "get_sections_at_level",
             "search",
             "update_section",
             "insert_content",
@@ -132,6 +133,60 @@ class TestGetSection:
 
         # Implementation returns dict with "error" key for not found
         assert "error" in result.data
+
+
+class TestGetSectionsAtLevel:
+    """Tests for get_sections_at_level tool."""
+
+    async def test_get_level_1_sections(self, mcp_client: Client):
+        """get_sections_at_level returns sections at level 1 (chapters)."""
+        result = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 1}
+        )
+
+        assert "level" in result.data
+        assert result.data["level"] == 1
+        assert "sections" in result.data
+        assert "count" in result.data
+
+        # Test document has 2 level-1 sections: Introduction, Constraints
+        sections = result.data["sections"]
+        assert len(sections) == 2
+        titles = [s["title"] for s in sections]
+        assert "Introduction" in titles
+        assert "Constraints" in titles
+
+    async def test_get_level_2_sections(self, mcp_client: Client):
+        """get_sections_at_level returns sections at level 2 (sub-sections)."""
+        result = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 2}
+        )
+
+        assert result.data["level"] == 2
+        sections = result.data["sections"]
+        # Test document has 1 level-2 section: Goals
+        assert len(sections) == 1
+        assert sections[0]["title"] == "Goals"
+
+    async def test_get_sections_empty_level(self, mcp_client: Client):
+        """get_sections_at_level returns empty list for levels with no sections."""
+        result = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 5}
+        )
+
+        assert result.data["level"] == 5
+        assert result.data["sections"] == []
+        assert result.data["count"] == 0
+
+    async def test_get_sections_has_path_and_title(self, mcp_client: Client):
+        """get_sections_at_level returns sections with path and title."""
+        result = await mcp_client.call_tool(
+            "get_sections_at_level", arguments={"level": 1}
+        )
+
+        for section in result.data["sections"]:
+            assert "path" in section
+            assert "title" in section
 
 
 # =============================================================================

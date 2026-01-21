@@ -139,6 +139,35 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
             return {"error": f"Failed to read section content: {e}"}
 
     @mcp.tool()
+    def get_sections_at_level(level: int) -> dict:
+        """Get all sections at a specific nesting level.
+
+        Use this tool to retrieve all sections at a particular level of the
+        document hierarchy. Level 1 represents chapters/top-level sections,
+        level 2 represents sub-sections, etc.
+
+        Args:
+            level: Nesting level (1 = chapters, 2 = sections, 3 = sub-sections, etc.)
+
+        Returns:
+            Dictionary with 'level', 'sections' (list with path and title),
+            and 'count'.
+        """
+        sections = index.get_sections_at_level(level)
+
+        return {
+            "level": level,
+            "sections": [
+                {
+                    "path": s.path,
+                    "title": s.title,
+                }
+                for s in sections
+            ],
+            "count": len(sections),
+        }
+
+    @mcp.tool()
     def search(
         query: str,
         scope: str | None = None,
