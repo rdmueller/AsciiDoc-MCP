@@ -33,7 +33,6 @@ ELEMENT_TYPE_TO_API = {
     "code": "code",
     "table": "table",
     "image": "image",
-    "admonition": "admonition",  # Not in API spec, but in model
 }
 
 # Reverse mapping from API types to internal types
