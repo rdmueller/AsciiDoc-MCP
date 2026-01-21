@@ -103,6 +103,57 @@ class AsciidocParser:
         self.base_path = base_path
         self.max_include_depth = max_include_depth
 
+    def get_section(
+        self, doc: AsciidocDocument, path: str
+    ) -> Section | None:
+        """Get a section by its hierarchical path.
+
+        Args:
+            doc: The parsed document
+            path: Dot-separated section path (e.g., "haupttitel.kapitel-1")
+
+        Returns:
+            The section if found, None otherwise
+        """
+        return self._find_section_by_path(doc.sections, path)
+
+    def _find_section_by_path(
+        self, sections: list[Section], path: str
+    ) -> Section | None:
+        """Recursively find a section by path.
+
+        Args:
+            sections: List of sections to search
+            path: Section path to find
+
+        Returns:
+            The section if found, None otherwise
+        """
+        for section in sections:
+            if section.path == path:
+                return section
+            # Search in children
+            result = self._find_section_by_path(section.children, path)
+            if result:
+                return result
+        return None
+
+    def get_elements(
+        self, doc: AsciidocDocument, element_type: str | None = None
+    ) -> list[Element]:
+        """Get elements from a document, optionally filtered by type.
+
+        Args:
+            doc: The parsed document
+            element_type: Optional type to filter by (code, table, image, etc.)
+
+        Returns:
+            List of elements matching the criteria
+        """
+        if element_type is None:
+            return doc.elements
+        return [e for e in doc.elements if e.type == element_type]
+
     def parse_file(
         self, file_path: Path, _depth: int = 0
     ) -> AsciidocDocument:

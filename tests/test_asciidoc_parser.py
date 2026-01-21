@@ -385,6 +385,73 @@ class TestCrossReferences:
         assert doc.cross_references[0].source_location.file == FIXTURES_DIR / "with_xrefs.adoc"
 
 
+class TestInterfaceMethods:
+    """Tests for interface methods get_section() and get_elements()."""
+
+    def test_get_section_returns_section_by_path(self):
+        """Test that get_section returns correct section by path."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        section = parser.get_section(doc, "haupttitel.kapitel-1")
+        assert section is not None
+        assert section.title == "Kapitel 1"
+
+    def test_get_section_returns_none_for_invalid_path(self):
+        """Test that get_section returns None for non-existent path."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        section = parser.get_section(doc, "non.existent.path")
+        assert section is None
+
+    def test_get_section_returns_nested_section(self):
+        """Test that get_section returns deeply nested section."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        section = parser.get_section(doc, "haupttitel.kapitel-2.unterkapitel")
+        assert section is not None
+        assert section.title == "Unterkapitel"
+
+    def test_get_elements_returns_all_elements(self):
+        """Test that get_elements returns all elements."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        elements = parser.get_elements(doc)
+        assert len(elements) >= 4  # code, table, image, admonitions
+
+    def test_get_elements_filters_by_type(self):
+        """Test that get_elements filters by element type."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        code_elements = parser.get_elements(doc, element_type="code")
+        assert len(code_elements) == 1
+        assert all(e.type == "code" for e in code_elements)
+
+    def test_get_elements_returns_empty_for_no_match(self):
+        """Test that get_elements returns empty list for non-existent type."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        elements = parser.get_elements(doc, element_type="plantuml")
+        assert elements == []
+
+
 class TestEdgeCases:
     """Tests for edge cases."""
 
