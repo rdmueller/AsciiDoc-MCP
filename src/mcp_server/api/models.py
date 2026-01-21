@@ -131,5 +131,42 @@ class ElementsResponse(BaseModel):
     count: int = Field(description="Number of elements returned")
 
 
+# ============================================================================
+# Manipulation API Models
+# ============================================================================
+
+
+class UpdateSectionRequest(BaseModel):
+    """Request body for PUT /section/{path} endpoint."""
+
+    content: str = Field(description="New section content")
+    preserve_title: bool = Field(
+        default=True,
+        description="Keep original title if content doesn't include one",
+    )
+
+
+class UpdateSectionResponse(BaseModel):
+    """Response for PUT /section/{path} endpoint."""
+
+    success: bool = Field(default=True)
+    path: str = Field(description="Section path that was updated")
+    location: LocationResponse
+
+
+class InsertContentRequest(BaseModel):
+    """Request body for POST /section/{path}/insert endpoint."""
+
+    position: str = Field(description="Insert position: 'before', 'after', or 'append'")
+    content: str = Field(description="Content to insert")
+
+
+class InsertContentResponse(BaseModel):
+    """Response for POST /section/{path}/insert endpoint."""
+
+    success: bool = Field(default=True)
+    inserted_at: LocationResponse
+
+
 # Allow forward references
 SectionResponse.model_rebuild()

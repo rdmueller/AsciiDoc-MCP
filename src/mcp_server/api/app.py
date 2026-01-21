@@ -6,7 +6,7 @@ Creates and configures the FastAPI application with all routers.
 from fastapi import FastAPI
 
 from mcp_server import __version__
-from mcp_server.api import content, navigation
+from mcp_server.api import content, manipulation, navigation
 from mcp_server.structure_index import StructureIndex
 
 
@@ -32,9 +32,11 @@ def create_app(index: StructureIndex | None = None) -> FastAPI:
     if index is not None:
         navigation.set_index(index)
         content.set_index(index)
+        manipulation.set_index(index)
 
     # Include routers
     app.include_router(navigation.router)
     app.include_router(content.router)
+    app.include_router(manipulation.router)
 
     return app
