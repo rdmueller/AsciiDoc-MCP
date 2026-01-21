@@ -282,8 +282,10 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                 return "|==="
             elif elem.type == "admonition":
                 atype = attrs.get("admonition_type", "NOTE")
-                content = attrs.get("content", "")[:30]
-                return f"{atype}: {content}..." if len(attrs.get("content", "")) > 30 else f"{atype}: {content}"
+                full_content = attrs.get("content", "")
+                if len(full_content) > 30:
+                    return f"{atype}: {full_content[:30]}..."
+                return f"{atype}: {full_content}"
             elif elem.type == "list":
                 list_type = attrs.get("list_type", "unordered")
                 return f"{list_type} list"
