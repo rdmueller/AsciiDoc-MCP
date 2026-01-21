@@ -12,6 +12,7 @@ Tools:
     - insert_content: Insert content relative to a section
 """
 
+import logging
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -22,6 +23,8 @@ from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteE
 from mcp_server.markdown_parser import MarkdownParser
 from mcp_server.models import Document, Section
 from mcp_server.structure_index import StructureIndex
+
+logger = logging.getLogger(__name__)
 
 
 def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
@@ -384,7 +387,7 @@ def _build_index(
             documents.append(doc)
         except Exception as e:
             # Log but continue with other files
-            print(f"Warning: Failed to parse {adoc_file}: {e}")
+            logger.warning(f"Failed to parse {adoc_file}: {e}")
 
     # Find and parse Markdown files
     for md_file in docs_root.rglob("*.md"):
@@ -402,12 +405,12 @@ def _build_index(
             )
             documents.append(doc)
         except Exception as e:
-            print(f"Warning: Failed to parse {md_file}: {e}")
+            logger.warning(f"Failed to parse {md_file}: {e}")
 
     # Build index
     warnings = index.build_from_documents(documents)
     for warning in warnings:
-        print(f"Index warning: {warning}")
+        logger.warning(f"Index warning: {warning}")
 
 
 def _get_section_end_line(
