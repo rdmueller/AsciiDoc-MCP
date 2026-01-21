@@ -1,0 +1,235 @@
+"""Tests for Markdown Parser.
+
+Tests are organized by acceptance criteria from 04_markdown_parser.adoc.
+"""
+
+import tempfile
+from pathlib import Path
+
+
+class TestMarkdownParserBasic:
+    """Basic parser instantiation tests."""
+
+    def test_parser_can_be_instantiated(self):
+        """Parser can be created."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        assert parser is not None
+
+    def test_parse_file_returns_markdown_document(self):
+        """parse_file returns a MarkdownDocument."""
+        from mcp_server.markdown_parser import MarkdownDocument, MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# Test\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert isinstance(doc, MarkdownDocument)
+
+
+class TestHeadingExtraction:
+    """AC-MD-01: Headings are correctly extracted."""
+
+    def test_extracts_single_h1_heading(self):
+        """Single H1 heading is extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# Main Title\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert doc.title == "Main Title"
+        assert len(doc.sections) == 1
+        assert doc.sections[0].title == "Main Title"
+        assert doc.sections[0].level == 1
+
+    def test_extracts_multiple_headings(self):
+        """Multiple headings at different levels are extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Haupttitel
+
+## Unterkapitel 1
+
+Text...
+
+## Unterkapitel 2
+
+### Sub-Unterkapitel
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        # Should have 4 sections total
+        assert doc.title == "Haupttitel"
+        assert len(doc.sections) == 1  # Root section
+        root = doc.sections[0]
+        assert root.title == "Haupttitel"
+        assert len(root.children) == 2  # Two H2 children
+
+        child1 = root.children[0]
+        assert child1.title == "Unterkapitel 1"
+        assert child1.level == 2
+
+        child2 = root.children[1]
+        assert child2.title == "Unterkapitel 2"
+        assert child2.level == 2
+        assert len(child2.children) == 1  # One H3 child
+
+        grandchild = child2.children[0]
+        assert grandchild.title == "Sub-Unterkapitel"
+        assert grandchild.level == 3
+
+    def test_heading_levels_1_to_6(self):
+        """All heading levels from 1 to 6 are supported."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# H1
+## H2
+### H3
+#### H4
+##### H5
+###### H6
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        # Verify all levels are captured
+        def count_sections(sections, level):
+            count = 0
+            for s in sections:
+                if s.level == level:
+                    count += 1
+                count += count_sections(s.children, level)
+            return count
+
+        for level in range(1, 7):
+            assert count_sections(doc.sections, level) == 1
+
+    def test_heading_with_trailing_hashes(self):
+        """Trailing hashes in headings are stripped."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# Title ###\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert doc.sections[0].title == "Title"
+
+
+class TestHeadingPaths:
+    """Test hierarchical path generation for headings."""
+
+    def test_root_heading_path(self):
+        """Root heading has correct path."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# Haupttitel\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        assert doc.sections[0].path == "/haupttitel"
+
+    def test_nested_heading_paths(self):
+        """Nested headings have correct hierarchical paths."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Haupttitel
+
+## Unterkapitel 1
+
+## Unterkapitel 2
+
+### Sub-Unterkapitel
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        assert root.path == "/haupttitel"
+        assert root.children[0].path == "/haupttitel/unterkapitel-1"
+        assert root.children[1].path == "/haupttitel/unterkapitel-2"
+        assert root.children[1].children[0].path == "/haupttitel/unterkapitel-2/sub-unterkapitel"
+
+    def test_path_slugification(self):
+        """Paths are properly slugified (lowercase, dashes)."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# My Great Title!\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        # Should be slugified
+        assert doc.sections[0].path == "/my-great-title"
+
+
+class TestSourceLocation:
+    """Test source location tracking for headings."""
+
+    def test_heading_has_source_location(self):
+        """Headings have correct source location."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+## Chapter
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        assert root.source_location.line == 1
+        assert root.source_location.file == Path(f.name)
+
+        chapter = root.children[0]
+        assert chapter.source_location.line == 3
