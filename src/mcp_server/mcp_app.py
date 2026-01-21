@@ -253,13 +253,41 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         )
 
         def build_preview(elem) -> str | None:
-            """Build preview string from element attributes."""
-            if not elem.attributes:
-                return None
-            attr_parts = []
-            for key, value in list(elem.attributes.items())[:3]:
-                attr_parts.append(f"{key}={value}")
-            return ", ".join(attr_parts) if attr_parts else None
+            """Build preview string from element attributes.
+
+            Formats preview according to element type:
+            - plantuml: [plantuml, name, format]
+            - code: [source, language]
+            - image: image::target[alt]
+            - table: |===
+            - admonition: TYPE: content (truncated)
+            - list: list_type list
+            """
+            attrs = elem.attributes
+            if elem.type == "plantuml":
+                parts = ["plantuml"]
+                if attrs.get("name"):
+                    parts.append(attrs["name"])
+                if attrs.get("format"):
+                    parts.append(attrs["format"])
+                return f"[{', '.join(parts)}]"
+            elif elem.type == "code":
+                lang = attrs.get("language", "")
+                return f"[source, {lang}]" if lang else "[source]"
+            elif elem.type == "image":
+                target = attrs.get("target", "")
+                alt = attrs.get("alt", "")
+                return f"image::{target}[{alt}]"
+            elif elem.type == "table":
+                return "|==="
+            elif elem.type == "admonition":
+                atype = attrs.get("admonition_type", "NOTE")
+                content = attrs.get("content", "")[:30]
+                return f"{atype}: {content}..." if len(attrs.get("content", "")) > 30 else f"{atype}: {content}"
+            elif elem.type == "list":
+                list_type = attrs.get("list_type", "unordered")
+                return f"{list_type} list"
+            return None
 
         return {
             "elements": [

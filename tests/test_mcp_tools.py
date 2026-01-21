@@ -225,6 +225,27 @@ class TestGetElements:
         assert "elements" in result.data
         assert isinstance(result.data["elements"], list)
 
+    async def test_get_elements_preview_format(self, mcp_client: Client):
+        """get_elements returns properly formatted preview strings."""
+        result = await mcp_client.call_tool("get_elements", arguments={})
+
+        elements = result.data["elements"]
+        for elem in elements:
+            preview = elem.get("preview")
+            if preview:
+                # Check preview follows expected formats
+                elem_type = elem["type"]
+                if elem_type == "code":
+                    assert preview.startswith("[source")
+                elif elem_type == "plantuml":
+                    assert preview.startswith("[plantuml")
+                elif elem_type == "image":
+                    assert preview.startswith("image::")
+                elif elem_type == "table":
+                    assert preview == "|==="
+                elif elem_type == "list":
+                    assert "list" in preview
+
 
 # =============================================================================
 # Manipulation Tools Tests
