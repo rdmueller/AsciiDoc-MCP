@@ -38,11 +38,11 @@ class SearchResult:
 
 
 class StructureIndex:
-    """In-memory index for fast document structure lookups.
+    """In-memory index for fast document structure lookups and full-text search.
 
     This class builds and maintains an index of document structure
     from parsed AsciiDoc and Markdown documents. It provides fast
-    lookups by path, level, and element type.
+    lookups by path, level, element type, and full-text search.
 
     Attributes:
         _path_to_section: Mapping of hierarchical path to Section
@@ -51,6 +51,7 @@ class StructureIndex:
         _type_to_elements: Mapping of element type to list of Elements
         _section_to_elements: Mapping of section path to list of Elements
         _file_to_sections: Mapping of file path to list of Sections
+        _section_content: Mapping of section path to content for full-text search
         _documents: List of indexed documents
         _index_ready: Whether the index has been built
     """
@@ -63,6 +64,7 @@ class StructureIndex:
         self._type_to_elements: dict[str, list[Element]] = {}
         self._section_to_elements: dict[str, list[Element]] = {}
         self._file_to_sections: dict[Path, list[Section]] = {}
+        self._section_content: dict[str, str] = {}  # Content for full-text search
         self._documents: list[Document] = []
         self._top_level_sections: list[Section] = []
         self._index_ready: bool = False
@@ -196,8 +198,7 @@ class StructureIndex:
     ) -> list[SearchResult]:
         """Search for content matching query.
 
-        Currently searches section titles. Future versions may search
-        full content.
+        Searches both section titles and section content.
 
         Args:
             query: Search query string
@@ -221,9 +222,9 @@ class StructureIndex:
             # Check title match
             title = section.title if case_sensitive else section.title.lower()
             if search_query in title:
-                # Calculate simple relevance score based on match position
+                # Calculate simple relevance score - title matches score higher
                 match_pos = title.find(search_query)
-                score = 1.0 - (match_pos / max(len(title), 1)) * 0.5
+                score = 1.0 - (match_pos / max(len(title), 1)) * 0.3
 
                 results.append(
                     SearchResult(
@@ -233,11 +234,65 @@ class StructureIndex:
                         score=score,
                     )
                 )
+                continue  # Don't also search content if title matched
+
+            # Check content match
+            content = self._section_content.get(path, "")
+            search_content = content if case_sensitive else content.lower()
+            if search_query in search_content:
+                # Find match position and create context snippet
+                match_pos = search_content.find(search_query)
+                context = self._build_context_snippet(content, match_pos, query)
+
+                # Content matches score lower than title matches
+                score = 0.7 - (match_pos / max(len(content), 1)) * 0.2
+
+                # Find the line number of the match
+                line = section.source_location.line
+                lines_before_match = content[:match_pos].count("\n")
+                line += lines_before_match
+
+                results.append(
+                    SearchResult(
+                        path=path,
+                        line=line,
+                        context=context,
+                        score=score,
+                    )
+                )
 
         # Sort by score descending
         results.sort(key=lambda r: r.score, reverse=True)
 
         return results[:max_results]
+
+    def _build_context_snippet(
+        self, content: str, match_pos: int, query: str, context_chars: int = 40
+    ) -> str:
+        """Build a context snippet around the match position.
+
+        Args:
+            content: Full content text
+            match_pos: Position of the match
+            query: The search query
+            context_chars: Number of characters to show before/after match
+
+        Returns:
+            Context snippet with ellipsis if truncated
+        """
+        start = max(0, match_pos - context_chars)
+        end = min(len(content), match_pos + len(query) + context_chars)
+
+        snippet = content[start:end]
+
+        # Clean up whitespace and add ellipsis
+        snippet = " ".join(snippet.split())
+        if start > 0:
+            snippet = "..." + snippet
+        if end < len(content):
+            snippet = snippet + "..."
+
+        return snippet
 
     def clear(self) -> None:
         """Clear the index."""
@@ -247,6 +302,7 @@ class StructureIndex:
         self._type_to_elements.clear()
         self._section_to_elements.clear()
         self._file_to_sections.clear()
+        self._section_content.clear()
         self._documents.clear()
         self._top_level_sections.clear()
         self._index_ready = False
@@ -261,6 +317,7 @@ class StructureIndex:
             "total_sections": len(self._path_to_section),
             "total_elements": len(self._elements),
             "total_documents": len(self._documents),
+            "sections_with_content": len(self._section_content),
             "index_ready": self._index_ready,
             "sections_by_level": {
                 level: len(sections)
@@ -312,12 +369,39 @@ class StructureIndex:
             self._file_to_sections[file_path] = []
         self._file_to_sections[file_path].append(section)
 
+        # Read and store section content for full-text search
+        self._store_section_content(section)
+
         # Index children recursively
         for child in section.children:
             child_warnings = self._index_section(child)
             warnings.extend(child_warnings)
 
         return warnings
+
+    def _store_section_content(self, section: Section) -> None:
+        """Read and store section content for full-text search.
+
+        Args:
+            section: Section to read content for
+        """
+        try:
+            file_path = section.source_location.file
+            if not file_path.exists():
+                return
+
+            content = file_path.read_text(encoding="utf-8")
+            lines = content.splitlines()
+
+            start_line = section.source_location.line - 1  # Convert to 0-based
+            end_line = section.source_location.end_line
+            if end_line is None:
+                end_line = len(lines)
+
+            section_content = "\n".join(lines[start_line:end_line])
+            self._section_content[section.path] = section_content
+        except (OSError, UnicodeDecodeError) as e:
+            logger.warning("Failed to read content for section '%s': %s", section.path, e)
 
     def _index_element(self, element: Element) -> None:
         """Index an element.

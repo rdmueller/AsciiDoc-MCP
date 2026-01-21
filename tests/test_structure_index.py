@@ -984,3 +984,198 @@ class TestClearAndStats:
         assert stats["total_elements"] == 1
         assert stats["total_documents"] == 1
         assert stats["index_ready"] is True
+
+
+class TestContentSearch:
+    """Tests for full-text search in section content (not just titles).
+
+    These tests verify AC-SEARCH-CONTENT: Search should find matches in
+    section body text, not just section titles.
+    """
+
+    def test_search_finds_content_in_section_body(self, tmp_path: Path):
+        """Search finds text that appears in section body but not in title."""
+        # Create a test file with specific content
+        test_file = tmp_path / "test.adoc"
+        test_file.write_text(
+            """= Document Title
+
+== Introduction
+
+This section contains information about atomic write operations.
+The implementation uses backup-and-replace strategy.
+
+== Constraints
+
+This section has different content about performance requirements.
+""",
+            encoding="utf-8",
+        )
+
+        index = StructureIndex()
+        doc = Document(
+            file_path=test_file,
+            title="Document Title",
+            sections=[
+                Section(
+                    title="Introduction",
+                    level=1,
+                    path="introduction",
+                    source_location=SourceLocation(
+                        file=test_file, line=3, end_line=7
+                    ),
+                ),
+                Section(
+                    title="Constraints",
+                    level=1,
+                    path="constraints",
+                    source_location=SourceLocation(
+                        file=test_file, line=9, end_line=11
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Search for "atomic" - appears in body of Introduction, not in title
+        results = index.search("atomic")
+        assert len(results) >= 1
+        # Should find the Introduction section
+        paths = [r.path for r in results]
+        assert "introduction" in paths
+
+    def test_search_returns_context_with_match(self, tmp_path: Path):
+        """Search results include context snippet containing the match."""
+        test_file = tmp_path / "test.adoc"
+        test_file.write_text(
+            """= Document Title
+
+== Implementation
+
+The system implements atomic writes using a backup-and-replace strategy.
+""",
+            encoding="utf-8",
+        )
+
+        index = StructureIndex()
+        doc = Document(
+            file_path=test_file,
+            title="Document Title",
+            sections=[
+                Section(
+                    title="Implementation",
+                    level=1,
+                    path="implementation",
+                    source_location=SourceLocation(
+                        file=test_file, line=3, end_line=5
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        results = index.search("atomic")
+        assert len(results) >= 1
+        # Context should contain the matched word
+        assert "atomic" in results[0].context.lower()
+
+    def test_content_search_respects_case_sensitive_flag(self, tmp_path: Path):
+        """Case-sensitive search works correctly for content."""
+        test_file = tmp_path / "test.adoc"
+        test_file.write_text(
+            """= Document Title
+
+== Section
+
+This contains Performance metrics and optimization details.
+""",
+            encoding="utf-8",
+        )
+
+        index = StructureIndex()
+        doc = Document(
+            file_path=test_file,
+            title="Document Title",
+            sections=[
+                Section(
+                    title="Section",
+                    level=1,
+                    path="section",
+                    source_location=SourceLocation(
+                        file=test_file, line=3, end_line=5
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Case-insensitive should find "Performance" when searching "performance"
+        results = index.search("performance", case_sensitive=False)
+        assert len(results) >= 1
+
+        # Case-sensitive with lowercase should NOT find "Performance" (capital P)
+        results = index.search("performance", case_sensitive=True)
+        assert len(results) == 0
+
+    def test_content_search_with_scope_restriction(self, tmp_path: Path):
+        """Content search respects scope parameter."""
+        test_file = tmp_path / "test.adoc"
+        test_file.write_text(
+            """= Document Title
+
+== Architecture
+
+The architecture uses atomic patterns.
+
+=== Components
+
+These are the components.
+
+== Runtime
+
+The runtime also uses atomic operations.
+""",
+            encoding="utf-8",
+        )
+
+        index = StructureIndex()
+        doc = Document(
+            file_path=test_file,
+            title="Document Title",
+            sections=[
+                Section(
+                    title="Architecture",
+                    level=1,
+                    path="architecture",
+                    source_location=SourceLocation(
+                        file=test_file, line=3, end_line=5
+                    ),
+                    children=[
+                        Section(
+                            title="Components",
+                            level=2,
+                            path="architecture.components",
+                            source_location=SourceLocation(
+                                file=test_file, line=7, end_line=9
+                            ),
+                        )
+                    ],
+                ),
+                Section(
+                    title="Runtime",
+                    level=1,
+                    path="runtime",
+                    source_location=SourceLocation(
+                        file=test_file, line=11, end_line=13
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Search for "atomic" but only in architecture scope
+        results = index.search("atomic", scope="architecture")
+        paths = [r.path for r in results]
+        # Should find architecture but not runtime
+        assert "architecture" in paths
+        assert "runtime" not in paths
