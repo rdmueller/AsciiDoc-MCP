@@ -115,9 +115,9 @@ class TestGetSection:
     async def test_get_section_returns_content(self, mcp_client: Client):
         """get_section returns section with content."""
         # Note: Paths use dot notation with document title prefix
-        # e.g., "test-document.introduction" not "/introduction"
+        # e.g., "introduction" not "/introduction"
         result = await mcp_client.call_tool(
-            "get_section", arguments={"path": "test-document.introduction"}
+            "get_section", arguments={"path": "introduction"}
         )
 
         assert result.data is not None
@@ -239,7 +239,7 @@ class TestUpdateSection:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "content": "== Introduction\n\nUpdated content.\n",
             },
         )
@@ -258,7 +258,7 @@ class TestUpdateSection:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "content": "New body content only.\n",
                 "preserve_title": True,
             },
@@ -282,7 +282,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "position": "after",
                 "content": "== New Section\n\nNew content.\n",
             },
@@ -309,7 +309,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "position": "before",
                 "content": "== Preface\n\nPreface content.\n",
             },
@@ -333,7 +333,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "position": "invalid",
                 "content": "Some content",
             },
@@ -359,7 +359,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.constraints",
+                "path": "constraints",
                 "position": "after",
                 "content": "== Brand New Section\n\nThis is brand new content.\n",
             },
@@ -370,7 +370,7 @@ class TestIndexRebuildAfterWrite:
         structure = await mcp_client.call_tool("get_structure", arguments={})
         all_paths = self._extract_all_paths(structure.data["sections"])
 
-        assert "test-document.brand-new-section" in all_paths
+        assert "brand-new-section" in all_paths
 
     async def test_index_updated_after_update_section(
         self, mcp_client: Client, temp_doc_dir: Path
@@ -384,7 +384,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "content": "Updated introduction with more text.\n\nAnother paragraph.\n",
                 "preserve_title": True,
             },
@@ -397,7 +397,7 @@ class TestIndexRebuildAfterWrite:
 
         # The section should still be accessible
         section = await mcp_client.call_tool(
-            "get_section", arguments={"path": "test-document.introduction"}
+            "get_section", arguments={"path": "introduction"}
         )
         assert "error" not in section.data
         assert "Updated introduction" in section.data["content"]
@@ -416,7 +416,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.constraints",
+                "path": "constraints",
                 "position": "after",
                 "content": "== Another Chapter\n\nChapter content.\n",
             },
@@ -440,7 +440,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "test-document.introduction",
+                "path": "introduction",
                 "position": "after",
                 "content": "== Zephyr Unique Title\n\nSome content.\n",
             },

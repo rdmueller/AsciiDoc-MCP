@@ -679,8 +679,12 @@ class MarkdownParser:
             level: Heading level
 
         Returns:
-            Hierarchical path string
+            Hierarchical path string (dot-separated, no document title prefix)
         """
+        # H1 (document title) has empty path per API spec
+        if level == 1:
+            return ""
+
         slug = slugify(title)
 
         # Find ancestors at lower levels
@@ -690,10 +694,14 @@ class MarkdownParser:
                 ancestors.append(s)
 
         if ancestors:
-            parent_path = ancestors[-1].path
-            return f"{parent_path}/{slug}"
+            parent = ancestors[-1]
+            # If parent is H1 (document title), don't prefix with parent path
+            if parent.level == 1:
+                return slug
+            else:
+                return f"{parent.path}.{slug}"
         else:
-            return f"/{slug}"
+            return slug
 
     def _find_section_by_path(
         self, sections: list[Section], path: str

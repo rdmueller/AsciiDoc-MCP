@@ -39,7 +39,7 @@ class TestIndexBuilding:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     children=[],
                 )
@@ -61,7 +61,7 @@ class TestIndexBuilding:
                 Section(
                     title="Section A",
                     level=1,
-                    path="/section-a",
+                    path="section-a",
                     source_location=SourceLocation(file=Path("doc1.adoc"), line=1),
                 )
             ],
@@ -73,7 +73,7 @@ class TestIndexBuilding:
                 Section(
                     title="Section B",
                     level=1,
-                    path="/section-b",
+                    path="section-b",
                     source_location=SourceLocation(file=Path("doc2.md"), line=1),
                 )
             ],
@@ -93,13 +93,13 @@ class TestIndexBuilding:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Section 1.1",
                             level=2,
-                            path="/chapter-1/section-1-1",
+                            path="chapter-1.section-1-1",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=10
                             ),
@@ -111,8 +111,8 @@ class TestIndexBuilding:
         index.build_from_documents([doc])
 
         # Both parent and child should be findable
-        assert index.get_section("/chapter-1") is not None
-        assert index.get_section("/chapter-1/section-1-1") is not None
+        assert index.get_section("chapter-1") is not None
+        assert index.get_section("chapter-1.section-1-1") is not None
 
     def test_elements_are_indexed(self):
         """Elements from documents are indexed."""
@@ -126,13 +126,13 @@ class TestIndexBuilding:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={"language": "python"},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="table",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     attributes={"columns": 3},
-                    parent_section="/data",
+                    parent_section="data",
                 ),
             ],
         )
@@ -155,13 +155,13 @@ class TestGetStructure:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Section 1.1",
                             level=2,
-                            path="/chapter-1/section-1-1",
+                            path="chapter-1.section-1-1",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=10
                             ),
@@ -171,7 +171,7 @@ class TestGetStructure:
                 Section(
                     title="Chapter 2",
                     level=1,
-                    path="/chapter-2",
+                    path="chapter-2",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                 ),
             ],
@@ -194,13 +194,13 @@ class TestGetStructure:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Section 1.1",
                             level=2,
-                            path="/chapter-1/section-1-1",
+                            path="chapter-1.section-1-1",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=10
                             ),
@@ -208,7 +208,7 @@ class TestGetStructure:
                                 Section(
                                     title="Subsection 1.1.1",
                                     level=3,
-                                    path="/chapter-1/section-1-1/subsection-1-1-1",
+                                    path="chapter-1.section-1-1/subsection-1-1-1",
                                     source_location=SourceLocation(
                                         file=Path("test.adoc"), line=15
                                     ),
@@ -245,14 +245,14 @@ class TestGetSection:
                 Section(
                     title="Introduction",
                     level=1,
-                    path="/introduction",
+                    path="introduction",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                 )
             ],
         )
         index.build_from_documents([doc])
 
-        section = index.get_section("/introduction")
+        section = index.get_section("introduction")
         assert section is not None
         assert section.title == "Introduction"
         assert section.source_location.line == 5
@@ -262,7 +262,7 @@ class TestGetSection:
         index = StructureIndex()
         index.build_from_documents([])
 
-        section = index.get_section("/nonexistent")
+        section = index.get_section("nonexistent")
         assert section is None
 
     def test_get_section_finds_nested_sections(self):
@@ -275,13 +275,13 @@ class TestGetSection:
                 Section(
                     title="Chapter",
                     level=1,
-                    path="/chapter",
+                    path="chapter",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Section",
                             level=2,
-                            path="/chapter/section",
+                            path="chapter.section",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=10
                             ),
@@ -289,7 +289,7 @@ class TestGetSection:
                                 Section(
                                     title="Subsection",
                                     level=3,
-                                    path="/chapter/section/subsection",
+                                    path="chapter.section/subsection",
                                     source_location=SourceLocation(
                                         file=Path("test.adoc"), line=20
                                     ),
@@ -302,7 +302,7 @@ class TestGetSection:
         )
         index.build_from_documents([doc])
 
-        section = index.get_section("/chapter/section/subsection")
+        section = index.get_section("chapter.section/subsection")
         assert section is not None
         assert section.title == "Subsection"
 
@@ -320,13 +320,13 @@ class TestGetSectionsAtLevel:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Section 1.1",
                             level=2,
-                            path="/chapter-1/section-1-1",
+                            path="chapter-1.section-1-1",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=5
                             ),
@@ -336,13 +336,13 @@ class TestGetSectionsAtLevel:
                 Section(
                     title="Chapter 2",
                     level=1,
-                    path="/chapter-2",
+                    path="chapter-2",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     children=[
                         Section(
                             title="Section 2.1",
                             level=2,
-                            path="/chapter-2/section-2-1",
+                            path="chapter-2.section-2-1",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=25
                             ),
@@ -385,13 +385,13 @@ class TestGetElements:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={"language": "python"},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="table",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     attributes={"columns": 3},
-                    parent_section="/data",
+                    parent_section="data",
                 ),
             ],
         )
@@ -412,19 +412,19 @@ class TestGetElements:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={"language": "python"},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=15),
                     attributes={"language": "java"},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="table",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     attributes={"columns": 3},
-                    parent_section="/data",
+                    parent_section="data",
                 ),
             ],
         )
@@ -449,19 +449,19 @@ class TestGetElements:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={"language": "python"},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=15),
                     attributes={"language": "java"},
-                    parent_section="/chapter-1",
+                    parent_section="chapter-1",
                 ),
             ],
         )
         index.build_from_documents([doc])
 
-        intro_elements = index.get_elements(section_path="/intro")
+        intro_elements = index.get_elements(section_path="intro")
         assert len(intro_elements) == 1
         assert intro_elements[0].attributes["language"] == "python"
 
@@ -477,25 +477,25 @@ class TestGetElements:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="table",
                     source_location=SourceLocation(file=Path("test.adoc"), line=10),
                     attributes={},
-                    parent_section="/intro",
+                    parent_section="intro",
                 ),
                 Element(
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     attributes={},
-                    parent_section="/chapter-1",
+                    parent_section="chapter-1",
                 ),
             ],
         )
         index.build_from_documents([doc])
 
-        elements = index.get_elements(element_type="code", section_path="/intro")
+        elements = index.get_elements(element_type="code", section_path="intro")
         assert len(elements) == 1
 
 
@@ -512,13 +512,13 @@ class TestSearch:
                 Section(
                     title="Introduction to Python",
                     level=1,
-                    path="/introduction",
+                    path="introduction",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 ),
                 Section(
                     title="Java Basics",
                     level=1,
-                    path="/java-basics",
+                    path="java-basics",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                 ),
             ],
@@ -527,7 +527,7 @@ class TestSearch:
 
         results = index.search("Python")
         assert len(results) == 1
-        assert results[0].path == "/introduction"
+        assert results[0].path == "introduction"
 
     def test_search_is_case_insensitive_by_default(self):
         """search() is case-insensitive by default."""
@@ -539,7 +539,7 @@ class TestSearch:
                 Section(
                     title="Python Tutorial",
                     level=1,
-                    path="/python",
+                    path="python",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 )
             ],
@@ -562,7 +562,7 @@ class TestSearch:
                 Section(
                     title="Python Tutorial",
                     level=1,
-                    path="/python",
+                    path="python",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 )
             ],
@@ -582,7 +582,7 @@ class TestSearch:
             Section(
                 title=f"Section {i}",
                 level=1,
-                path=f"/section-{i}",
+                path=f"section-{i}",
                 source_location=SourceLocation(file=Path("test.adoc"), line=i * 10),
             )
             for i in range(10)
@@ -607,13 +607,13 @@ class TestSearch:
                 Section(
                     title="Chapter 1",
                     level=1,
-                    path="/chapter-1",
+                    path="chapter-1",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                     children=[
                         Section(
                             title="Python Section",
                             level=2,
-                            path="/chapter-1/python",
+                            path="chapter-1.python",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=5
                             ),
@@ -623,13 +623,13 @@ class TestSearch:
                 Section(
                     title="Chapter 2",
                     level=1,
-                    path="/chapter-2",
+                    path="chapter-2",
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                     children=[
                         Section(
                             title="Python Advanced",
                             level=2,
-                            path="/chapter-2/python",
+                            path="chapter-2.python",
                             source_location=SourceLocation(
                                 file=Path("test.adoc"), line=25
                             ),
@@ -641,9 +641,9 @@ class TestSearch:
         index.build_from_documents([doc])
 
         # Search within chapter-1 scope
-        results = index.search("Python", scope="/chapter-1")
+        results = index.search("Python", scope="chapter-1")
         assert len(results) == 1
-        assert results[0].path == "/chapter-1/python"
+        assert results[0].path == "chapter-1.python"
 
 
 class TestDuplicateDetection:
@@ -659,13 +659,13 @@ class TestDuplicateDetection:
                 Section(
                     title="Section A",
                     level=1,
-                    path="/section",
+                    path="section",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 ),
                 Section(
                     title="Section B",
                     level=1,
-                    path="/section",  # Duplicate path!
+                    path="section",  # Duplicate path!
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                 ),
             ],
@@ -686,13 +686,13 @@ class TestDuplicateDetection:
                 Section(
                     title="Section A",
                     level=1,
-                    path="/section",
+                    path="section",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 ),
                 Section(
                     title="Section B",
                     level=1,
-                    path="/section",  # Duplicate path!
+                    path="section",  # Duplicate path!
                     source_location=SourceLocation(file=Path("test.adoc"), line=20),
                 ),
             ],
@@ -703,7 +703,7 @@ class TestDuplicateDetection:
         assert len(warnings) == 1
 
         # Only first section should be indexed
-        section = index.get_section("/section")
+        section = index.get_section("section")
         assert section is not None
         assert section.title == "Section A"
         assert section.source_location.line == 1
@@ -727,7 +727,7 @@ class TestClearAndStats:
                 Section(
                     title="Chapter",
                     level=1,
-                    path="/chapter",
+                    path="chapter",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 )
             ],
@@ -748,7 +748,7 @@ class TestClearAndStats:
                 Section(
                     title="Chapter",
                     level=1,
-                    path="/chapter",
+                    path="chapter",
                     source_location=SourceLocation(file=Path("test.adoc"), line=1),
                 )
             ],
@@ -757,7 +757,7 @@ class TestClearAndStats:
                     type="code",
                     source_location=SourceLocation(file=Path("test.adoc"), line=5),
                     attributes={},
-                    parent_section="/chapter",
+                    parent_section="chapter",
                 )
             ],
         )

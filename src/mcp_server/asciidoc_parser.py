@@ -426,7 +426,7 @@ class AsciidocParser:
                 # Document title (level 0)
                 if level == 0:
                     document_title = title
-                    section.path = _title_to_slug(title)
+                    section.path = ""  # Empty path for document title per API spec
                     sections.append(section)
                     section_stack = [section]
                 else:
@@ -434,13 +434,18 @@ class AsciidocParser:
                     while section_stack and section_stack[-1].level >= level:
                         section_stack.pop()
 
+                    slug = _title_to_slug(title)
                     if section_stack:
                         parent = section_stack[-1]
-                        section.path = f"{parent.path}.{_title_to_slug(title)}"
+                        # If parent is document title (level 0), don't prefix
+                        if parent.level == 0:
+                            section.path = slug
+                        else:
+                            section.path = f"{parent.path}.{slug}"
                         parent.children.append(section)
                     else:
                         # No parent found, add as top-level
-                        section.path = _title_to_slug(title)
+                        section.path = slug
                         sections.append(section)
 
                     section_stack.append(section)

@@ -161,10 +161,11 @@ class TestHeadingPaths:
             f.flush()
             doc = parser.parse_file(Path(f.name))
 
-        assert doc.sections[0].path == "/haupttitel"
+        # Document title (H1) has empty path per API spec
+        assert doc.sections[0].path == ""
 
     def test_nested_heading_paths(self):
-        """Nested headings have correct hierarchical paths."""
+        """Nested headings have correct hierarchical paths with dot-separation."""
         from mcp_server.markdown_parser import MarkdownParser
 
         parser = MarkdownParser()
@@ -185,10 +186,13 @@ class TestHeadingPaths:
             doc = parser.parse_file(Path(f.name))
 
         root = doc.sections[0]
-        assert root.path == "/haupttitel"
-        assert root.children[0].path == "/haupttitel/unterkapitel-1"
-        assert root.children[1].path == "/haupttitel/unterkapitel-2"
-        assert root.children[1].children[0].path == "/haupttitel/unterkapitel-2/sub-unterkapitel"
+        # H1 (document title) has empty path
+        assert root.path == ""
+        # H2 sections have slug-only paths (no document title prefix)
+        assert root.children[0].path == "unterkapitel-1"
+        assert root.children[1].path == "unterkapitel-2"
+        # H3+ sections have parent.slug format with dot-separation
+        assert root.children[1].children[0].path == "unterkapitel-2.sub-unterkapitel"
 
     def test_path_slugification(self):
         """Paths are properly slugified (lowercase, dashes)."""
@@ -203,8 +207,8 @@ class TestHeadingPaths:
             f.flush()
             doc = parser.parse_file(Path(f.name))
 
-        # Should be slugified
-        assert doc.sections[0].path == "/my-great-title"
+        # Document title has empty path (per API spec)
+        assert doc.sections[0].path == ""
 
 
 class TestSourceLocation:
@@ -539,7 +543,7 @@ code
             doc = parser.parse_file(Path(f.name))
 
         code_block = doc.elements[0]
-        assert code_block.parent_section == "/root/code-section"
+        assert code_block.parent_section == "code-section"
 
     def test_multiple_code_blocks(self):
         """Multiple code blocks are extracted."""
@@ -1041,7 +1045,7 @@ class TestInterfaceMethods:
             f.flush()
             doc = parser.parse_file(Path(f.name))
 
-        section = parser.get_section(doc, "/root/chapter")
+        section = parser.get_section(doc, "chapter")
         assert section is not None
         assert section.title == "Chapter"
 

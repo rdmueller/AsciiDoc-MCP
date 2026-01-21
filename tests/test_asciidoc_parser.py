@@ -112,28 +112,30 @@ class TestSectionPaths:
     """Tests for hierarchical section paths."""
 
     def test_root_section_path(self):
-        """Test that root section has correct path."""
+        """Test that root section (document title) has empty path."""
         from mcp_server.asciidoc_parser import AsciidocParser
 
         parser = AsciidocParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
         root = doc.sections[0]
-        assert root.path == "haupttitel"
+        # Document title (level 0) has empty path per API spec
+        assert root.path == ""
 
     def test_chapter_section_path(self):
-        """Test that chapter sections have correct hierarchical paths."""
+        """Test that chapter sections have paths without document title prefix."""
         from mcp_server.asciidoc_parser import AsciidocParser
 
         parser = AsciidocParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
         root = doc.sections[0]
-        assert root.children[0].path == "haupttitel.kapitel-1"
-        assert root.children[1].path == "haupttitel.kapitel-2"
+        # Level 1 sections have slug-only paths (no document title prefix)
+        assert root.children[0].path == "kapitel-1"
+        assert root.children[1].path == "kapitel-2"
 
     def test_subsection_path(self):
-        """Test that subsections have correct hierarchical paths."""
+        """Test that subsections have hierarchical paths with dot-separation."""
         from mcp_server.asciidoc_parser import AsciidocParser
 
         parser = AsciidocParser(base_path=FIXTURES_DIR)
@@ -141,7 +143,8 @@ class TestSectionPaths:
 
         root = doc.sections[0]
         unterkapitel = root.children[1].children[0]
-        assert unterkapitel.path == "haupttitel.kapitel-2.unterkapitel"
+        # Level 2+ sections have parent.slug format
+        assert unterkapitel.path == "kapitel-2.unterkapitel"
 
 
 class TestSourceLocation:
@@ -527,7 +530,7 @@ class TestInterfaceMethods:
         parser = AsciidocParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
-        section = parser.get_section(doc, "haupttitel.kapitel-1")
+        section = parser.get_section(doc, "kapitel-1")
         assert section is not None
         assert section.title == "Kapitel 1"
 
@@ -548,7 +551,7 @@ class TestInterfaceMethods:
         parser = AsciidocParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
-        section = parser.get_section(doc, "haupttitel.kapitel-2.unterkapitel")
+        section = parser.get_section(doc, "kapitel-2.unterkapitel")
         assert section is not None
         assert section.title == "Unterkapitel"
 
