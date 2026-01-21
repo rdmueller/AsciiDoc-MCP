@@ -679,3 +679,259 @@ class TestImageExtraction:
 
         image = doc.elements[0]
         assert image.source_location.line == 3
+
+
+class TestFolderStructure:
+    """AC-MD-05: Folder hierarchy is correctly mapped."""
+
+    def test_parse_folder_returns_folder_document(self):
+        """parse_folder returns a FolderDocument."""
+        from mcp_server.markdown_parser import FolderDocument, MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "index.md").write_text("# Root\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert isinstance(doc, FolderDocument)
+
+    def test_parses_single_file_in_folder(self):
+        """Single file in folder is parsed."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "index.md").write_text("# Root Document\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert len(doc.documents) == 1
+        assert doc.documents[0].title == "Root Document"
+
+    def test_parses_multiple_files_in_folder(self):
+        """Multiple files in folder are parsed."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "index.md").write_text("# Index\n")
+            (folder / "chapter.md").write_text("# Chapter\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert len(doc.documents) == 2
+
+    def test_parses_nested_folders(self):
+        """Nested folders are parsed recursively."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "index.md").write_text("# Root\n")
+            subdir = folder / "01_intro"
+            subdir.mkdir()
+            (subdir / "index.md").write_text("# Intro\n")
+            (subdir / "01_details.md").write_text("# Details\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert len(doc.documents) == 3
+
+    def test_folder_structure_order(self):
+        """Files are in correct order (index first, then sorted)."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "index.md").write_text("# Index\n")
+            subdir = folder / "01_intro"
+            subdir.mkdir()
+            (subdir / "index.md").write_text("# Intro\n")
+            (subdir / "01_details.md").write_text("# Details\n")
+            (folder / "02_chapter.md").write_text("# Chapter\n")
+
+            doc = parser.parse_folder(folder)
+
+        # Expected order: index.md, 01_intro/index.md, 01_intro/01_details.md, 02_chapter.md
+        assert doc.documents[0].title == "Index"
+        assert doc.documents[1].title == "Intro"
+        assert doc.documents[2].title == "Details"
+        assert doc.documents[3].title == "Chapter"
+
+
+class TestNumericPrefixSorting:
+    """AC-MD-06: Numeric prefixes are correctly sorted."""
+
+    def test_numeric_prefixes_sorted_correctly(self):
+        """Files with numeric prefixes are sorted numerically."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "README.md").write_text("# README\n")
+            (folder / "10_z.md").write_text("# Ten\n")
+            (folder / "2_b.md").write_text("# Two\n")
+            (folder / "1_a.md").write_text("# One\n")
+
+            doc = parser.parse_folder(folder)
+
+        # Expected order: README.md, 1_a.md, 2_b.md, 10_z.md
+        assert len(doc.documents) == 4
+        assert doc.documents[0].title == "README"
+        assert doc.documents[1].title == "One"
+        assert doc.documents[2].title == "Two"
+        assert doc.documents[3].title == "Ten"
+
+    def test_readme_comes_first(self):
+        """README.md comes before other files."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "a_first.md").write_text("# A First\n")
+            (folder / "README.md").write_text("# README\n")
+            (folder / "z_last.md").write_text("# Z Last\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert doc.documents[0].title == "README"
+
+    def test_index_comes_first(self):
+        """index.md comes before other files."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "a_first.md").write_text("# A First\n")
+            (folder / "index.md").write_text("# Index\n")
+            (folder / "z_last.md").write_text("# Z Last\n")
+
+            doc = parser.parse_folder(folder)
+
+        assert doc.documents[0].title == "Index"
+
+    def test_mixed_prefixes_and_names(self):
+        """Mixed numeric prefixes and plain names are sorted correctly."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "01_intro.md").write_text("# Intro\n")
+            (folder / "appendix.md").write_text("# Appendix\n")
+            (folder / "02_main.md").write_text("# Main\n")
+
+            doc = parser.parse_folder(folder)
+
+        # Numeric prefixes should come first, then alphabetic
+        assert doc.documents[0].title == "Intro"
+        assert doc.documents[1].title == "Main"
+        assert doc.documents[2].title == "Appendix"
+
+
+class TestInterfaceMethods:
+    """Test get_section and get_elements interface methods."""
+
+    def test_get_section_returns_section_by_path(self):
+        """get_section returns correct section."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Root
+
+## Chapter
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        section = parser.get_section(doc, "/root/chapter")
+        assert section is not None
+        assert section.title == "Chapter"
+
+    def test_get_section_returns_none_for_invalid_path(self):
+        """get_section returns None for invalid path."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write("# Title\n")
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        section = parser.get_section(doc, "/nonexistent")
+        assert section is None
+
+    def test_get_elements_returns_all_elements(self):
+        """get_elements returns all elements."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+```python
+code
+```
+
+![img](test.png)
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        elements = parser.get_elements(doc)
+        assert len(elements) == 2
+
+    def test_get_elements_filters_by_type(self):
+        """get_elements filters by type."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Title
+
+```python
+code
+```
+
+![img](test.png)
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        code_elements = parser.get_elements(doc, "code")
+        assert len(code_elements) == 1
+        assert code_elements[0].type == "code"

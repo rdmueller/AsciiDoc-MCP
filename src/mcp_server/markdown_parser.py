@@ -141,8 +141,27 @@ class MarkdownParser:
         Returns:
             FolderDocument with all parsed files
         """
-        # TODO: Implement folder parsing (AC-MD-05, AC-MD-06)
-        return FolderDocument(root_path=folder_path)
+        documents: list[MarkdownDocument] = []
+
+        # Collect all markdown files recursively
+        md_files = self._collect_markdown_files(folder_path)
+
+        # Sort files according to spec rules
+        sorted_files = self._sort_files(md_files, folder_path)
+
+        # Parse each file
+        for file_path in sorted_files:
+            try:
+                doc = self.parse_file(file_path)
+                documents.append(doc)
+            except Exception as e:
+                logger.warning(f"Failed to parse {file_path}: {e}")
+
+        return FolderDocument(
+            root_path=folder_path,
+            documents=documents,
+            structure=[],  # TODO: Build combined structure
+        )
 
     def get_section(
         self, doc: MarkdownDocument, path: str
@@ -399,6 +418,93 @@ class MarkdownParser:
             )
 
         return elements
+
+    def _collect_markdown_files(self, folder_path: Path) -> list[Path]:
+        """Collect all Markdown files in folder recursively.
+
+        Args:
+            folder_path: Root folder path
+
+        Returns:
+            List of Markdown file paths
+        """
+        md_files: list[Path] = []
+
+        for item in folder_path.iterdir():
+            if item.is_file() and item.suffix.lower() == ".md":
+                md_files.append(item)
+            elif item.is_dir() and not item.name.startswith("."):
+                md_files.extend(self._collect_markdown_files(item))
+
+        return md_files
+
+    def _sort_files(self, files: list[Path], root: Path) -> list[Path]:
+        """Sort files according to spec rules.
+
+        Sorting rules:
+        1. index.md / README.md come first in their directory
+        2. Numeric prefixes are sorted numerically (1, 2, 10 not 1, 10, 2)
+        3. Files without numeric prefixes come after those with prefixes
+        4. Directories are processed in order, with their contents inline
+
+        Args:
+            files: List of file paths
+            root: Root folder for relative path calculation
+
+        Returns:
+            Sorted list of file paths
+        """
+
+        def sort_key(path: Path) -> tuple:
+            """Generate sort key for a file path."""
+            rel_path = path.relative_to(root)
+            parts = rel_path.parts
+
+            # Build sort key from path components
+            key_parts: list[tuple[int, int, str]] = []
+            for i, part in enumerate(parts):
+                is_last = i == len(parts) - 1
+
+                if is_last:
+                    # File name - check for special names
+                    name_lower = part.lower()
+                    if name_lower in ("index.md", "readme.md"):
+                        # Special files come first (priority 0)
+                        key_parts.append((0, 0, ""))
+                    else:
+                        # Extract numeric prefix if present
+                        num, rest = self._extract_numeric_prefix(part)
+                        if num is not None:
+                            # Numeric prefix (priority 1)
+                            key_parts.append((1, num, rest))
+                        else:
+                            # No numeric prefix (priority 2)
+                            key_parts.append((2, 0, part.lower()))
+                else:
+                    # Directory name
+                    num, rest = self._extract_numeric_prefix(part)
+                    if num is not None:
+                        key_parts.append((1, num, rest))
+                    else:
+                        key_parts.append((2, 0, part.lower()))
+
+            return tuple(key_parts)
+
+        return sorted(files, key=sort_key)
+
+    def _extract_numeric_prefix(self, name: str) -> tuple[int | None, str]:
+        """Extract numeric prefix from filename.
+
+        Args:
+            name: Filename (e.g., "01_intro.md")
+
+        Returns:
+            Tuple of (number or None, rest of name)
+        """
+        match = re.match(r"^(\d+)[_-](.+)$", name)
+        if match:
+            return int(match.group(1)), match.group(2)
+        return None, name
 
     def _find_section_path(self, sections: list[Section], title: str) -> str:
         """Find section path by title.
