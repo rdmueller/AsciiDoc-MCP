@@ -313,6 +313,27 @@ class MarkdownParser:
             # Track current section
             heading_match = HEADING_PATTERN.match(line)
             if heading_match and not in_code_block:
+                # If we were in a table, finalize it before starting a new heading.
+                if in_table:
+                    if has_separator:
+                        elements.append(
+                            Element(
+                                type="table",
+                                source_location=SourceLocation(
+                                    file=file_path, line=table_start_line
+                                ),
+                                attributes={
+                                    "columns": table_columns,
+                                    "rows": table_rows,
+                                },
+                                parent_section=current_section_path,
+                            )
+                        )
+                    # Reset table state regardless of whether it was valid
+                    in_table = False
+                    table_columns = 0
+                    table_rows = 0
+                    has_separator = False
                 title = heading_match.group(2).strip()
                 current_section_path = self._find_section_path(sections, title)
                 continue
