@@ -466,6 +466,14 @@ class AsciidocParser:
             section_match = SECTION_PATTERN.match(line_text)
             if section_match:
                 title = section_match.group(2).strip()
+                # Apply attribute substitution to section titles so they match
+                # the substituted titles stored in `sections`.
+                if "attributes" in locals() and attributes:
+                    def _sub_attr(match: re.Match) -> str:
+                        name = match.group(1)
+                        return attributes.get(name, match.group(0))
+
+                    title = re.sub(r"\{([^}]+)\}", _sub_attr, title)
                 current_section_path = self._find_section_path(sections, title)
                 continue
 
