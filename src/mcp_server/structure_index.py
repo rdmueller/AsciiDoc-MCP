@@ -220,9 +220,6 @@ class StructureIndex:
                     )
                 )
 
-                if len(results) >= max_results:
-                    break
-
         # Sort by score descending
         results.sort(key=lambda r: r.score, reverse=True)
 
