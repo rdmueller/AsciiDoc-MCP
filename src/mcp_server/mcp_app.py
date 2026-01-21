@@ -241,6 +241,15 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
             section_path=section_path,
         )
 
+        def build_preview(elem) -> str | None:
+            """Build preview string from element attributes."""
+            if not elem.attributes:
+                return None
+            attr_parts = []
+            for key, value in list(elem.attributes.items())[:3]:
+                attr_parts.append(f"{key}={value}")
+            return ", ".join(attr_parts) if attr_parts else None
+
         return {
             "elements": [
                 {
@@ -251,7 +260,7 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
                         "start_line": e.source_location.line,
                         "end_line": e.source_location.end_line,
                     },
-                    "preview": e.content[:100] if e.content else None,
+                    "preview": build_preview(e),
                 }
                 for e in elements
             ],

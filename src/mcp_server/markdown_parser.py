@@ -30,6 +30,10 @@ TABLE_ROW_PATTERN = re.compile(r"^\|(.+)\|$")
 TABLE_SEPARATOR_PATTERN = re.compile(r"^\|[\s:|-]+\|$")
 IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"([^\"]*)\")?\)")
 
+# List patterns
+UNORDERED_LIST_PATTERN = re.compile(r"^[\s]*[-*+]\s+.+$")
+ORDERED_LIST_PATTERN = re.compile(r"^[\s]*\d+\.\s+.+$")
+
 
 def slugify(text: str) -> str:
     """Convert text to URL-friendly slug.
@@ -373,6 +377,9 @@ class MarkdownParser:
         table_rows = 0
         has_separator = False
 
+        # Track list state
+        current_list_type: str | None = None
+
         for line_num, line in enumerate(lines, start=1 + line_offset):
             # Track current section
             heading_match = HEADING_PATTERN.match(line)
@@ -489,6 +496,46 @@ class MarkdownParser:
                         parent_section=current_section_path,
                     )
                 )
+                current_list_type = None  # Reset list tracking
+                continue
+
+            # Handle lists (unordered and ordered)
+            if not in_code_block and not in_table:
+                # Check for unordered list (*, -, +)
+                if UNORDERED_LIST_PATTERN.match(line):
+                    if current_list_type != "unordered":
+                        current_list_type = "unordered"
+                        elements.append(
+                            Element(
+                                type="list",
+                                source_location=SourceLocation(
+                                    file=file_path, line=line_num
+                                ),
+                                attributes={"list_type": "unordered"},
+                                parent_section=current_section_path,
+                            )
+                        )
+                    continue
+
+                # Check for ordered list (1., 2., etc.)
+                if ORDERED_LIST_PATTERN.match(line):
+                    if current_list_type != "ordered":
+                        current_list_type = "ordered"
+                        elements.append(
+                            Element(
+                                type="list",
+                                source_location=SourceLocation(
+                                    file=file_path, line=line_num
+                                ),
+                                attributes={"list_type": "ordered"},
+                                parent_section=current_section_path,
+                            )
+                        )
+                    continue
+
+                # If non-empty, non-list line, reset list tracking
+                if line.strip():
+                    current_list_type = None
 
         # Handle unclosed code block at end of file
         if in_code_block:

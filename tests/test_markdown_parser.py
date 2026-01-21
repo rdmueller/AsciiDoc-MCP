@@ -765,6 +765,96 @@ class TestImageExtraction:
         assert image.source_location.line == 3
 
 
+class TestListExtraction:
+    """Tests for list element extraction."""
+
+    def test_extracts_unordered_list(self):
+        """Test that unordered lists (* or -) are extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Document
+
+## Lists
+
+* Item one
+* Item two
+* Item three
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        unordered = [e for e in list_elements if e.attributes.get("list_type") == "unordered"]
+        assert len(unordered) >= 1
+
+    def test_extracts_ordered_list(self):
+        """Test that ordered lists (1.) are extracted."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Document
+
+## Steps
+
+1. First step
+2. Second step
+3. Third step
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        ordered = [e for e in list_elements if e.attributes.get("list_type") == "ordered"]
+        assert len(ordered) >= 1
+
+    def test_list_has_parent_section(self):
+        """Test that list element has correct parent section."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Document
+
+## My Lists
+
+* Item A
+* Item B
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        assert len(list_elements) >= 1
+        assert "my-lists" in list_elements[0].parent_section
+
+    def test_list_source_location(self):
+        """Test that list has correct source location."""
+        from mcp_server.markdown_parser import MarkdownParser
+
+        parser = MarkdownParser()
+        content = """# Document
+
+## Lists
+
+* First item
+* Second item
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        assert len(list_elements) >= 1
+        assert list_elements[0].source_location.line == 5  # Line of "* First item"
+
+
 class TestFolderStructure:
     """AC-MD-05: Folder hierarchy is correctly mapped."""
 

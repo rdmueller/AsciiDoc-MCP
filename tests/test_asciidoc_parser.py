@@ -422,6 +422,52 @@ Alice -> Bob: Test
             # Clean up temp file
             temp_file.unlink()
 
+    def test_unordered_list_is_extracted(self):
+        """Test that unordered lists are extracted as elements."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        unordered = [e for e in list_elements if e.attributes.get("list_type") == "unordered"]
+        assert len(unordered) >= 1
+
+    def test_ordered_list_is_extracted(self):
+        """Test that ordered lists are extracted as elements."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        ordered = [e for e in list_elements if e.attributes.get("list_type") == "ordered"]
+        assert len(ordered) >= 1
+
+    def test_description_list_is_extracted(self):
+        """Test that description lists are extracted as elements."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        description = [e for e in list_elements if e.attributes.get("list_type") == "description"]
+        assert len(description) >= 1
+
+    def test_list_has_parent_section(self):
+        """Test that list element has correct parent section."""
+        from mcp_server.asciidoc_parser import AsciidocParser
+
+        parser = AsciidocParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        assert len(list_elements) >= 1
+        # All lists should be in the "listen" section
+        for elem in list_elements:
+            assert "listen" in elem.parent_section
+
 
 class TestCrossReferences:
     """Tests for cross-reference extraction (AC-ADOC-08)."""

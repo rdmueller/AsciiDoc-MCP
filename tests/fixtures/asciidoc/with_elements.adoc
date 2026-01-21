@@ -38,3 +38,22 @@ Bob --> Alice: Hi
 NOTE: Dies ist ein wichtiger Hinweis.
 
 WARNING: Dies ist eine Warnung.
+
+== Listen
+
+Eine ungeordnete Liste:
+
+* Erster Punkt
+* Zweiter Punkt
+* Dritter Punkt
+
+Eine geordnete Liste:
+
+. Schritt eins
+. Schritt zwei
+. Schritt drei
+
+Eine Beschreibungsliste:
+
+Term A:: Definition von A
+Term B:: Definition von B

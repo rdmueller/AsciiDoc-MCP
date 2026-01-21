@@ -36,6 +36,11 @@ ADMONITION_PATTERN = re.compile(r"^(NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s*(.*)$
 # Cross-reference pattern: <<target>> or <<target,display text>>
 XREF_PATTERN = re.compile(r"<<([^,>]+)(?:,([^>]+))?>>", re.MULTILINE)
 
+# List patterns
+UNORDERED_LIST_PATTERN = re.compile(r"^\*+\s+.+$")
+ORDERED_LIST_PATTERN = re.compile(r"^\.+\s+.+$")
+DESCRIPTION_LIST_PATTERN = re.compile(r"^.+::(\s+.+)?$")
+
 
 class CircularIncludeError(Exception):
     """Raised when a circular include is detected."""
@@ -533,6 +538,7 @@ class AsciidocParser:
         in_code_block = False
         in_plantuml_block = False
         in_table = False
+        current_list_type: str | None = None  # Track if we're in a list
 
         for line_text, source_file, line_num, resolved_from in lines:
             # Track current section for parent_section
@@ -677,7 +683,73 @@ class AsciidocParser:
                         parent_section=current_section_path,
                     )
                 )
+                current_list_type = None  # Reset list tracking
                 continue
+
+            # Detect lists (unordered, ordered, description)
+            # Check for unordered list (* item)
+            if UNORDERED_LIST_PATTERN.match(line_text):
+                if current_list_type != "unordered":
+                    # Start of a new unordered list
+                    current_list_type = "unordered"
+                    source_location = SourceLocation(
+                        file=source_file,
+                        line=line_num,
+                        resolved_from=resolved_from,
+                    )
+                    elements.append(
+                        Element(
+                            type="list",
+                            source_location=source_location,
+                            attributes={"list_type": "unordered"},
+                            parent_section=current_section_path,
+                        )
+                    )
+                continue
+
+            # Check for ordered list (. item)
+            if ORDERED_LIST_PATTERN.match(line_text):
+                if current_list_type != "ordered":
+                    # Start of a new ordered list
+                    current_list_type = "ordered"
+                    source_location = SourceLocation(
+                        file=source_file,
+                        line=line_num,
+                        resolved_from=resolved_from,
+                    )
+                    elements.append(
+                        Element(
+                            type="list",
+                            source_location=source_location,
+                            attributes={"list_type": "ordered"},
+                            parent_section=current_section_path,
+                        )
+                    )
+                continue
+
+            # Check for description list (term:: definition)
+            if DESCRIPTION_LIST_PATTERN.match(line_text):
+                if current_list_type != "description":
+                    # Start of a new description list
+                    current_list_type = "description"
+                    source_location = SourceLocation(
+                        file=source_file,
+                        line=line_num,
+                        resolved_from=resolved_from,
+                    )
+                    elements.append(
+                        Element(
+                            type="list",
+                            source_location=source_location,
+                            attributes={"list_type": "description"},
+                            parent_section=current_section_path,
+                        )
+                    )
+                continue
+
+            # If line is not a list item, reset list tracking
+            if line_text.strip():
+                current_list_type = None
 
         return elements
 

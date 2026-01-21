@@ -76,7 +76,7 @@ class Element:
         parent_section: Path of the containing section
     """
 
-    type: Literal["code", "table", "image", "plantuml", "admonition"]
+    type: Literal["code", "table", "image", "plantuml", "admonition", "list"]
     source_location: SourceLocation
     attributes: dict[str, Any]
     parent_section: str
