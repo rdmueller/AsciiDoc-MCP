@@ -817,7 +817,8 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
                 if prev_line.strip():
                     insert_content = "\n" + insert_content
             # Add blank line after content if next line is a heading
-            next_line_idx = end_line  # 0-based index (end_line is 1-based, so lines[end_line] is next)
+            # 0-based index (end_line is 1-based, so lines[end_line] is the next line)
+            next_line_idx = end_line
             if next_line_is_heading(lines, next_line_idx) and not starts_with_heading:
                 insert_content = ensure_trailing_blank_line(insert_content)
             new_lines = lines[:end_line] + [insert_content] + lines[end_line:]

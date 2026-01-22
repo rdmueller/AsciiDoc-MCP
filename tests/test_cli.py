@@ -1130,10 +1130,10 @@ class TestCliUpdateCommand:
         assert "Original content" not in content
 
     def test_update_stdin_with_heading_preserves_title(self, tmp_path):
-        """Update with stdin content starting with heading should preserve original title (Issue #120).
+        """Update with stdin heading should preserve original title (Issue #120).
 
-        When preserve_title=true (default), the original title should always be kept,
-        even if the stdin content starts with a heading.
+        When preserve_title=true (default), the original title should always
+        be kept, even if the stdin content starts with a heading.
         """
         from dacli.cli import cli
 
@@ -1163,7 +1163,7 @@ class TestCliUpdateCommand:
         assert "New content from stdin" in content
 
     def test_update_stdin_with_heading_preserves_title_asciidoc(self, tmp_path):
-        """Update with stdin content starting with heading should preserve title in AsciiDoc (Issue #120)."""
+        """Update with stdin heading should preserve title in AsciiDoc (#120)."""
         from dacli.cli import cli
 
         doc_file = tmp_path / "test.adoc"
@@ -1249,7 +1249,7 @@ Content B.
                 if next_content_idx < len(lines) and lines[next_content_idx].startswith("=="):
                     # There should be at least one blank line between
                     blank_lines = next_content_idx - i - 1
-                    assert blank_lines >= 1, f"Should have blank line before heading, found {blank_lines}"
+                    assert blank_lines >= 1, f"Need blank line before heading, got {blank_lines}"
                 break
 
     def test_insert_adds_blank_line_after_content_before_heading_markdown(self, tmp_path):
@@ -1293,5 +1293,5 @@ Content B.
                     next_content_idx += 1
                 if next_content_idx < len(lines) and lines[next_content_idx].startswith("#"):
                     blank_lines = next_content_idx - i - 1
-                    assert blank_lines >= 1, f"Should have blank line before heading, found {blank_lines}"
+                    assert blank_lines >= 1, f"Need blank line before heading, got {blank_lines}"
                 break
