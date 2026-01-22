@@ -265,6 +265,20 @@ class MarkdownStructureParser:
         sections: list[Section] = []
         section_stack: list[Section] = []
         document_title = ""
+        # Track used paths for disambiguation (Issue #123)
+        used_paths: dict[str, int] = {}
+
+        def get_unique_path(base_path: str) -> str:
+            """Get a unique path, appending -2, -3 etc. for duplicates."""
+            if base_path not in used_paths:
+                used_paths[base_path] = 1
+                return base_path
+            # Path already exists, disambiguate
+            used_paths[base_path] += 1
+            new_path = f"{base_path}-{used_paths[base_path]}"
+            # Track the new path too in case there are further references
+            used_paths[new_path] = 1
+            return new_path
 
         # Track previous lines for Setext detection
         prev_line = ""
@@ -289,7 +303,9 @@ class MarkdownStructureParser:
                 document_title = title
 
             # Build hierarchical path
-            path = self._build_path(section_stack, title, level)
+            base_path = self._build_path(section_stack, title, level)
+            # Get unique path (Issue #123: disambiguate duplicates)
+            path = get_unique_path(base_path)
 
             section = Section(
                 title=title,

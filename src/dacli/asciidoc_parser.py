@@ -404,6 +404,20 @@ class AsciidocStructureParser:
         sections: list[Section] = []
         section_stack: list[Section] = []
         document_title = ""
+        # Track used paths for disambiguation (Issue #123)
+        used_paths: dict[str, int] = {}
+
+        def get_unique_path(base_path: str) -> str:
+            """Get a unique path, appending -2, -3 etc. for duplicates."""
+            if base_path not in used_paths:
+                used_paths[base_path] = 1
+                return base_path
+            # Path already exists, disambiguate
+            used_paths[base_path] += 1
+            new_path = f"{base_path}-{used_paths[base_path]}"
+            # Track the new path too in case there are further references
+            used_paths[new_path] = 1
+            return new_path
 
         for line_text, source_file, line_num, resolved_from in lines:
             match = SECTION_PATTERN.match(line_text)
@@ -446,13 +460,16 @@ class AsciidocStructureParser:
                         parent = section_stack[-1]
                         # If parent is document title (level 0), don't prefix
                         if parent.level == 0:
-                            section.path = slug
+                            base_path = slug
                         else:
-                            section.path = f"{parent.path}.{slug}"
+                            base_path = f"{parent.path}.{slug}"
+                        # Get unique path (Issue #123: disambiguate duplicates)
+                        section.path = get_unique_path(base_path)
                         parent.children.append(section)
                     else:
                         # No parent found, add as top-level
-                        section.path = slug
+                        # Get unique path (Issue #123: disambiguate duplicates)
+                        section.path = get_unique_path(slug)
                         sections.append(section)
 
                     section_stack.append(section)

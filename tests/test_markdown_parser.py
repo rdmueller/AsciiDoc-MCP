@@ -210,6 +210,115 @@ class TestHeadingPaths:
         # Document title has empty path (per API spec)
         assert doc.sections[0].path == ""
 
+    def test_duplicate_heading_titles_get_disambiguated_paths(self):
+        """Test that headings with same title at same level get disambiguated paths.
+
+        Issue #123: When multiple headings have the same title, paths should
+        be automatically disambiguated as: 'introduction', 'introduction-2', 'introduction-3'.
+        """
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Document Title
+
+## Introduction
+
+First introduction content.
+
+## Details
+
+Some details.
+
+## Introduction
+
+Second introduction content.
+
+## Introduction
+
+Third introduction content.
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        # First occurrence keeps original path
+        assert root.children[0].path == "introduction"
+        # Subsequent duplicates get numbered suffix
+        assert root.children[2].path == "introduction-2"
+        assert root.children[3].path == "introduction-3"
+
+    def test_duplicate_nested_heading_paths(self):
+        """Test that duplicate titles in nested headings also get disambiguated.
+
+        Issue #123: Disambiguation should work at all nesting levels.
+        """
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Document
+
+## Parent
+
+### Details
+
+First details.
+
+### Details
+
+Second details.
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        parent = root.children[0]
+        # First occurrence keeps original path
+        assert parent.children[0].path == "parent.details"
+        # Second occurrence gets numbered suffix
+        assert parent.children[1].path == "parent.details-2"
+
+    def test_same_title_different_parents_no_conflict(self):
+        """Test that same titles under different parents don't conflict.
+
+        Issue #123: 'parent1.details' and 'parent2.details' are different paths.
+        """
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Document
+
+## Parent 1
+
+### Details
+
+Parent 1 details.
+
+## Parent 2
+
+### Details
+
+Parent 2 details.
+"""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        root = doc.sections[0]
+        # Both 'Details' sections keep their original path (different parents)
+        assert root.children[0].children[0].path == "parent-1.details"
+        assert root.children[1].children[0].path == "parent-2.details"
+
 
 class TestSourceLocation:
     """Test source location tracking for headings."""
