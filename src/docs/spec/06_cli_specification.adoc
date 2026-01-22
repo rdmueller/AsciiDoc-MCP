@@ -250,16 +250,29 @@ Updates the content of a section.
 dacli update <PATH> --content "..." [--no-preserve-title] [--expected-hash HASH]
 ----
 
-**Example:**
+**Content Input:**
+
+* Direct string: `--content "New content here"`
+* Escape sequences: `--content "Line 1\nLine 2"` (converts `\n` to actual newlines)
+* From stdin: `--content -` (reads from stdin)
+
+**Examples:**
 [source,bash]
 ----
-$ dacli update introduction --content "New introduction text..."
+# Direct content with escape sequences
+$ dacli update introduction --content "First paragraph.\n\nSecond paragraph."
 {
   "success": true,
   "path": "introduction",
   "previous_hash": "a1b2c3d4",
   "new_hash": "e5f6g7h8"
 }
+
+# Read content from stdin (useful for multi-line content)
+$ cat new_content.txt | dacli update introduction --content -
+
+# Pipe from another command
+$ echo "Updated via stdin" | dacli update introduction --content -
 ----
 
 === insert
@@ -271,14 +284,35 @@ Inserts content relative to a section.
 dacli insert <PATH> --position before|after|append --content "..."
 ----
 
-**Example:**
+**Position Options:**
+
+* `before` - Insert before the section heading
+* `after` - Insert after the section content (before next sibling)
+* `append` - Insert at end of section, after all subsections
+
+**Content Input:**
+
+* Direct string: `--content "New content"`
+* Escape sequences: `--content "## Section\n\nContent"` (converts `\n` to newlines)
+* From stdin: `--content -` (reads from stdin)
+
+NOTE: When inserting content that starts with a heading (`#` or `=`) after existing content, a blank line is automatically added for proper formatting.
+
+**Examples:**
 [source,bash]
 ----
+# Insert new section with escape sequences
 $ dacli insert architecture --position after --content "== New Section\n\nContent..."
 {
   "success": true,
   "inserted_at": {"file": "arc42.adoc", "line": 150}
 }
+
+# Insert from stdin (for complex multi-line content)
+$ cat new_section.adoc | dacli insert architecture --position after --content -
+
+# Append to end of parent section (after all subsections)
+$ dacli insert components --position append --content "=== New Component\n\nDetails..."
 ----
 
 == Exit Codes
