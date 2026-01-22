@@ -31,7 +31,50 @@ from dacli.file_handler import FileReadError, FileSystemHandler, FileWriteError
 from dacli.file_utils import find_doc_files
 from dacli.markdown_parser import MarkdownStructureParser
 from dacli.mcp_app import _build_index, _get_section_end_line
-from dacli.structure_index import StructureIndex
+from dacli.structure_index import Section, StructureIndex
+
+
+def _get_section_append_line(
+    section: Section,
+    index: StructureIndex,
+    file_handler: FileSystemHandler,
+) -> int:
+    """Get the line number where content should be appended (after all descendants).
+
+    For 'append' position, we need to find the end of the last descendant section,
+    not just the end of the section's own content.
+
+    Args:
+        section: The parent section to append to
+        index: Structure index for finding related sections
+        file_handler: File handler for reading files
+
+    Returns:
+        The line number where content should be inserted (1-based)
+    """
+    file_path = section.source_location.file
+    all_sections = index.get_sections_by_file(file_path)
+
+    # Find all descendants (sections whose path starts with parent path + ".")
+    parent_path = section.path
+    descendants = [
+        s for s in all_sections
+        if s.path.startswith(parent_path + ".") or
+           (parent_path == "" and s.path != "" and "." not in s.path)
+    ]
+
+    if not descendants:
+        # No children, use section's own end line
+        return _get_section_end_line(section, file_path, file_handler)
+
+    # Find the descendant with the highest end line
+    max_end_line = _get_section_end_line(section, file_path, file_handler)
+    for desc in descendants:
+        desc_end = _get_section_end_line(desc, file_path, file_handler)
+        if desc_end > max_end_line:
+            max_end_line = desc_end
+
+    return max_end_line
 
 # Exit codes as specified in 06_cli_specification.adoc
 EXIT_SUCCESS = 0
@@ -653,7 +696,8 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
         click.echo(format_output(ctx, result))
         sys.exit(EXIT_ERROR)
 
-    new_content = content
+    # Process escape sequences (e.g., \n -> actual newline)
+    new_content = content.encode("utf-8").decode("unicode_escape")
     if preserve_title:
         stripped_content = new_content.lstrip()
         has_explicit_title = stripped_content.startswith("=") or stripped_content.startswith("#")
@@ -713,7 +757,8 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
     start_line = section_obj.source_location.line
     end_line = _get_section_end_line(section_obj, file_path, ctx.file_handler)
 
-    insert_content = content
+    # Process escape sequences (e.g., \n -> actual newline)
+    insert_content = content.encode("utf-8").decode("unicode_escape")
     if not insert_content.endswith("\n"):
         insert_content += "\n"
 
@@ -728,9 +773,10 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
         elif position == "after":
             insert_line = end_line + 1
             new_lines = lines[:end_line] + [insert_content] + lines[end_line:]
-        else:  # append
-            insert_line = end_line
-            new_lines = lines[: end_line - 1] + [insert_content] + lines[end_line - 1 :]
+        else:  # append - insert after all descendants
+            append_line = _get_section_append_line(section_obj, ctx.index, ctx.file_handler)
+            insert_line = append_line + 1
+            new_lines = lines[:append_line] + [insert_content] + lines[append_line:]
 
         new_file_content = "".join(new_lines)
         new_hash = hashlib.md5(new_file_content.encode("utf-8")).hexdigest()[:8]

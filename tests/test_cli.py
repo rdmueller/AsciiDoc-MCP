@@ -754,3 +754,156 @@ class TestCliHelpImprovements:
 
         assert result.exit_code == 0
         assert "Examples:" in result.output or "dacli" in result.output
+
+
+class TestCliInsertCommand:
+    """Test the 'insert' command."""
+
+    @pytest.fixture
+    def sample_docs(self, tmp_path):
+        """Create sample documentation files for testing."""
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Introduction
+
+Introduction content here.
+
+== Components
+
+Components overview.
+
+=== Frontend
+
+Frontend details.
+
+=== Backend
+
+Backend details.
+
+== Conclusion
+
+Final thoughts.
+""")
+        return tmp_path
+
+    def test_insert_processes_escape_sequences(self, sample_docs):
+        """Insert command should convert \\n to actual newlines (Issue #106)."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        # Insert content with escape sequences
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs),
+                "--format", "json",
+                "insert", "introduction",
+                "--position", "after",
+                "--content", "== New Section\\n\\nNew content here.\\n",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        # Read the file and verify actual newlines were inserted
+        doc_file = sample_docs / "test.adoc"
+        content = doc_file.read_text()
+
+        # Should contain actual newlines, not literal \n
+        assert "\\n" not in content or "== New Section\n" in content
+        assert "== New Section" in content
+        assert "New content here." in content
+
+    def test_insert_append_adds_at_end_of_section(self, sample_docs):
+        """Insert --position append should add content after all subsections (Issue #108)."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        # Append to Components section (which has Frontend and Backend subsections)
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs),
+                "--format", "json",
+                "insert", "components",
+                "--position", "append",
+                "--content", "=== Testing\\n\\nTesting details.\\n",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        # Read the file and check position
+        doc_file = sample_docs / "test.adoc"
+        content = doc_file.read_text()
+
+        # The new section should appear AFTER Backend, not right after Components header
+        backend_pos = content.find("=== Backend")
+        if "=== Testing" in content:
+            testing_pos = content.find("=== Testing")
+        else:
+            testing_pos = content.find("Testing details")
+        conclusion_pos = content.find("== Conclusion")
+
+        # Testing should be after Backend but before Conclusion
+        assert testing_pos > backend_pos, "Appended content should be after Backend subsection"
+        assert testing_pos < conclusion_pos, "Appended content should be before Conclusion"
+
+    def test_insert_before_works(self, sample_docs):
+        """Insert --position before should add content before section."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs),
+                "--format", "json",
+                "insert", "components",
+                "--position", "before",
+                "--content", "== Prerequisites\\n\\nBefore components.\\n",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        doc_file = sample_docs / "test.adoc"
+        content = doc_file.read_text()
+
+        # Prerequisites should appear before Components
+        prereq_pos = content.find("Prerequisites") if "Prerequisites" in content else -1
+        components_pos = content.find("== Components")
+
+        assert prereq_pos != -1, "Prerequisites section should exist"
+        assert prereq_pos < components_pos, "Prerequisites should be before Components"
+
+    def test_insert_after_works(self, sample_docs):
+        """Insert --position after should add content after section."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs),
+                "--format", "json",
+                "insert", "introduction",
+                "--position", "after",
+                "--content", "== Goals\\n\\nProject goals.\\n",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        doc_file = sample_docs / "test.adoc"
+        content = doc_file.read_text()
+
+        # Goals should appear after Introduction but before Components
+        intro_pos = content.find("== Introduction")
+        goals_pos = content.find("Goals") if "Goals" in content else -1
+        components_pos = content.find("== Components")
+
+        assert goals_pos != -1, "Goals section should exist"
+        assert goals_pos > intro_pos, "Goals should be after Introduction"
+        assert goals_pos < components_pos, "Goals should be before Components"
