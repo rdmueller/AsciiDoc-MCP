@@ -644,6 +644,19 @@ class TestCliHelpImprovements:
         assert "Validate" in result.output
         assert "Edit" in result.output
 
+    def test_main_help_shows_examples(self):
+        """Main --help should show usage examples."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+
+        assert result.exit_code == 0
+        assert "Examples:" in result.output
+        assert "dacli" in result.output
+        assert "structure" in result.output
+        assert "search" in result.output
+
     def test_help_shows_command_aliases(self):
         """Help output should show aliases in parentheses."""
         from dacli.cli import cli

@@ -216,7 +216,15 @@ def _format_as_text(data: dict, indent: int = 0) -> str:
 pass_context = click.make_pass_decorator(CliContext)
 
 
-@click.group(cls=AliasedGroup)
+@click.group(
+    cls=AliasedGroup,
+    epilog="""
+Examples:
+  dacli --format json structure          # Get document structure as JSON
+  dacli search "authentication"          # Find sections about authentication
+  dacli section api.endpoints            # Read a specific section
+""",
+)
 @click.option(
     "--docs-root",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
