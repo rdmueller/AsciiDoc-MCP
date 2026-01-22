@@ -20,7 +20,7 @@ Large Language Models (LLMs) face significant challenges when interacting with e
 *   **Inefficient Access**: Reading entire files is token-inefficient when only small sections are needed.
 *   **Difficult Manipulation**: Modifying specific parts of a document is cumbersome and error-prone.
 
-The **MCP Documentation Server** aims to solve these problems by providing a structured, content-aware API for interacting with AsciiDoc and Markdown projects. This enables efficient navigation, reading, and modification of complex documentation.
+**dacli** (Documentation Access CLI) aims to solve these problems by providing structured, content-aware tools for interacting with AsciiDoc and Markdown projects. Available as both a CLI tool and MCP server, it enables efficient navigation, reading, and modification of complex documentation.
 
 === Quality Goals
 
@@ -38,15 +38,15 @@ The architecture will prioritize the following key quality goals, derived from t
 
 === Stakeholders
 
-The primary stakeholders of the MCP Documentation Server are:
+The primary stakeholders of dacli are:
 
 .Stakeholders
 [cols="1,2,2"]
 |===
 | Role/Name | Contact | Expectations
-| **Software Developer** | Development Team | Uses the server to analyze and maintain code documentation with LLM assistance.
-| **Software Architect** | Architecture Team | Uses the server to manage and update large-scale architecture documents (e.g., arc42) with LLMs.
-| **Documentation Engineer** | Documentation Team | Manages complex documentation projects, relying on the server for efficient navigation and maintenance.
+| **Software Developer** | Development Team | Uses dacli to analyze and maintain code documentation with LLM assistance.
+| **Software Architect** | Architecture Team | Uses dacli to manage and update large-scale architecture documents (e.g., arc42) with LLMs.
+| **Documentation Engineer** | Documentation Team | Manages complex documentation projects, relying on dacli for efficient navigation and maintenance.
 |===
 
 [plantuml, stakeholder-overview, svg]
@@ -60,7 +60,7 @@ actor "Software Developer" as Dev
 actor "Software Architect" as Arch
 actor "Documentation Engineer" as DocEng
 
-rectangle "MCP Documentation Server" as Server {
+rectangle "dacli" as Server {
   usecase "Analyze & Maintain Docs" as UC1
   usecase "Update Architecture" as UC2
   usecase "Manage Projects" as UC3

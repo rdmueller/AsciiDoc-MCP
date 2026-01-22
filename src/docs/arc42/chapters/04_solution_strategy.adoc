@@ -29,12 +29,11 @@ To implement this strategy, the following technology stack is proposed. The choi
 [cols="1,2,3"]
 |===
 | Component | Technology | Justification
-| **Language** | **Python 3.12+** | Excellent for text processing, large standard library, strong community support, and mature libraries for parsing and web development.
+| **Language** | **Python 3.12+** | Excellent for text processing, large standard library, strong community support, and mature libraries for parsing.
 | **Package Manager** | **uv** | Ultra-fast Python package installer and resolver. Provides deterministic builds via `uv.lock`, faster dependency resolution than pip/poetry, and integrated virtual environment management.
-| **Web Server / API** | **FastAPI** | Provides a high-performance, MCP-compliant web server with automatic data validation and API documentation, directly supporting **Usability** (USAB-1, USAB-2).
-| **MCP SDK** | **mcp[cli]** | Official MCP SDK for Python to ensure full protocol compliance.
-| **Document Parsing** | **Custom Parser Logic** | A custom parser will be developed to handle AsciiDoc/Markdown specifics, especially the critical requirement of resolving includes and tracking line numbers accurately. Off-the-shelf libraries often lack the required granularity. This directly addresses the risk of **Format Variations**.
-| **Diff Engine** | **difflib** | Python's standard library for generating diffs, sufficient for providing real-time feedback in the web UI (**Usability**, USAB-3).
+| **MCP Framework** | **FastMCP** | High-level framework for building MCP servers in Python. Simplifies tool registration, handles MCP protocol details, and provides stdio transport.
+| **CLI Framework** | **Click** | Mature Python CLI framework for building the `dacli` command-line interface.
+| **Document Parsing** | **Custom Parser Logic** | Custom parsers handle AsciiDoc/Markdown specifics, especially resolving includes and tracking line numbers accurately. Off-the-shelf libraries often lack the required granularity. This directly addresses the risk of **Format Variations**.
 |===
 
 === Development Environment Setup
@@ -71,6 +70,7 @@ The architectural strategy directly addresses the top quality goals defined in C
 | Strategy | Quality Goal Addressed | How it is achieved
 | **In-Memory Structure Index** | **Performance** (PERF-1, PERF-2) | Read operations query the fast in-memory index for file locations instead of parsing files on every request.
 | **Atomic Write-Through Cache** | **Reliability** (REL-1, REL-3) | A File System Handler component implements atomic writes by using temporary files and backups. This prevents file corruption.
-| **MCP-Compliant API (FastAPI)** | **Usability** (USAB-1) | FastAPI's strict schema validation and automatic documentation ensures the API adheres to the defined protocol.
+| **MCP-Compliant Tools (FastMCP)** | **Usability** (USAB-1) | FastMCP handles MCP protocol compliance, tool registration, and stdio transport. Tools are strongly typed with clear parameter definitions.
+| **Dual Interface (CLI + MCP)** | **Usability** (USAB-2) | Both CLI (for direct use) and MCP server (for LLM integration) share the same core logic, ensuring consistent behavior.
 | **Stateless, File-Based Design** | **Scalability** (SCAL-1) & **Reliability** | By keeping the server stateless, scaling becomes simpler (less state to manage). It also improves reliability as there is no complex database state to corrupt or manage.
 |===

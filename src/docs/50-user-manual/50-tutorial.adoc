@@ -16,7 +16,7 @@ The examples in this tutorial serve to illustrate the tool's functionality and o
 
 == Prerequisites
 
-The CLI is included with the MCP Documentation Server. Install it globally:
+The CLI is included with dacli. Install it globally:
 
 [source,bash]
 ----

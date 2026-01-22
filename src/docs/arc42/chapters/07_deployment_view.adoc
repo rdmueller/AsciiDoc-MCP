@@ -11,7 +11,7 @@ ifndef::imagesdir[:imagesdir: ../../images]
 [[section-deployment-view]]
 == Deployment View
 
-This chapter describes the infrastructure and environment for the MCP Documentation Server.
+This chapter describes the infrastructure and environment for dacli.
 
 === Deployment Strategy
 
@@ -23,18 +23,21 @@ For local development and MCP client integration, the server runs directly via u
 
 [source,bash]
 ----
-# Install dependencies and run
+# Install dependencies and run MCP server
 uv sync
-uv run dacli-mcp --project-path /path/to/docs
+uv run dacli-mcp --docs-root /path/to/docs
 
-# Or configure in MCP client (e.g., Claude Desktop)
+# Or use CLI directly
+uv run dacli --docs-root /path/to/docs structure
+
+# Configure in MCP client (e.g., Claude Desktop)
 # ~/.config/claude/claude_desktop_config.json
 {
   "mcpServers": {
-    "docs-server": {
+    "dacli": {
       "command": "uv",
       "args": ["run", "dacli-mcp"],
-      "cwd": "/path/to/mcp-docs-server",
+      "cwd": "/path/to/dacli",
       "env": {
         "PROJECT_PATH": "/path/to/documentation"
       }
@@ -45,7 +48,7 @@ uv run dacli-mcp --project-path /path/to/docs
 
 ==== Docker Deployment
 
-For production or isolated environments, the application is packaged into a Docker container:
+For containerized environments, the application can be packaged into a Docker container:
 
 [source,dockerfile]
 ----
@@ -59,16 +62,16 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY src/ ./src/
-EXPOSE 8000
 
+# MCP server uses stdio transport, no port needed
 CMD ["uv", "run", "dacli-mcp"]
 ----
 
-The Web Interface (SPA) is a set of static files (HTML, CSS, JS) that can be served by any web server or even directly by the FastAPI backend for simplicity.
+NOTE: The MCP server communicates via stdio (standard input/output), not HTTP. The container is typically invoked by an MCP client that manages the stdio streams.
 
 === Production Environment
 
-The production environment is envisioned as a single virtual or physical machine running Docker.
+For production use, dacli runs as a subprocess managed by the MCP client. The typical deployment involves:
 
 [plantuml, deployment-overview, svg]
 ----
@@ -78,15 +81,15 @@ LAYOUT_WITH_LEGEND()
 
 title Deployment Diagram
 
-Deployment_Node('prod_server', 'Production Server', 'e.g. AWS EC2') {
-    Deployment_Node('docker', 'Docker Engine') {
-        Container(api_container, "MCP API Server", "Python/FastAPI")
-        Container(web_server, "Web Server", "Nginx")
+Deployment_Node('user_machine', 'User Machine') {
+    Container(mcp_client, "MCP Client", "e.g. Claude Desktop, IDE Plugin")
+    Deployment_Node('docker', 'Docker Engine (optional)') {
+        Container(dacli_container, "dacli MCP Server", "Python/FastMCP")
     }
     Node('doc_folder', 'Documentation Project', 'File System')
 }
 
-Rel(web_server, api_container, "Forwards API calls to", "HTTPS")
-Rel(api_container, doc_folder, "Mounts and interacts with", "File System API")
+Rel(mcp_client, dacli_container, "Spawns and communicates via", "stdio")
+Rel(dacli_container, doc_folder, "Reads/Writes", "File System API")
 @enduml
 ----

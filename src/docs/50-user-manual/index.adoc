@@ -1,7 +1,7 @@
 = User Manual
 :toc:
 
-Welcome to the MCP Documentation Server User Manual.
+Welcome to the dacli User Manual.
 
 == Contents
 
@@ -17,6 +17,6 @@ Welcome to the MCP Documentation Server User Manual.
 
 == About
 
-The MCP Documentation Server enables LLM interaction with AsciiDoc and Markdown documentation projects through the Model Context Protocol (MCP).
+dacli enables LLM interaction with AsciiDoc and Markdown documentation projects through the Model Context Protocol (MCP). It provides both a CLI tool for direct use and an MCP server for LLM integration.
 
 For architecture documentation, see the link:../arc42/arc42.html[arc42 documentation].

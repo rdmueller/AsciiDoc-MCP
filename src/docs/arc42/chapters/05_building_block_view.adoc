@@ -15,7 +15,7 @@ This chapter describes the static decomposition of the system into its key build
 
 === Level 2: System Containers
 
-The MCP Documentation Server system is composed of two main containers: a web-based user interface and the back-end API server. The file system acts as the system's database.
+The dacli system provides two interfaces: a CLI tool for direct command-line usage and an MCP server for LLM integration. The file system acts as the system's database.
 
 [plantuml, container-overview, svg]
 ----
@@ -24,27 +24,27 @@ The MCP Documentation Server system is composed of two main containers: a web-ba
 LAYOUT_TOP_DOWN()
 SHOW_LEGEND()
 
-title Container diagram for MCP Documentation Server
+title Container diagram for dacli
 
-Person(user, "Developer / Architect", "Uses the system via an MCP client or web browser.")
+Person(user, "Developer / Architect", "Uses the system via CLI or MCP client.")
 
-System_Boundary(mcp_system, "MCP Documentation Server") {
-    Container(spa, "Web Interface", "JavaScript, HTML, CSS", "Provides a visual representation of the document structure and modification diffs.")
-    Container(api, "MCP API Server", "Python, FastAPI", "Provides MCP-compliant API for structured document access and manipulation.")
+System_Boundary(mcp_system, "dacli") {
+    Container(cli, "CLI Tool", "Python, Click", "Provides command-line access to all documentation tools (dacli).")
+    Container(mcp, "MCP Server", "Python, FastMCP", "Provides MCP-compliant tools for LLM integration (dacli-mcp).")
 }
 
 System_Ext(file_system, "File System", "Stores the AsciiDoc and Markdown files.")
 
-Rel(user, spa, "Uses", "HTTPS")
-Rel(user, api, "Makes API calls via MCP Client", "HTTPS")
-Rel(spa, api, "Makes API calls", "HTTPS/JSON")
-Rel(api, file_system, "Reads/Writes", "File System API")
+Rel(user, cli, "Executes commands", "Shell")
+Rel(user, mcp, "Sends tool calls via MCP Client", "stdio")
+Rel(cli, file_system, "Reads/Writes", "File System API")
+Rel(mcp, file_system, "Reads/Writes", "File System API")
 @enduml
 ----
 
-=== Level 3: Components of the MCP API Server
+=== Level 3: Components of the MCP Server
 
-We now zoom into the `MCP API Server` container. It is composed of several components, each with a distinct responsibility, reflecting a classic layered architecture.
+We now zoom into the `MCP Server` container. It is composed of several components, each with a distinct responsibility.
 
 [plantuml, component-detail-api, svg]
 ----
@@ -52,71 +52,51 @@ We now zoom into the `MCP API Server` container. It is composed of several compo
 !include <C4/C4_Component>
 LAYOUT_WITH_LEGEND()
 
-title Component diagram for MCP API Server
+title Component diagram for MCP Server
 
-Container_Boundary(api, "MCP API Server") {
-    Component(api_endpoints, "API Endpoints", "FastAPI", "Receives MCP requests, validates input, and returns responses.")
-    Component(doc_service, "Document Service", "Python", "Orchestrates the business logic for navigation and manipulation use cases.")
-    Component(search_service, "Search Service", "Python", "Provides full-text search across indexed content.")
-    Component(validation_service, "Validation Service", "Python", "Validates document structure, detects issues like circular includes.")
-    Component(parser, "Document Parser", "Python", "Parses AsciiDoc/Markdown files, resolves includes, and builds an Abstract Syntax Tree (AST).")
-    Component(index, "Structure Index", "Python (In-Memory Dictionary)", "Stores the hierarchical structure of the documentation project for fast lookups.")
+Container_Boundary(api, "MCP Server") {
+    Component(mcp_tools, "MCP Tools", "FastMCP", "Exposes tools for navigation, search, manipulation via MCP protocol.")
+    Component(parser, "Document Parsers", "Python", "Parses AsciiDoc/Markdown files, resolves includes, builds AST with line numbers.")
+    Component(index, "Structure Index", "Python (In-Memory)", "Stores hierarchical structure for fast lookups.")
     Component(fs_handler, "File System Handler", "Python", "Performs atomic read/write operations on the file system.")
 }
 
 System_Ext(file_system, "File System")
 
-Rel(api_endpoints, doc_service, "Uses", "Navigation & Manipulation")
-Rel(api_endpoints, search_service, "Uses", "Content Search")
-Rel(api_endpoints, validation_service, "Uses", "Structure Validation")
-Rel(doc_service, parser, "Uses", "To get document AST on initialization")
-Rel(doc_service, index, "Uses", "To find section locations")
-Rel(doc_service, fs_handler, "Uses", "To read/write file content")
-Rel(search_service, index, "Queries")
-Rel(validation_service, index, "Analyzes")
-
+Rel(mcp_tools, index, "Queries", "Structure & Search")
+Rel(mcp_tools, fs_handler, "Uses", "Read/Write content")
 Rel(parser, fs_handler, "Reads files via")
 Rel(index, parser, "Is built by")
 Rel(fs_handler, file_system, "Interacts with")
 @enduml
 ----
 
+NOTE: The CLI tool (`dacli`) shares the same core components (parsers, index, file handler) but operates synchronously via the command line.
+
 === Component Responsibilities
 
-The following table maps components to the API groups defined in the specification:
+The following table maps components to the MCP tools:
 
-.Component to API Group Mapping
-[cols="2,2,3"]
+.Component to MCP Tool Mapping
+[cols="2,3,2"]
 |===
-| Component | API Group | Use Cases
+| Component | Responsibility | MCP Tools
 
-| **API Endpoints**
-| All Groups
-| Request routing, validation, response formatting
+| **MCP Tools**
+| Exposes all functionality via MCP protocol
+| get_structure, get_section, get_sections_at_level, search, get_elements, get_metadata, validate_structure, update_section, insert_content
 
-| **Document Service**
-| Navigation API, Manipulation API
-| UC-01, UC-02, UC-03, UC-09, UC-10
-
-| **Search Service**
-| Content Access API
-| UC-04 (search_content), UC-05 (get_elements)
-
-| **Validation Service**
-| Meta-Information API
-| UC-06 (get_metadata), UC-07 (validate_structure)
-
-| **Document Parser**
-| (Internal)
-| UC-08 (Server Initialization)
+| **Document Parsers**
+| Parse AsciiDoc/Markdown, resolve includes, track line numbers
+| (Internal - used during initialization)
 
 | **Structure Index**
-| (Internal)
-| Supports all read operations
+| In-memory index for fast lookups of sections and elements
+| (Internal - supports all read operations)
 
 | **File System Handler**
-| (Internal)
-| Supports all write operations, atomic writes (ADR-004)
+| Atomic file read/write operations with backup strategy
+| (Internal - supports write operations, ADR-004)
 |===
 
 === Data Models

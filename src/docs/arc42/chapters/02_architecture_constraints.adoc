@@ -11,7 +11,7 @@ ifndef::imagesdir[:imagesdir: ../../images]
 [[section-architecture-constraints]]
 == Architecture Constraints
 
-This chapter outlines the constraints that shape the architecture of the MCP Documentation Server.
+This chapter outlines the constraints that shape the architecture of dacli.
 
 === Technical Constraints
 
@@ -36,7 +36,7 @@ The system must adhere to the following technical constraints, derived directly 
 | Constraint | Description
 | **Workflow Integration** | The solution must integrate seamlessly into existing developer workflows without imposing significant process changes.
 | **No External Services** | The system must be self-contained and not rely on any external or third-party services for its core functionality.
-| **Phased Development** | The project will be developed in phases (Core Engine, MCP Integration, Web Interface), requiring a modular architecture that supports incremental delivery.
+| **Phased Development** | The project is developed in phases (Core Engine, MCP Integration, CLI), requiring a modular architecture that supports incremental delivery.
 |===
 
 === Conventions

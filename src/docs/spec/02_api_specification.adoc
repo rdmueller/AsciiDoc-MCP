@@ -6,28 +6,32 @@ ifndef::imagesdir[:imagesdir: ../../images]
 
 :toc:
 
-= MCP Documentation Server - API Specification
+= dacli - API Specification
 :sectnums:
 :icons: font
 
 == Overview
 
-This specification defines the API endpoints of the MCP Documentation Server in OpenAPI style.
+This specification defines the MCP tools provided by dacli. The tools are available via two interfaces:
 
-=== Base URL
+* **MCP Server** (`dacli-mcp`): For LLM integration via MCP protocol over stdio
+* **CLI** (`dacli`): For direct command-line usage (see `06_cli_specification.adoc`)
+
+=== MCP Communication
 
 [source]
 ----
-Base URL: http://localhost:8000/api/v1
-Protocol: MCP over HTTP/JSON
+Transport: stdio (standard input/output)
+Protocol: MCP (Model Context Protocol)
 ----
+
+The MCP server is spawned as a subprocess by an MCP client (e.g., Claude Desktop) and communicates via JSON-RPC over stdio.
 
 === Authentication
 
 [NOTE]
 ====
-The current version does not require authentication (single-tenant).
-API key authentication is planned for future versions.
+The current version does not require authentication (single-tenant, local access only).
 ====
 
 == Data Models
@@ -141,11 +145,11 @@ Standardized error response.
 }
 ----
 
-== API Endpoints
+== MCP Tools
 
-=== Navigation API
+=== Navigation Tools
 
-==== GET /structure
+==== get_structure
 
 Retrieves the hierarchical document structure.
 
@@ -155,7 +159,7 @@ Retrieves the hierarchical document structure.
 |===
 | Parameter | Description
 
-| `max_depth` (query, optional)
+| `max_depth` (int, optional)
 | Maximum depth of returned structure. Default: unlimited.
 |===
 
@@ -187,20 +191,9 @@ Retrieves the hierarchical document structure.
 }
 ----
 
-**Response 500:**
-[source,json]
-----
-{
-  "error": {
-    "code": "INDEX_NOT_READY",
-    "message": "Server index is not initialized"
-  }
-}
-----
-
 '''
 
-==== GET /section/{path}
+==== get_section
 
 Reads the content of a specific section.
 
@@ -210,8 +203,8 @@ Reads the content of a specific section.
 |===
 | Parameter | Description
 
-| `path` (path, required)
-| Hierarchical path to section (URL-encoded)
+| `path` (string, required)
+| Hierarchical path to section (e.g., "introduction.goals")
 |===
 
 **Response 200:**
@@ -247,7 +240,7 @@ Reads the content of a specific section.
 
 '''
 
-==== GET /sections
+==== get_sections_at_level
 
 Retrieves all sections at a specific level.
 
@@ -257,7 +250,7 @@ Retrieves all sections at a specific level.
 |===
 | Parameter | Description
 
-| `level` (query, required)
+| `level` (int, required)
 | Desired nesting depth (1 = chapter)
 |===
 
@@ -280,9 +273,9 @@ Retrieves all sections at a specific level.
 }
 ----
 
-=== Content Access API
+=== Content Access Tools
 
-==== GET /elements
+==== get_elements
 
 Retrieves elements of a specific type.
 
@@ -292,10 +285,10 @@ Retrieves elements of a specific type.
 |===
 | Parameter | Description
 
-| `type` (query, required)
-| Element type: `diagram`, `table`, `code`, `list`, `image`
+| `element_type` (string, optional)
+| Element type: `code`, `table`, `image`, `diagram`, `list`, `admonition`, `plantuml`. None returns all elements.
 
-| `path` (query, optional)
+| `section_path` (string, optional)
 | Restriction to specific section
 |===
 
@@ -337,22 +330,25 @@ Retrieves elements of a specific type.
 
 '''
 
-==== POST /search
+==== search
 
 Searches documentation content.
 
 **Use Case:** UC-04
 
-**Request Body:**
-[source,json]
-----
-{
-  "query": "string",          // Search term (required)
-  "scope": "string",          // Restriction to path (optional)
-  "case_sensitive": false,    // Case sensitivity (optional)
-  "max_results": 50           // Maximum results (optional)
-}
-----
+[cols="1,3"]
+|===
+| Parameter | Description
+
+| `query` (string, required)
+| Search term (case-insensitive)
+
+| `scope` (string, optional)
+| Restriction to path prefix (e.g., "/architecture")
+
+| `max_results` (int, optional)
+| Maximum results to return (default: 50)
+|===
 
 **Response 200:**
 [source,json]
@@ -378,9 +374,9 @@ Searches documentation content.
 }
 ----
 
-=== Content Manipulation API
+=== Content Manipulation Tools
 
-==== PUT /section/{path}
+==== update_section
 
 Updates the content of a section.
 
@@ -390,18 +386,18 @@ Updates the content of a section.
 |===
 | Parameter | Description
 
-| `path` (path, required)
-| Hierarchical path to section
-|===
+| `path` (string, required)
+| Hierarchical path to section (e.g., "introduction.goals")
 
-**Request Body:**
-[source,json]
-----
-{
-  "content": "string",        // New section content (required)
-  "preserve_title": true      // Keep title (optional, default: true)
-}
-----
+| `content` (string, required)
+| New section content
+
+| `preserve_title` (bool, optional)
+| Keep original title (default: true)
+
+| `expected_hash` (string, optional)
+| Hash for optimistic locking - update fails if current content hash doesn't match
+|===
 
 **Response 200:**
 [source,json]
@@ -447,7 +443,7 @@ Updates the content of a section.
 
 '''
 
-==== POST /section/{path}/insert
+==== insert_content
 
 Inserts content relative to a section.
 
@@ -457,18 +453,15 @@ Inserts content relative to a section.
 |===
 | Parameter | Description
 
-| `path` (path, required)
+| `path` (string, required)
 | Hierarchical path to reference section
-|===
 
-**Request Body:**
-[source,json]
-----
-{
-  "position": "string",       // "before" | "after" | "append" (required)
-  "content": "string"         // Content to insert (required)
-}
-----
+| `position` (string, required)
+| Where to insert: "before", "after", or "append"
+
+| `content` (string, required)
+| Content to insert
+|===
 
 **Response 200:**
 [source,json]
@@ -484,9 +477,14 @@ Inserts content relative to a section.
 
 '''
 
-==== PUT /element/{path}/{index}
+==== update_element (planned)
 
-Replaces a specific element.
+[NOTE]
+====
+This tool is planned but not yet implemented.
+====
+
+Replaces a specific element (code block, table, etc.).
 
 **Use Case:** UC-10
 
@@ -494,50 +492,21 @@ Replaces a specific element.
 |===
 | Parameter | Description
 
-| `path` (path, required)
+| `path` (string, required)
 | Hierarchical path to section
 
-| `index` (path, required)
+| `index` (int, required)
 | Index of element within section (0-based)
+
+| `content` (string, required)
+| New element content
 |===
 
-**Request Body:**
-[source,json]
-----
-{
-  "content": "string"         // New element content (required)
-}
-----
+=== Meta-Information Tools
 
-**Response 200:**
-[source,json]
-----
-{
-  "success": true,
-  "element": {
-    "type": "table",
-    "path": "quality.performance",
-    "index": 0
-  }
-}
-----
+==== get_metadata
 
-**Response 404:**
-[source,json]
-----
-{
-  "error": {
-    "code": "ELEMENT_NOT_FOUND",
-    "message": "No element at index 2 in section 'quality.performance'"
-  }
-}
-----
-
-=== Meta-Information API
-
-==== GET /metadata
-
-Retrieves metadata.
+Retrieves metadata about the project or a specific section.
 
 **Use Case:** UC-06
 
@@ -545,8 +514,8 @@ Retrieves metadata.
 |===
 | Parameter | Description
 
-| `path` (query, optional)
-| Path to section. Without: project metadata
+| `path` (string, optional)
+| Path to section. If None, returns project-level metadata.
 |===
 
 **Response 200 (Project):**
@@ -579,36 +548,20 @@ Retrieves metadata.
 
 '''
 
-==== GET /dependencies
+==== get_dependencies (planned)
 
-Retrieves include dependencies.
+[NOTE]
+====
+This tool is planned but not yet implemented.
+====
+
+Retrieves include dependencies and cross-references.
 
 **Use Case:** UC-06 (Extension)
 
-**Response 200:**
-[source,json]
-----
-{
-  "include_tree": {
-    "arc42.adoc": [
-      "chapters/01_introduction.adoc",
-      "chapters/02_constraints.adoc",
-      "chapters/03_context.adoc"
-    ]
-  },
-  "cross_references": [
-    {
-      "from": "decisions.adr-001",
-      "to": "constraints.technical",
-      "type": "reference"
-    }
-  ]
-}
-----
-
 '''
 
-==== POST /validate
+==== validate_structure
 
 Validates the document structure.
 
@@ -652,37 +605,20 @@ Validates the document structure.
 }
 ----
 
-=== System API
+=== System Tools (planned)
 
-==== GET /health
+[NOTE]
+====
+The following tools are planned but not yet implemented. The MCP server currently rebuilds the index automatically after write operations.
+====
 
-Health check endpoint.
+==== get_health (planned)
 
-**Response 200:**
-[source,json]
-----
-{
-  "status": "healthy",
-  "index_ready": true,
-  "indexed_files": 15,
-  "uptime_seconds": 3600
-}
-----
+Returns server health status and index information.
 
-'''
+==== reindex (planned)
 
-==== POST /reindex
-
-Triggers reindexing.
-
-**Response 202:**
-[source,json]
-----
-{
-  "status": "reindexing",
-  "message": "Reindexing started in background"
-}
-----
+Triggers manual reindexing of the documentation.
 
 == CLI Interface
 
@@ -693,39 +629,44 @@ especially for LLMs without MCP support.
 
 == Error Code Reference
 
-[cols="1,1,3"]
+Error responses are returned as dictionaries with an `error` key:
+
+[cols="1,3"]
 |===
-| Code | HTTP Status | Description
+| Code | Description
 
-| `PATH_NOT_FOUND` | 404 | Requested path does not exist
-| `ELEMENT_NOT_FOUND` | 404 | Element at specified index does not exist
-| `INVALID_TYPE` | 400 | Unknown element type
-| `INVALID_POSITION` | 400 | Invalid insert position
-| `INVALID_QUERY` | 400 | Invalid search query
-| `WRITE_FAILED` | 500 | Write operation failed
-| `INDEX_NOT_READY` | 503 | Index not yet initialized
-| `PARSE_ERROR` | 500 | Error parsing a file
+| `PATH_NOT_FOUND` | Requested section path does not exist
+| `ELEMENT_NOT_FOUND` | Element at specified index does not exist
+| `INVALID_TYPE` | Unknown element type
+| `INVALID_POSITION` | Invalid insert position (must be "before", "after", or "append")
+| `WRITE_FAILED` | Write operation failed (file permission, disk full, etc.)
 |===
 
-== Rate Limiting
+== Tool Summary
 
-[NOTE]
-====
-The current version has no rate limiting.
-For production environments, the following is recommended:
+.Implemented MCP Tools
+[cols="2,3"]
+|===
+| Tool | Description
 
-* 100 requests/minute for read operations
-* 20 requests/minute for write operations
-====
+| `get_structure` | Get hierarchical document structure
+| `get_section` | Read content of a specific section
+| `get_sections_at_level` | Get all sections at a nesting level
+| `search` | Search documentation content
+| `get_elements` | Get code blocks, tables, images, etc.
+| `get_metadata` | Get project or section metadata
+| `validate_structure` | Validate document structure
+| `update_section` | Update section content
+| `insert_content` | Insert content before/after sections
+|===
 
-== Versioning
+.Planned Tools
+[cols="2,3"]
+|===
+| Tool | Description
 
-The API uses URL-based versioning (`/api/v1/`).
-
-Changes within a version are backward compatible:
-
-* New optional parameters
-* New response fields
-* New endpoints
-
-Breaking changes require a new version (`/api/v2/`).
+| `update_element` | Replace a specific element (code, table)
+| `get_dependencies` | Get include dependencies
+| `get_health` | Server health status
+| `reindex` | Trigger manual reindexing
+|===
