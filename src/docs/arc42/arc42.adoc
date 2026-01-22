@@ -8,7 +8,7 @@
 // configure EN settings for asciidoc
 include::chapters/config.adoc[]
 
-= MCP Documentation Server - Architecture
+= dacli - Architecture Documentation
 :toc-title: Table of Contents
 
 

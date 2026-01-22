@@ -4,7 +4,7 @@
 
 == Overview
 
-The MCP Documentation Server provides 9 tools for interacting with documentation projects via the Model Context Protocol. These tools enable LLMs to navigate, read, search, and modify documentation.
+dacli provides 9 MCP tools for interacting with documentation projects via the Model Context Protocol. These tools enable LLMs to navigate, read, search, and modify documentation.
 
 == Navigation Tools
 

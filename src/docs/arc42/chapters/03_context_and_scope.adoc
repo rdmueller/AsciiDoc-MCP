@@ -15,7 +15,7 @@ This chapter describes the system's boundaries, its users, and its interactions 
 
 === Business Context
 
-From a business perspective, the MCP Documentation Server acts as a specialized middleware that enables technical users to interact with documentation projects more effectively. It abstracts away the complexity of file-based document structures.
+From a business perspective, dacli acts as a specialized middleware that enables technical users to interact with documentation projects more effectively. It abstracts away the complexity of file-based document structures and provides both a CLI for direct use and an MCP server for LLM integration.
 
 [plantuml, business-context, svg]
 ----
@@ -23,7 +23,7 @@ From a business perspective, the MCP Documentation Server acts as a specialized 
 !include <C4/C4_Context>
 LAYOUT_WITH_LEGEND()
 
-title Business Context for MCP Documentation Server
+title Business Context for dacli
 
 Person(developer, "Software Developer / Architect", "Works on code and documentation.")
 Person(doc_eng, "Documentation Engineer", "Manages large documentation projects.")
@@ -40,7 +40,7 @@ Rel_Back(dacli, doc_project, "Reads from and writes to")
 
 === Technical Context
 
-On a technical level, the system is accessed by an MCP-compliant client. It interacts directly with the file system to read documentation source files and write back modifications. It is also aware of the version control system (Git) to ensure workflow compatibility.
+On a technical level, the MCP server is spawned as a subprocess by an MCP-compliant client and communicates via stdio (standard input/output). The CLI tool can be invoked directly from the shell. Both interfaces interact directly with the file system to read documentation source files and write back modifications.
 
 [plantuml, technical-context, svg]
 ----
@@ -48,16 +48,18 @@ On a technical level, the system is accessed by an MCP-compliant client. It inte
 !include <C4/C4_Context>
 LAYOUT_WITH_LEGEND()
 
-title Technical Context for MCP Documentation Server
+title Technical Context for dacli
 
-System(mcp_client, "MCP Client (e.g., LLM Agent)", "Initiates requests to view or modify documentation.")
+System(mcp_client, "MCP Client (e.g., Claude Desktop)", "Spawns dacli-mcp and sends tool calls.")
+Person(user, "Developer", "Invokes dacli CLI directly.")
 
-System(dacli, "dacli", "The system being built.")
+System(dacli, "dacli", "CLI tool and MCP server.")
 
 System_Ext(file_system, "File System", "Stores the AsciiDoc/Markdown source files.")
 System_Ext(git, "Git Version Control", "Tracks changes to the documentation files.")
 
-Rel(mcp_client, dacli, "Sends requests to", "MCP Protocol over HTTPS")
+Rel(mcp_client, dacli, "Spawns and communicates via", "stdio (MCP Protocol)")
+Rel(user, dacli, "Executes commands", "Shell")
 Rel(dacli, file_system, "Reads/Writes files", "File System API")
 Rel(dacli, git, "Is compatible with", "Standard Git commands")
 @enduml
