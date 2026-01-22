@@ -305,6 +305,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "pathspec" },
+    { name = "pydocket" },
     { name = "pyyaml" },
     { name = "uvicorn" },
 ]
@@ -323,6 +324,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "fastmcp", specifier = ">=2.14.0,<3" },
     { name = "pathspec", specifier = ">=1.0.3" },
+    { name = "pydocket", specifier = "<0.17" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24.0" },
     { name = "pytest-html", marker = "extra == 'dev'", specifier = ">=4.0.0" },
