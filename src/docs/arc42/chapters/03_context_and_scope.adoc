@@ -28,13 +28,13 @@ title Business Context for MCP Documentation Server
 Person(developer, "Software Developer / Architect", "Works on code and documentation.")
 Person(doc_eng, "Documentation Engineer", "Manages large documentation projects.")
 
-System(mcp_server, "MCP Documentation Server", "Provides structured, hierarchical access to AsciiDoc/Markdown projects.")
+System(dacli, "dacli", "Provides structured, hierarchical access to AsciiDoc/Markdown projects.")
 
 System_Ext(doc_project, "Documentation Project", "A collection of AsciiDoc/Markdown files in a Git repository.")
 
-Rel(developer, mcp_server, "Uses", "To analyze, update, and maintain documentation with LLM assistance.")
-Rel(doc_eng, mcp_server, "Uses", "To manage and navigate large-scale documentation projects.")
-Rel_Back(mcp_server, doc_project, "Reads from and writes to")
+Rel(developer, dacli, "Uses", "To analyze, update, and maintain documentation with LLM assistance.")
+Rel(doc_eng, dacli, "Uses", "To manage and navigate large-scale documentation projects.")
+Rel_Back(dacli, doc_project, "Reads from and writes to")
 @enduml
 ----
 
@@ -52,13 +52,13 @@ title Technical Context for MCP Documentation Server
 
 System(mcp_client, "MCP Client (e.g., LLM Agent)", "Initiates requests to view or modify documentation.")
 
-System(mcp_server, "MCP Documentation Server", "The system being built.")
+System(dacli, "dacli", "The system being built.")
 
 System_Ext(file_system, "File System", "Stores the AsciiDoc/Markdown source files.")
 System_Ext(git, "Git Version Control", "Tracks changes to the documentation files.")
 
-Rel(mcp_client, mcp_server, "Sends requests to", "MCP Protocol over HTTPS")
-Rel(mcp_server, file_system, "Reads/Writes files", "File System API")
-Rel(mcp_server, git, "Is compatible with", "Standard Git commands")
+Rel(mcp_client, dacli, "Sends requests to", "MCP Protocol over HTTPS")
+Rel(dacli, file_system, "Reads/Writes files", "File System API")
+Rel(dacli, git, "Is compatible with", "Standard Git commands")
 @enduml
 ----

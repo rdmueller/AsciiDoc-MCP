@@ -21,8 +21,8 @@ The CLI is included with the MCP Documentation Server. Install it globally:
 [source,bash]
 ----
 # Clone and install
-git clone https://github.com/rdmueller/AsciiDoc-MCP.git
-cd AsciiDoc-MCP
+git clone https://github.com/docToolchain/dacli.git
+cd dacli
 uv tool install .
 
 # Verify installation

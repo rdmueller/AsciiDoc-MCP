@@ -1,10 +1,12 @@
-# MCP Documentation Server
+# dacli - Documentation Access CLI
 
-[![CI](https://github.com/rdmueller/AsciiDoc-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/rdmueller/AsciiDoc-MCP/actions/workflows/ci.yml)
+[![CI](https://github.com/docToolchain/dacli/actions/workflows/ci.yml/badge.svg)](https://github.com/docToolchain/dacli/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Enables LLM interaction with large AsciiDoc/Markdown documentation projects through hierarchical, content-aware access via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
+Navigate and query large documentation projects. Supports AsciiDoc and Markdown with hierarchical, content-aware access. Available as CLI tool and [MCP](https://modelcontextprotocol.io/) server for LLM integration.
+
+Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 
 ## Features
 
@@ -21,63 +23,16 @@ Enables LLM interaction with large AsciiDoc/Markdown documentation projects thro
 
 ```bash
 # Clone the repository
-git clone https://github.com/rdmueller/AsciiDoc-MCP.git
-cd AsciiDoc-MCP
+git clone https://github.com/docToolchain/dacli.git
+cd dacli
 
 # Install dependencies
 uv sync
 ```
 
-### Running the Server
+### CLI Usage
 
 ```bash
-uv run python -m mcp_server --docs-root /path/to/your/docs
-```
-
-### Claude Desktop Configuration
-
-Add to your Claude Desktop config (`~/.config/claude-desktop/config.json` on Linux, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-```json
-{
-  "mcpServers": {
-    "asciidoc-mcp": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory", "/path/to/AsciiDoc-MCP",
-        "python", "-m", "mcp_server",
-        "--docs-root", "/path/to/your/documentation"
-      ]
-    }
-  }
-}
-```
-
-## Available MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `get_structure` | Get hierarchical document structure with configurable depth |
-| `get_section` | Read content of a specific section by path |
-| `get_sections_at_level` | Get all sections at a specific nesting level |
-| `search` | Full-text search across documentation |
-| `get_elements` | Get code blocks, tables, images, and other elements |
-| `get_metadata` | Get project or section metadata (word count, timestamps) |
-| `validate_structure` | Validate documentation structure |
-| `update_section` | Update section content with optimistic locking |
-| `insert_content` | Insert new content before/after sections |
-
-For detailed tool documentation, see the [User Manual](src/docs/50-user-manual/).
-
-## CLI Interface (dacli)
-
-For LLMs without MCP support, a command-line interface is available:
-
-```bash
-# Install
-uv sync
-
 # Show help
 uv run dacli --help
 
@@ -98,6 +53,48 @@ All commands output text by default for human readability. Use `--format json` o
 
 For full CLI documentation, see [06_cli_specification.adoc](src/docs/spec/06_cli_specification.adoc).
 
+### MCP Server (for LLM integration)
+
+```bash
+uv run dacli-mcp --docs-root /path/to/your/docs
+```
+
+#### Claude Desktop Configuration
+
+Add to your Claude Desktop config (`~/.config/claude-desktop/config.json` on Linux, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "dacli": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory", "/path/to/dacli",
+        "dacli-mcp",
+        "--docs-root", "/path/to/your/documentation"
+      ]
+    }
+  }
+}
+```
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_structure` | Get hierarchical document structure with configurable depth |
+| `get_section` | Read content of a specific section by path |
+| `get_sections_at_level` | Get all sections at a specific nesting level |
+| `search` | Full-text search across documentation |
+| `get_elements` | Get code blocks, tables, images, and other elements |
+| `get_metadata` | Get project or section metadata (word count, timestamps) |
+| `validate_structure` | Validate documentation structure |
+| `update_section` | Update section content with optimistic locking |
+| `insert_content` | Insert new content before/after sections |
+
+For detailed tool documentation, see the [User Manual](src/docs/50-user-manual/).
+
 ## Development
 
 ```bash
@@ -116,7 +113,7 @@ uv run ruff format src tests
 
 ## Architecture
 
-The server uses an in-memory index built from parsed documentation files at startup. Key components:
+The tool uses an in-memory index built from parsed documentation files at startup. Key components:
 
 - **Document Parsers** - Parse AsciiDoc (with include resolution) and Markdown
 - **Structure Index** - In-memory hierarchical index for fast lookups

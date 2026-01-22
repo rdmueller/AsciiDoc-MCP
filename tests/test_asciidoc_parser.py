@@ -22,7 +22,7 @@ class TestAsciidocStructureParserBasic:
 
     def test_parser_can_be_instantiated(self):
         """Test that AsciidocStructureParser can be instantiated with a base path."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=Path("."))
         assert parser is not None
@@ -30,14 +30,14 @@ class TestAsciidocStructureParserBasic:
 
     def test_parser_accepts_max_include_depth(self):
         """Test that parser accepts max_include_depth parameter."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=Path("."), max_include_depth=10)
         assert parser.max_include_depth == 10
 
     def test_parser_default_max_include_depth_is_20(self):
         """Test that default max_include_depth is 20."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=Path("."))
         assert parser.max_include_depth == 20
@@ -48,7 +48,7 @@ class TestSectionExtraction:
 
     def test_parse_file_returns_asciidoc_document(self):
         """Test that parse_file returns an AsciidocDocument."""
-        from mcp_server.asciidoc_parser import AsciidocDocument, AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocDocument, AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -57,7 +57,7 @@ class TestSectionExtraction:
 
     def test_parse_file_extracts_document_title(self):
         """Test that document title is extracted."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -66,7 +66,7 @@ class TestSectionExtraction:
 
     def test_parse_file_extracts_sections(self):
         """Test that sections are extracted from the document."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -76,7 +76,7 @@ class TestSectionExtraction:
 
     def test_section_levels_are_correct(self):
         """Test that section levels are correctly determined."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -95,7 +95,7 @@ class TestSectionExtraction:
 
     def test_nested_sections_hierarchy(self):
         """Test that nested sections form correct hierarchy."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -113,7 +113,7 @@ class TestSectionPaths:
 
     def test_root_section_path(self):
         """Test that root section (document title) has empty path."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -124,7 +124,7 @@ class TestSectionPaths:
 
     def test_chapter_section_path(self):
         """Test that chapter sections have paths without document title prefix."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -136,7 +136,7 @@ class TestSectionPaths:
 
     def test_subsection_path(self):
         """Test that subsections have hierarchical paths with dot-separation."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -152,7 +152,7 @@ class TestSourceLocation:
 
     def test_section_has_source_location(self):
         """Test that sections have source location."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -164,7 +164,7 @@ class TestSourceLocation:
 
     def test_chapter_source_location(self):
         """Test that chapter has correct source location."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -175,7 +175,7 @@ class TestSourceLocation:
 
     def test_section_has_end_line(self):
         """Test that sections have end_line calculated."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -185,7 +185,7 @@ class TestSourceLocation:
 
     def test_section_end_line_is_before_next_section(self):
         """Test that section end_line is correctly calculated."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -203,7 +203,7 @@ class TestDocumentAttributes:
 
     def test_parse_attributes_from_document(self):
         """Test that document attributes are extracted."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_attributes.adoc")
@@ -213,7 +213,7 @@ class TestDocumentAttributes:
 
     def test_parse_multiple_attributes(self):
         """Test that multiple attributes are extracted."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_attributes.adoc")
@@ -225,7 +225,7 @@ class TestDocumentAttributes:
 
     def test_attribute_in_title_is_resolved(self):
         """Test that attribute references in title are resolved."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_attributes.adoc")
@@ -239,7 +239,7 @@ class TestIncludeDirectives:
 
     def test_include_directive_is_recorded(self):
         """Test that include directives are recorded in includes list."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_include.adoc")
@@ -249,7 +249,7 @@ class TestIncludeDirectives:
 
     def test_include_directive_source_location(self):
         """Test that include directive has correct source location."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_include.adoc")
@@ -259,7 +259,7 @@ class TestIncludeDirectives:
 
     def test_included_sections_are_merged(self):
         """Test that sections from included file are merged into document."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_include.adoc")
@@ -275,7 +275,7 @@ class TestIncludeDirectives:
 
     def test_included_section_has_resolved_from_info(self):
         """Test that included sections track their source file."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_include.adoc")
@@ -303,7 +303,7 @@ class TestElementExtraction:
 
     def test_code_block_is_extracted(self):
         """Test that code blocks are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -314,7 +314,7 @@ class TestElementExtraction:
 
     def test_code_block_source_location(self):
         """Test that code block has correct source location."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -324,7 +324,7 @@ class TestElementExtraction:
 
     def test_code_block_parent_section(self):
         """Test that code block has correct parent section."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -334,7 +334,7 @@ class TestElementExtraction:
 
     def test_table_is_extracted(self):
         """Test that tables are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -344,7 +344,7 @@ class TestElementExtraction:
 
     def test_image_is_extracted(self):
         """Test that images are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -355,7 +355,7 @@ class TestElementExtraction:
 
     def test_admonition_is_extracted(self):
         """Test that admonitions are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -365,7 +365,7 @@ class TestElementExtraction:
 
     def test_plantuml_block_is_extracted(self):
         """Test that PlantUML blocks are extracted as elements (AC-ADOC-06)."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -375,7 +375,7 @@ class TestElementExtraction:
 
     def test_plantuml_block_has_attributes(self):
         """Test that PlantUML block has name and format attributes."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -389,7 +389,7 @@ class TestElementExtraction:
         import tempfile
         from pathlib import Path
 
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         # Create a temporary test file with PlantUML block without attributes
         with tempfile.NamedTemporaryFile(
@@ -427,7 +427,7 @@ Alice -> Bob: Test
 
     def test_unordered_list_is_extracted(self):
         """Test that unordered lists are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -438,7 +438,7 @@ Alice -> Bob: Test
 
     def test_ordered_list_is_extracted(self):
         """Test that ordered lists are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -449,7 +449,7 @@ Alice -> Bob: Test
 
     def test_description_list_is_extracted(self):
         """Test that description lists are extracted as elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -460,7 +460,7 @@ Alice -> Bob: Test
 
     def test_list_has_parent_section(self):
         """Test that list element has correct parent section."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -477,7 +477,7 @@ class TestCrossReferences:
 
     def test_cross_reference_is_extracted(self):
         """Test that cross-references are extracted."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_xrefs.adoc")
@@ -486,7 +486,7 @@ class TestCrossReferences:
 
     def test_cross_reference_target(self):
         """Test that cross-reference target is captured."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_xrefs.adoc")
@@ -497,7 +497,7 @@ class TestCrossReferences:
 
     def test_cross_reference_with_text(self):
         """Test that cross-reference display text is captured."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_xrefs.adoc")
@@ -511,7 +511,7 @@ class TestCrossReferences:
 
     def test_cross_reference_source_location(self):
         """Test that cross-reference has source location."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_xrefs.adoc")
@@ -525,7 +525,7 @@ class TestInterfaceMethods:
 
     def test_get_section_returns_section_by_path(self):
         """Test that get_section returns correct section by path."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -536,7 +536,7 @@ class TestInterfaceMethods:
 
     def test_get_section_returns_none_for_invalid_path(self):
         """Test that get_section returns None for non-existent path."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -546,7 +546,7 @@ class TestInterfaceMethods:
 
     def test_get_section_returns_nested_section(self):
         """Test that get_section returns deeply nested section."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -557,7 +557,7 @@ class TestInterfaceMethods:
 
     def test_get_elements_returns_all_elements(self):
         """Test that get_elements returns all elements."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -567,7 +567,7 @@ class TestInterfaceMethods:
 
     def test_get_elements_filters_by_type(self):
         """Test that get_elements filters by element type."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
@@ -578,7 +578,7 @@ class TestInterfaceMethods:
 
     def test_get_elements_returns_empty_for_no_match(self):
         """Test that get_elements returns empty list for non-existent type."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
@@ -592,7 +592,7 @@ class TestCircularIncludeDetection:
 
     def test_circular_include_raises_error(self):
         """Test that circular includes raise CircularIncludeError."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser, CircularIncludeError
+        from dacli.asciidoc_parser import AsciidocStructureParser, CircularIncludeError
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         with pytest.raises(CircularIncludeError):
@@ -600,7 +600,7 @@ class TestCircularIncludeDetection:
 
     def test_circular_include_error_contains_path_info(self):
         """Test that CircularIncludeError contains information about the cycle."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser, CircularIncludeError
+        from dacli.asciidoc_parser import AsciidocStructureParser, CircularIncludeError
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         try:
@@ -616,7 +616,7 @@ class TestEdgeCases:
 
     def test_parse_nonexistent_file_raises_error(self):
         """Test that parsing nonexistent file raises FileNotFoundError."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         with pytest.raises(FileNotFoundError):
@@ -624,7 +624,7 @@ class TestEdgeCases:
 
     def test_parse_empty_file(self):
         """Test that parsing empty file returns document with no sections."""
-        from mcp_server.asciidoc_parser import AsciidocStructureParser
+        from dacli.asciidoc_parser import AsciidocStructureParser
 
         # Create empty file
         empty_file = FIXTURES_DIR / "empty.adoc"

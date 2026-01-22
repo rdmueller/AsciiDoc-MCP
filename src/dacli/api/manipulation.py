@@ -9,7 +9,7 @@ from pathlib import Path as FilePath
 
 from fastapi import APIRouter, HTTPException, Path
 
-from mcp_server.api.models import (
+from dacli.api.models import (
     ErrorDetail,
     ErrorResponse,
     InsertContentRequest,
@@ -18,9 +18,9 @@ from mcp_server.api.models import (
     UpdateSectionRequest,
     UpdateSectionResponse,
 )
-from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteError
-from mcp_server.models import Section
-from mcp_server.structure_index import StructureIndex
+from dacli.file_handler import FileReadError, FileSystemHandler, FileWriteError
+from dacli.models import Section
+from dacli.structure_index import StructureIndex
 
 router = APIRouter(prefix="/api/v1", tags=["Manipulation"])
 

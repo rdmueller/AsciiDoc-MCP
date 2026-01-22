@@ -18,7 +18,7 @@ from typing import Any
 
 import yaml
 
-from mcp_server.models import Element, Section, SourceLocation
+from dacli.models import Element, Section, SourceLocation
 
 logger = logging.getLogger(__name__)
 

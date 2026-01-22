@@ -17,7 +17,7 @@ class TestSourceLocation:
 
     def test_create_source_location_basic(self):
         """Test creating a basic SourceLocation with file and line."""
-        from mcp_server.models import SourceLocation
+        from dacli.models import SourceLocation
 
         loc = SourceLocation(file=Path("docs/intro.adoc"), line=42)
 
@@ -27,7 +27,7 @@ class TestSourceLocation:
 
     def test_create_source_location_with_resolved_from(self):
         """Test SourceLocation with include resolution tracking."""
-        from mcp_server.models import SourceLocation
+        from dacli.models import SourceLocation
 
         loc = SourceLocation(
             file=Path("chapters/intro.adoc"),
@@ -41,7 +41,7 @@ class TestSourceLocation:
 
     def test_source_location_line_is_positive(self):
         """Test that line numbers are 1-based (positive integers)."""
-        from mcp_server.models import SourceLocation
+        from dacli.models import SourceLocation
 
         loc = SourceLocation(file=Path("test.adoc"), line=1)
         assert loc.line >= 1
@@ -52,7 +52,7 @@ class TestSection:
 
     def test_create_section_basic(self):
         """Test creating a basic section."""
-        from mcp_server.models import Section, SourceLocation
+        from dacli.models import Section, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=5)
         section = Section(
@@ -71,7 +71,7 @@ class TestSection:
 
     def test_create_section_with_children(self):
         """Test section with child sections."""
-        from mcp_server.models import Section, SourceLocation
+        from dacli.models import Section, SourceLocation
 
         loc1 = SourceLocation(file=Path("doc.adoc"), line=5)
         loc2 = SourceLocation(file=Path("doc.adoc"), line=15)
@@ -95,7 +95,7 @@ class TestSection:
 
     def test_create_section_with_anchor(self):
         """Test section with explicit anchor."""
-        from mcp_server.models import Section, SourceLocation
+        from dacli.models import Section, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=5)
         section = Section(
@@ -114,7 +114,7 @@ class TestElement:
 
     def test_create_code_element(self):
         """Test creating a code block element."""
-        from mcp_server.models import Element, SourceLocation
+        from dacli.models import Element, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=20)
         element = Element(
@@ -131,7 +131,7 @@ class TestElement:
 
     def test_create_table_element(self):
         """Test creating a table element."""
-        from mcp_server.models import Element, SourceLocation
+        from dacli.models import Element, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=30)
         element = Element(
@@ -147,7 +147,7 @@ class TestElement:
 
     def test_create_image_element(self):
         """Test creating an image element."""
-        from mcp_server.models import Element, SourceLocation
+        from dacli.models import Element, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=40)
         element = Element(
@@ -168,7 +168,7 @@ class TestElement:
 
     def test_create_plantuml_element(self):
         """Test creating a PlantUML diagram element."""
-        from mcp_server.models import Element, SourceLocation
+        from dacli.models import Element, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=50)
         element = Element(
@@ -188,7 +188,7 @@ class TestElement:
 
     def test_create_admonition_element(self):
         """Test creating an admonition element."""
-        from mcp_server.models import Element, SourceLocation
+        from dacli.models import Element, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=60)
         element = Element(
@@ -210,7 +210,7 @@ class TestCrossReference:
 
     def test_create_internal_reference(self):
         """Test creating an internal cross-reference."""
-        from mcp_server.models import CrossReference, SourceLocation
+        from dacli.models import CrossReference, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=25)
         ref = CrossReference(
@@ -226,7 +226,7 @@ class TestCrossReference:
 
     def test_create_internal_reference_with_text(self):
         """Test internal reference with custom link text."""
-        from mcp_server.models import CrossReference, SourceLocation
+        from dacli.models import CrossReference, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=25)
         ref = CrossReference(
@@ -240,7 +240,7 @@ class TestCrossReference:
 
     def test_create_external_reference(self):
         """Test creating an external cross-reference (xref)."""
-        from mcp_server.models import CrossReference, SourceLocation
+        from dacli.models import CrossReference, SourceLocation
 
         loc = SourceLocation(file=Path("doc.adoc"), line=30)
         ref = CrossReference(
@@ -260,7 +260,7 @@ class TestDocument:
 
     def test_create_document_basic(self):
         """Test creating a basic document."""
-        from mcp_server.models import Document
+        from dacli.models import Document
 
         doc = Document(
             file_path=Path("docs/intro.adoc"),
@@ -274,7 +274,7 @@ class TestDocument:
 
     def test_create_document_with_sections(self):
         """Test document with sections."""
-        from mcp_server.models import Document, Section, SourceLocation
+        from dacli.models import Document, Section, SourceLocation
 
         loc = SourceLocation(file=Path("docs/intro.adoc"), line=1)
         section = Section(
@@ -294,7 +294,7 @@ class TestDocument:
 
     def test_create_document_with_elements(self):
         """Test document with elements."""
-        from mcp_server.models import Document, Element, SourceLocation
+        from dacli.models import Document, Element, SourceLocation
 
         loc = SourceLocation(file=Path("docs/intro.adoc"), line=10)
         element = Element(
@@ -318,7 +318,7 @@ class TestJSONSerialization:
 
     def test_source_location_to_dict(self):
         """Test SourceLocation converts to dict for JSON."""
-        from mcp_server.models import SourceLocation, model_to_dict
+        from dacli.models import SourceLocation, model_to_dict
 
         loc = SourceLocation(file=Path("doc.adoc"), line=42)
         data = model_to_dict(loc)
@@ -330,7 +330,7 @@ class TestJSONSerialization:
 
     def test_source_location_with_resolved_from_to_dict(self):
         """Test SourceLocation with resolved_from converts to dict."""
-        from mcp_server.models import SourceLocation, model_to_dict
+        from dacli.models import SourceLocation, model_to_dict
 
         loc = SourceLocation(
             file=Path("chapters/intro.adoc"),
@@ -343,7 +343,7 @@ class TestJSONSerialization:
 
     def test_section_to_dict(self):
         """Test Section converts to dict for JSON."""
-        from mcp_server.models import Section, SourceLocation, model_to_dict
+        from dacli.models import Section, SourceLocation, model_to_dict
 
         loc = SourceLocation(file=Path("doc.adoc"), line=5)
         section = Section(
@@ -364,7 +364,7 @@ class TestJSONSerialization:
 
     def test_section_with_children_to_dict(self):
         """Test Section with children converts to dict recursively."""
-        from mcp_server.models import Section, SourceLocation, model_to_dict
+        from dacli.models import Section, SourceLocation, model_to_dict
 
         loc1 = SourceLocation(file=Path("doc.adoc"), line=5)
         loc2 = SourceLocation(file=Path("doc.adoc"), line=15)
@@ -388,7 +388,7 @@ class TestJSONSerialization:
 
     def test_element_to_dict(self):
         """Test Element converts to dict for JSON."""
-        from mcp_server.models import Element, SourceLocation, model_to_dict
+        from dacli.models import Element, SourceLocation, model_to_dict
 
         loc = SourceLocation(file=Path("doc.adoc"), line=20)
         element = Element(
@@ -405,7 +405,7 @@ class TestJSONSerialization:
 
     def test_document_to_dict(self):
         """Test Document converts to dict for JSON."""
-        from mcp_server.models import Document, model_to_dict
+        from dacli.models import Document, model_to_dict
 
         doc = Document(
             file_path=Path("docs/intro.adoc"),
@@ -420,7 +420,7 @@ class TestJSONSerialization:
 
     def test_cross_reference_to_dict(self):
         """Test CrossReference converts to dict for JSON."""
-        from mcp_server.models import CrossReference, SourceLocation, model_to_dict
+        from dacli.models import CrossReference, SourceLocation, model_to_dict
 
         loc = SourceLocation(file=Path("doc.adoc"), line=25)
         ref = CrossReference(

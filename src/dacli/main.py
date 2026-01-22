@@ -1,21 +1,21 @@
-"""Main entry point for MCP Documentation Server.
+"""Main entry point for dacli MCP server.
 
 This module provides the CLI entry point for running the MCP server.
 The server can be configured via command line arguments or environment variables.
 
 Usage:
-    uv run python -m mcp_server --docs-root /path/to/docs
+    uv run dacli-mcp --docs-root /path/to/docs
 
     Or with environment variable:
-    PROJECT_PATH=/path/to/docs uv run python -m mcp_server
+    PROJECT_PATH=/path/to/docs uv run dacli-mcp
 
 MCP Client Configuration (e.g., Claude Desktop):
     {
         "mcpServers": {
-            "asciidoc-mcp": {
+            "dacli": {
                 "command": "uv",
-                "args": ["run", "python", "-m", "mcp_server"],
-                "cwd": "/path/to/asciidoc-mcp",
+                "args": ["run", "dacli-mcp"],
+                "cwd": "/path/to/dacli",
                 "env": {"PROJECT_PATH": "/path/to/documentation"}
             }
         }
@@ -27,15 +27,15 @@ import os
 import sys
 from pathlib import Path
 
-from mcp_server import __version__
-from mcp_server.mcp_app import create_mcp_server
+from dacli import __version__
+from dacli.mcp_app import create_mcp_server
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
-        prog="mcp-docs-server",
-        description="MCP Documentation Server - LLM interaction with documentation",
+        prog="dacli-mcp",
+        description="dacli MCP server - LLM interaction with documentation",
     )
     parser.add_argument(
         "--version",

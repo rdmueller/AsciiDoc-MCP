@@ -4,7 +4,7 @@
 
 == Overview
 
-The MCP Documentation Server enables LLM interaction with AsciiDoc and Markdown documentation projects. This guide covers installation on all supported platforms.
+The dacli - Documentation Access enables LLM interaction with AsciiDoc and Markdown documentation projects. This guide covers installation on all supported platforms.
 
 == Prerequisites
 
@@ -45,8 +45,8 @@ NOTE: uv will automatically download and manage Python 3.12+ when you run `uv sy
 
 [source,bash]
 ----
-git clone https://github.com/rdmueller/AsciiDoc-MCP.git
-cd AsciiDoc-MCP
+git clone https://github.com/docToolchain/dacli.git
+cd dacli
 ----
 
 === Option A: Global Installation (Recommended)
@@ -86,7 +86,7 @@ This creates a virtual environment. Run commands with `uv run`:
 [source,bash]
 ----
 uv run dacli --version
-uv run python -m mcp_server --help
+uv run dacli-mcp --help
 ----
 
 === Verify Installation
@@ -107,14 +107,14 @@ dacli, version 0.1.0
 [source,bash]
 ----
 mcp-docs-server --help
-# or: uv run python -m mcp_server --help
+# or: uv run dacli-mcp --help
 ----
 
 Expected output:
 ----
-usage: mcp_server [-h] [--docs-root DOCS_ROOT]
+usage: dacli-mcp [-h] [--docs-root DOCS_ROOT]
 
-MCP Documentation Server
+dacli - Documentation Access
 
 options:
   -h, --help            show this help message and exit
@@ -148,12 +148,12 @@ Windows::
 ----
 {
   "mcpServers": {
-    "asciidoc-mcp": {
+    "dacli": {
       "command": "uv",
       "args": [
         "run",
-        "--directory", "/path/to/AsciiDoc-MCP",
-        "python", "-m", "mcp_server",
+        "--directory", "/path/to/dacli",
+        "dacli-mcp",
         "--docs-root", "/path/to/your/documentation"
       ]
     }
@@ -161,7 +161,7 @@ Windows::
 }
 ----
 
-IMPORTANT: Replace `/path/to/AsciiDoc-MCP` with the actual path where you cloned the repository, and `/path/to/your/documentation` with the path to your documentation project.
+IMPORTANT: Replace `/path/to/dacli` with the actual path where you cloned the repository, and `/path/to/your/documentation` with the path to your documentation project.
 
 === Claude Code (CLI)
 
@@ -171,12 +171,12 @@ Add to your Claude Code MCP settings (`~/.config/claude-code/settings.json` or v
 ----
 {
   "mcpServers": {
-    "asciidoc-mcp": {
+    "dacli": {
       "command": "uv",
       "args": [
         "run",
-        "--directory", "/path/to/AsciiDoc-MCP",
-        "python", "-m", "mcp_server",
+        "--directory", "/path/to/dacli",
+        "dacli-mcp",
         "--docs-root", "/path/to/your/documentation"
       ]
     }
@@ -190,12 +190,12 @@ Add to your Claude Code MCP settings (`~/.config/claude-code/settings.json` or v
 ----
 {
   "mcpServers": {
-    "asciidoc-mcp": {
+    "dacli": {
       "command": "uv",
       "args": [
         "run",
-        "--directory", "/path/to/AsciiDoc-MCP",
-        "python", "-m", "mcp_server",
+        "--directory", "/path/to/dacli",
+        "dacli-mcp",
         "--docs-root", "/path/to/documentation"
       ]
     }
@@ -211,7 +211,7 @@ For testing or debugging, run the server directly:
 
 [source,bash]
 ----
-uv run python -m mcp_server --docs-root /path/to/your/docs
+uv run dacli-mcp --docs-root /path/to/your/docs
 ----
 
 === Using the CLI
@@ -259,7 +259,7 @@ Dependencies are not installed.
 **Solution:** Run `uv sync` in the project directory:
 [source,bash]
 ----
-cd /path/to/AsciiDoc-MCP
+cd /path/to/dacli
 uv sync
 ----
 
@@ -268,14 +268,14 @@ uv sync
 **Check:**
 
 1. The paths in your config are absolute paths (not relative)
-2. The `--directory` path points to the AsciiDoc-MCP folder
+2. The `--directory` path points to the dacli folder
 3. The `--docs-root` path points to your documentation folder
 4. Both paths exist and are accessible
 
 **Debug:** Try running the server manually to see error messages:
 [source,bash]
 ----
-uv run --directory /path/to/AsciiDoc-MCP python -m mcp_server --docs-root /path/to/docs
+uv run --directory /path/to/dacli dacli-mcp --docs-root /path/to/docs
 ----
 
 ==== "Permission denied" on Linux/macOS
@@ -288,7 +288,7 @@ chmod -R u+r /path/to/your/docs
 
 === Getting Help
 
-- GitHub Issues: https://github.com/rdmueller/AsciiDoc-MCP/issues
+- GitHub Issues: https://github.com/docToolchain/dacli/issues
 - Documentation: See the other files in this user manual
 
 == Updating
@@ -297,7 +297,7 @@ To update to the latest version:
 
 [source,bash]
 ----
-cd /path/to/AsciiDoc-MCP
+cd /path/to/dacli
 git pull
 uv sync
 ----
@@ -309,8 +309,8 @@ To remove the server:
 [source,bash]
 ----
 # Remove the repository
-rm -rf /path/to/AsciiDoc-MCP
+rm -rf /path/to/dacli
 
 # Remove MCP configuration from Claude Desktop
-# (Edit your config.json and remove the "asciidoc-mcp" entry)
+# (Edit your config.json and remove the "dacli" entry)
 ----

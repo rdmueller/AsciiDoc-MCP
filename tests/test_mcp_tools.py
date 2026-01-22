@@ -10,7 +10,7 @@ import pytest
 import pytest_asyncio
 from fastmcp.client import Client
 
-from mcp_server.mcp_app import create_mcp_server
+from dacli.mcp_app import create_mcp_server
 
 
 @pytest.fixture

@@ -8,7 +8,7 @@ class TestLoadGitignoreSpec:
 
     def test_loads_gitignore_from_docs_root(self, tmp_path: Path):
         """Should load .gitignore from docs root directory."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         # Create .gitignore
         gitignore = tmp_path / ".gitignore"
@@ -23,7 +23,7 @@ class TestLoadGitignoreSpec:
 
     def test_returns_none_when_no_gitignore(self, tmp_path: Path):
         """Should return None when .gitignore doesn't exist."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         spec = load_gitignore_spec(tmp_path)
 
@@ -31,7 +31,7 @@ class TestLoadGitignoreSpec:
 
     def test_handles_empty_gitignore(self, tmp_path: Path):
         """Should handle empty .gitignore file."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         gitignore = tmp_path / ".gitignore"
         gitignore.write_text("")
@@ -44,7 +44,7 @@ class TestLoadGitignoreSpec:
 
     def test_handles_comments_in_gitignore(self, tmp_path: Path):
         """Should handle comments in .gitignore."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         gitignore = tmp_path / ".gitignore"
         gitignore.write_text("# This is a comment\nnode_modules/\n# Another comment\n")
@@ -56,7 +56,7 @@ class TestLoadGitignoreSpec:
 
     def test_handles_negation_patterns(self, tmp_path: Path):
         """Should handle negation patterns in .gitignore."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         gitignore = tmp_path / ".gitignore"
         gitignore.write_text("*.log\n!important.log\n")
@@ -70,7 +70,7 @@ class TestLoadGitignoreSpec:
 
     def test_loads_nested_gitignore_files(self, tmp_path: Path):
         """Should load .gitignore from parent directories up to docs root."""
-        from mcp_server.file_utils import load_gitignore_spec
+        from dacli.file_utils import load_gitignore_spec
 
         # Create root .gitignore
         gitignore = tmp_path / ".gitignore"
@@ -87,7 +87,7 @@ class TestFindDocFiles:
 
     def test_finds_adoc_files(self, tmp_path: Path):
         """Should find .adoc files in directory."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create test files
         (tmp_path / "doc1.adoc").write_text("= Doc 1")
@@ -101,7 +101,7 @@ class TestFindDocFiles:
 
     def test_finds_md_files(self, tmp_path: Path):
         """Should find .md files in directory."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         (tmp_path / "doc1.md").write_text("# Doc 1")
         (tmp_path / "doc2.md").write_text("# Doc 2")
@@ -114,7 +114,7 @@ class TestFindDocFiles:
 
     def test_finds_files_recursively(self, tmp_path: Path):
         """Should find files in subdirectories."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create nested structure
         subdir = tmp_path / "chapters"
@@ -128,7 +128,7 @@ class TestFindDocFiles:
 
     def test_excludes_gitignored_files(self, tmp_path: Path):
         """Should exclude files matching .gitignore patterns."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create .gitignore
         (tmp_path / ".gitignore").write_text("node_modules/\n")
@@ -146,7 +146,7 @@ class TestFindDocFiles:
 
     def test_excludes_hidden_directories(self, tmp_path: Path):
         """Should exclude hidden directories (starting with .) by default."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create files
         (tmp_path / "doc.adoc").write_text("= Doc")
@@ -161,7 +161,7 @@ class TestFindDocFiles:
 
     def test_includes_all_files_when_no_gitignore(self, tmp_path: Path):
         """Should include all files when no .gitignore exists (except hidden)."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create files (no .gitignore)
         (tmp_path / "doc.adoc").write_text("= Doc")
@@ -175,7 +175,7 @@ class TestFindDocFiles:
 
     def test_respects_no_gitignore_flag(self, tmp_path: Path):
         """Should include gitignored files when respect_gitignore=False."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create .gitignore
         (tmp_path / ".gitignore").write_text("ignored/\n")
@@ -193,7 +193,7 @@ class TestFindDocFiles:
 
     def test_handles_complex_gitignore_patterns(self, tmp_path: Path):
         """Should handle complex gitignore patterns."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create .gitignore with various patterns
         (tmp_path / ".gitignore").write_text(
@@ -225,7 +225,7 @@ class TestIntegration:
 
     def test_typical_node_project_structure(self, tmp_path: Path):
         """Should correctly filter a typical Node.js project with docs."""
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create typical .gitignore
         (tmp_path / ".gitignore").write_text(
@@ -266,7 +266,7 @@ class TestIntegration:
         """Should handle directories with many ignored files efficiently."""
         import time
 
-        from mcp_server.file_utils import find_doc_files
+        from dacli.file_utils import find_doc_files
 
         # Create .gitignore
         (tmp_path / ".gitignore").write_text("ignored/\n")

@@ -8,27 +8,27 @@ import subprocess
 import sys
 
 
-def test_mcp_server_module_importable():
-    """Test that mcp_server module can be imported."""
-    import mcp_server
-    assert hasattr(mcp_server, "__version__")
+def test_dacli_module_importable():
+    """Test that dacli module can be imported."""
+    import dacli
+    assert hasattr(dacli, "__version__")
 
 
-def test_mcp_server_version_is_string():
+def test_dacli_version_is_string():
     """Test that version is a proper string."""
-    from mcp_server import __version__
+    from dacli import __version__
     assert isinstance(__version__, str)
     assert len(__version__) > 0
 
 
-def test_mcp_server_can_be_run_as_module():
-    """Test that 'python -m mcp_server' runs without error.
+def test_dacli_mcp_can_be_run():
+    """Test that 'dacli-mcp --help' runs without error.
 
     This is an acceptance test that verifies the project setup
-    allows running the server as a module.
+    allows running the MCP server.
     """
     result = subprocess.run(
-        [sys.executable, "-m", "mcp_server", "--help"],
+        [sys.executable, "-m", "dacli", "--help"],
         capture_output=True,
         text=True,
         timeout=10

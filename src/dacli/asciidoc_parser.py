@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from mcp_server.models import (
+from dacli.models import (
     CrossReference,
     Document,
     Element,

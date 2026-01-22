@@ -8,7 +8,7 @@ Provides endpoints for navigating the document structure:
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
-from mcp_server.api.models import (
+from dacli.api.models import (
     ErrorDetail,
     ErrorResponse,
     LocationResponse,
@@ -18,7 +18,7 @@ from mcp_server.api.models import (
     SectionSummary,
     StructureResponse,
 )
-from mcp_server.structure_index import StructureIndex
+from dacli.structure_index import StructureIndex
 
 router = APIRouter(prefix="/api/v1", tags=["Navigation"])
 

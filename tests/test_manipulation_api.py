@@ -11,9 +11,9 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from mcp_server.api.app import create_app
-from mcp_server.models import Document, Section, SourceLocation
-from mcp_server.structure_index import StructureIndex
+from dacli.api.app import create_app
+from dacli.models import Document, Section, SourceLocation
+from dacli.structure_index import StructureIndex
 
 
 @pytest.fixture
@@ -186,9 +186,9 @@ class TestUpdateSection:
 
         # Mock file handler instance to raise an error
         with patch(
-            "mcp_server.api.manipulation._file_handler.update_section"
+            "dacli.api.manipulation._file_handler.update_section"
         ) as mock_update:
-            from mcp_server.file_handler import FileWriteError
+            from dacli.file_handler import FileWriteError
 
             mock_update.side_effect = FileWriteError("Simulated write failure")
 

@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MCP Documentation Server - enables LLM interaction with large AsciiDoc/Markdown documentation projects through hierarchical, content-aware access via the Model Context Protocol (MCP).
+**dacli** (Documentation Access CLI) - Navigate and query large documentation projects. Supports AsciiDoc and Markdown with hierarchical, content-aware access. Available as CLI tool and MCP server for LLM integration.
 
-**Current State:** Core implementation complete. AsciiDoc/Markdown parsers, Structure Index, and MCP tools are working. Some tech-debt issues remain for advanced features.
+Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
+
+**Current State:** Core implementation complete. AsciiDoc/Markdown parsers, Structure Index, CLI and MCP tools are working. Some tech-debt issues remain for advanced features.
 
 ## Technology Stack
 
@@ -29,8 +31,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install dependencies
 uv sync
 
-# Run the server
-uv run python -m mcp_server
+# Run CLI
+uv run dacli --help
+
+# Run MCP server
+uv run dacli-mcp --docs-root /path/to/docs
 
 # Add dependencies
 uv add <package-name>

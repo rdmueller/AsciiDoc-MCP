@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from mcp_server.api.app import create_app
-from mcp_server.models import Document, Element, Section, SourceLocation
-from mcp_server.structure_index import StructureIndex
+from dacli.api.app import create_app
+from dacli.models import Document, Element, Section, SourceLocation
+from dacli.structure_index import StructureIndex
 
 
 @pytest.fixture

@@ -15,7 +15,7 @@ class TestCliBasic:
 
     def test_cli_help_shows_commands(self):
         """CLI --help should list all available commands."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
@@ -33,7 +33,7 @@ class TestCliBasic:
 
     def test_cli_version_shows_version(self):
         """CLI --version should show the version number."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
@@ -64,7 +64,7 @@ Architecture description.
 
     def test_structure_returns_json_when_requested(self, sample_docs):
         """structure command should return valid JSON when --format json is specified."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -78,7 +78,7 @@ Architecture description.
 
     def test_structure_with_max_depth(self, sample_docs):
         """structure --max-depth should limit returned depth."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -108,7 +108,7 @@ Introduction content here.
 
     def test_section_returns_content(self, sample_docs):
         """section command should return section content as JSON when requested."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -123,7 +123,7 @@ Introduction content here.
 
     def test_section_not_found_returns_error(self, sample_docs):
         """section command should return error for non-existent path."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -153,7 +153,7 @@ This section covers authentication topics.
 
     def test_search_returns_results(self, sample_docs):
         """search command should return JSON results when requested."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -184,7 +184,7 @@ Content.
 
     def test_metadata_project_level(self, sample_docs):
         """metadata without path should return project metadata."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -197,7 +197,7 @@ Content.
 
     def test_metadata_section_level(self, sample_docs):
         """metadata with path should return section metadata."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -227,7 +227,7 @@ Content.
 
     def test_validate_returns_result(self, sample_docs):
         """validate command should return validation result."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -256,7 +256,7 @@ Content.
 
     def test_text_format_is_default(self, sample_docs):
         """Default output should be text format."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--docs-root", str(sample_docs), "structure"])
@@ -268,7 +268,7 @@ Content.
 
     def test_pretty_flag_formats_json_output(self, sample_docs):
         """--pretty flag should format JSON output for readability."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -307,7 +307,7 @@ Content from doc2.
 
     def test_quiet_option_in_help(self):
         """--quiet option should be listed in help."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
@@ -317,7 +317,7 @@ Content from doc2.
 
     def test_quiet_short_option_in_help(self):
         """Short -q option should be available."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
@@ -327,7 +327,7 @@ Content from doc2.
 
     def test_quiet_suppresses_warnings(self, docs_with_duplicates):
         """--quiet should suppress warning messages to stderr."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
 
@@ -348,7 +348,7 @@ Content from doc2.
 
     def test_quiet_short_form_works(self, docs_with_duplicates):
         """-q short form should work the same as --quiet."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
@@ -361,7 +361,7 @@ Content from doc2.
 
     def test_quiet_still_shows_errors(self, tmp_path):
         """--quiet should still show error messages."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         runner = CliRunner()
         # Request non-existent section - should still show error
@@ -378,7 +378,7 @@ Content from doc2.
 
     def test_quiet_does_not_affect_output(self, tmp_path):
         """--quiet should not affect the JSON/text output."""
-        from mcp_server.cli import cli
+        from dacli.cli import cli
 
         doc = tmp_path / "test.adoc"
         doc.write_text("= Test\n\n== Section\n\nContent.")

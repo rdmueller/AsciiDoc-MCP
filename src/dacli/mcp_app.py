@@ -22,13 +22,13 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-from mcp_server import __version__
-from mcp_server.asciidoc_parser import AsciidocStructureParser
-from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteError
-from mcp_server.file_utils import find_doc_files
-from mcp_server.markdown_parser import MarkdownStructureParser
-from mcp_server.models import Document, Section
-from mcp_server.structure_index import StructureIndex
+from dacli import __version__
+from dacli.asciidoc_parser import AsciidocStructureParser
+from dacli.file_handler import FileReadError, FileSystemHandler, FileWriteError
+from dacli.file_utils import find_doc_files
+from dacli.markdown_parser import MarkdownStructureParser
+from dacli.models import Document, Section
+from dacli.structure_index import StructureIndex
 
 # Configure logging to stderr (stdout is reserved for MCP protocol)
 logging.basicConfig(
@@ -58,7 +58,7 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
 
     # Create server instance
     mcp = FastMCP(
-        name="AsciiDoc MCP Server",
+        name="dacli",
         version=__version__,
     )
 

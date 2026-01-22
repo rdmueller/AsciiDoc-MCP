@@ -50,7 +50,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync
 
 # Run the server
-uv run python -m mcp_server
+uv run dacli-mcp
 
 # Add a new dependency
 uv add <package-name>

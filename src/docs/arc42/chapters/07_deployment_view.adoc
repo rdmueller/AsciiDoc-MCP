@@ -25,7 +25,7 @@ For local development and MCP client integration, the server runs directly via u
 ----
 # Install dependencies and run
 uv sync
-uv run python -m mcp_server --project-path /path/to/docs
+uv run dacli-mcp --project-path /path/to/docs
 
 # Or configure in MCP client (e.g., Claude Desktop)
 # ~/.config/claude/claude_desktop_config.json
@@ -33,7 +33,7 @@ uv run python -m mcp_server --project-path /path/to/docs
   "mcpServers": {
     "docs-server": {
       "command": "uv",
-      "args": ["run", "python", "-m", "mcp_server"],
+      "args": ["run", "dacli-mcp"],
       "cwd": "/path/to/mcp-docs-server",
       "env": {
         "PROJECT_PATH": "/path/to/documentation"
@@ -61,7 +61,7 @@ RUN uv sync --frozen --no-dev
 COPY src/ ./src/
 EXPOSE 8000
 
-CMD ["uv", "run", "python", "-m", "mcp_server"]
+CMD ["uv", "run", "dacli-mcp"]
 ----
 
 The Web Interface (SPA) is a set of static files (HTML, CSS, JS) that can be served by any web server or even directly by the FastAPI backend for simplicity.

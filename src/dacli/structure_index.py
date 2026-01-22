@@ -15,7 +15,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from mcp_server.models import Document, Element, Section
+from dacli.models import Document, Element, Section
 
 logger = logging.getLogger(__name__)
 

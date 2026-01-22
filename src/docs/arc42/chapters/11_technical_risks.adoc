@@ -48,17 +48,17 @@ Implementation-related technical debt is tracked as GitHub issues with the `tech
 |===
 | Issue | Description
 
-| https://github.com/rdmueller/AsciiDoc-MCP/issues/14[TD-ADOC-001]
+| https://github.com/docToolchain/dacli/issues/14[TD-ADOC-001]
 | AsciiDoc ifdef/ifndef conditional support
 
-| https://github.com/rdmueller/AsciiDoc-MCP/issues/19[TD-ADOC-002]
+| https://github.com/docToolchain/dacli/issues/19[TD-ADOC-002]
 | Include options and attribute substitution in paths
 
-| https://github.com/rdmueller/AsciiDoc-MCP/issues/28[tech-debt: Markdown Parser]
+| https://github.com/docToolchain/dacli/issues/28[tech-debt: Markdown Parser]
 | Additional features from spec (end_line, reserved frontmatter fields, content extraction)
 
-| https://github.com/rdmueller/AsciiDoc-MCP/issues/32[tech-debt: Structure Index]
+| https://github.com/docToolchain/dacli/issues/32[tech-debt: Structure Index]
 | File→Sections mapping, rebuild() method, element index within section
 |===
 
-NOTE: For the current list of all tech-debt issues, see the https://github.com/rdmueller/AsciiDoc-MCP/issues?q=is%3Aissue+is%3Aopen+tech-debt[GitHub Issues with tech-debt label].
+NOTE: For the current list of all tech-debt issues, see the https://github.com/docToolchain/dacli/issues?q=is%3Aissue+is%3Aopen+tech-debt[GitHub Issues with tech-debt label].

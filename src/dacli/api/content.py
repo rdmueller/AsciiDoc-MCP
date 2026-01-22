@@ -9,7 +9,7 @@ import time
 
 from fastapi import APIRouter, HTTPException, Query
 
-from mcp_server.api.models import (
+from dacli.api.models import (
     VALID_ELEMENT_TYPES,
     ElementItem,
     ElementLocation,
@@ -20,7 +20,7 @@ from mcp_server.api.models import (
     SearchResponse,
     SearchResultItem,
 )
-from mcp_server.structure_index import StructureIndex
+from dacli.structure_index import StructureIndex
 
 router = APIRouter(prefix="/api/v1", tags=["Content Access"])
 

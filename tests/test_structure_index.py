@@ -6,8 +6,8 @@ of document structure and sections.
 
 from pathlib import Path
 
-from mcp_server.models import Document, Element, Section, SourceLocation
-from mcp_server.structure_index import StructureIndex
+from dacli.models import Document, Element, Section, SourceLocation
+from dacli.structure_index import StructureIndex
 
 
 class TestStructureIndexBasic:

@@ -5,9 +5,9 @@ Creates and configures the FastAPI application with all routers.
 
 from fastapi import FastAPI
 
-from mcp_server import __version__
-from mcp_server.api import content, manipulation, navigation
-from mcp_server.structure_index import StructureIndex
+from dacli import __version__
+from dacli.api import content, manipulation, navigation
+from dacli.structure_index import StructureIndex
 
 
 def create_app(index: StructureIndex | None = None) -> FastAPI:
