@@ -22,6 +22,7 @@ dependencies = [
     "fastapi>=0.115.0",
     "fastmcp>=2.14.0,<3",
     "pathspec>=1.0.3",
+    "pydocket<0.17",  # Pin to avoid breaking change in 0.17 (fastmcp compatibility)
     "pyyaml>=6.0",
     "uvicorn>=0.30.0",
 ]
