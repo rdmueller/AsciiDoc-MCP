@@ -93,40 +93,40 @@ microsite.with {
     siteFolder = '../site'
 
     // the title of the microsite, displayed in the upper left corner
-    title = '##site-title##'
+    title = 'MCP Documentation Server'
     // the next items configure some links in the footer
     //
     // contact eMail
     // example: mailto:bert@example.com
-    footerMail = '##footer-email##'
+    footerMail = ''
     //
     // twitter account url
-    footerTwitter = '##twitter-url##'
+    footerTwitter = ''
     //
     // Stackoverflow QA
-    footerSO = '##Stackoverflow-url##'
+    footerSO = ''
     //
     // Github Repository
-    footerGithub = '##Github-url##'
+    footerGithub = 'https://github.com/rdmueller/AsciiDoc-MCP'
     //
     // Slack Channel
-    footerSlack = '##Slack-url##'
+    footerSlack = ''
     //
     // Footer Text
     // example: <small class="text-white">built with docToolchain and jBake <br /> theme: docsy</small>
     footerText = '<small class="text-white">built with <a href="https://doctoolchain.org">docToolchain</a> and <a href="https://jbake.org">jBake</a> <br /> theme: <a href="https://www.docsy.dev/">docsy</a></small>'
     //
     // site title if no other title is given
-    title = 'docToolchain'
+    title = 'MCP Documentation Server'
     //
     // the url to create an issue in github
     // Example: https://github.com/docToolchain/docToolchain/issues/new
-    issueUrl = '##issue-url##'
+    issueUrl = 'https://github.com/rdmueller/AsciiDoc-MCP/issues/new'
     //
     // the base url for code files in github
     // Example: https://github.com/doctoolchain/doctoolchain/edit/master/src/docs
     branch = System.getenv("DTC_PROJECT_BRANCH")?:'-'
-    gitRepoUrl = '##git-repo-url##'
+    gitRepoUrl = 'https://github.com/rdmueller/AsciiDoc-MCP/edit/main/src/docs'
 
     //
     // the location of the landing page
