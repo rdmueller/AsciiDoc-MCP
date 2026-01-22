@@ -93,7 +93,7 @@ microsite.with {
     siteFolder = '../site'
 
     // the title of the microsite, displayed in the upper left corner
-    title = 'MCP Documentation Server'
+    title = 'dacli'
     // the next items configure some links in the footer
     //
     // contact eMail
@@ -107,7 +107,7 @@ microsite.with {
     footerSO = ''
     //
     // Github Repository
-    footerGithub = 'https://github.com/rdmueller/AsciiDoc-MCP'
+    footerGithub = 'https://github.com/docToolchain/dacli'
     //
     // Slack Channel
     footerSlack = ''
@@ -117,16 +117,16 @@ microsite.with {
     footerText = '<small class="text-white">built with <a href="https://doctoolchain.org">docToolchain</a> and <a href="https://jbake.org">jBake</a> <br /> theme: <a href="https://www.docsy.dev/">docsy</a></small>'
     //
     // site title if no other title is given
-    title = 'MCP Documentation Server'
+    title = 'dacli'
     //
     // the url to create an issue in github
     // Example: https://github.com/docToolchain/docToolchain/issues/new
-    issueUrl = 'https://github.com/rdmueller/AsciiDoc-MCP/issues/new'
+    issueUrl = 'https://github.com/docToolchain/dacli/issues/new'
     //
     // the base url for code files in github
     // Example: https://github.com/doctoolchain/doctoolchain/edit/master/src/docs
     branch = System.getenv("DTC_PROJECT_BRANCH")?:'-'
-    gitRepoUrl = 'https://github.com/rdmueller/AsciiDoc-MCP/edit/main/src/docs'
+    gitRepoUrl = 'https://github.com/docToolchain/dacli/edit/main/src/docs'
 
     //
     // the location of the landing page
