@@ -2,40 +2,40 @@
 :toc:
 :toclevels: 3
 
-== Übersicht
+== Overview
 
-`dacli` (Docs-As-Code CLI) ermöglicht die Nutzung aller Dokumentations-Tools über die Kommandozeile.
-Dies ist besonders nützlich für LLMs, die keinen MCP-Support haben, aber Bash/Shell-Tools verwenden können.
+`dacli` (Docs-As-Code CLI) enables the use of all documentation tools via the command line.
+This is especially useful for LLMs that don't have MCP support but can use Bash/Shell tools.
 
-== Globale Optionen
+== Global Options
 
 [source,bash]
 ----
 dacli [OPTIONS] <COMMAND> [ARGS]
 
 Options:
-  --docs-root PATH    Dokumentations-Wurzelverzeichnis (default: $PROJECT_PATH oder cwd)
-  --format FORMAT     Ausgabeformat: text (default), json, yaml
-  --pretty            Formatierte Ausgabe für Menschen
-  --quiet, -q         Unterdrückt Warnmeldungen
-  --no-gitignore      Dateien einbeziehen, die normalerweise durch .gitignore-Muster ausgeschlossen würden
-  --include-hidden    Dateien in versteckten Verzeichnissen (beginnend mit '.') einbeziehen
-  --version           Zeigt Version
-  --help              Zeigt Hilfe
+  --docs-root PATH    Documentation root directory (default: $PROJECT_PATH or cwd)
+  --format FORMAT     Output format: text (default), json, yaml
+  --pretty            Formatted output for humans
+  --quiet, -q         Suppress warning messages
+  --no-gitignore      Include files that would normally be excluded by .gitignore patterns
+  --include-hidden    Include files in hidden directories (starting with '.')
+  --version           Show version
+  --help              Show help
 ----
 
 == Navigation Commands
 
 === structure
 
-Zeigt die hierarchische Dokumentstruktur.
+Shows the hierarchical document structure.
 
 [source,bash]
 ----
 dacli structure [--max-depth N]
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli structure --max-depth 1
@@ -50,14 +50,14 @@ $ dacli structure --max-depth 1
 
 === section
 
-Liest den Inhalt einer Sektion.
+Reads the content of a section.
 
 [source,bash]
 ----
 dacli section <PATH>
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli section introduction.goals
@@ -71,7 +71,7 @@ $ dacli section introduction.goals
 
 === sections-at-level
 
-Zeigt alle Sektionen auf einer bestimmten Ebene.
+Shows all sections at a specific level.
 
 [source,bash]
 ----
@@ -82,14 +82,14 @@ dacli sections-at-level <LEVEL>
 
 === search
 
-Durchsucht die Dokumentation.
+Searches the documentation.
 
 [source,bash]
 ----
 dacli search <QUERY> [--scope PATH] [--max-results N]
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli search "authentication" --max-results 5
@@ -104,27 +104,27 @@ $ dacli search "authentication" --max-results 5
 
 === elements
 
-Listet Elemente (Code-Blöcke, Tabellen, etc.).
+Lists elements (code blocks, tables, etc.).
 
 [source,bash]
 ----
 dacli elements [--type TYPE] [--section PATH]
 ----
 
-**Type-Optionen:** `code`, `table`, `image`, `diagram`, `list`, `admonition`
+**Type options:** `code`, `table`, `image`, `diagram`, `list`, `admonition`
 
 == Meta-Information Commands
 
 === metadata
 
-Zeigt Metadaten für Projekt oder Sektion.
+Shows metadata for project or section.
 
 [source,bash]
 ----
 dacli metadata [PATH]
 ----
 
-**Projekt-Metadaten (ohne PATH):**
+**Project metadata (without PATH):**
 [source,bash]
 ----
 $ dacli metadata
@@ -136,7 +136,7 @@ $ dacli metadata
 }
 ----
 
-**Sektions-Metadaten (mit PATH):**
+**Section metadata (with PATH):**
 [source,bash]
 ----
 $ dacli metadata architecture.decisions
@@ -150,14 +150,14 @@ $ dacli metadata architecture.decisions
 
 === validate
 
-Validiert die Dokumentstruktur.
+Validates the documentation structure.
 
 [source,bash]
 ----
 dacli validate
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli validate
@@ -175,14 +175,14 @@ $ dacli validate
 
 === update
 
-Aktualisiert den Inhalt einer Sektion.
+Updates the content of a section.
 
 [source,bash]
 ----
 dacli update <PATH> --content "..." [--no-preserve-title] [--expected-hash HASH]
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli update introduction --content "New introduction text..."
@@ -196,14 +196,14 @@ $ dacli update introduction --content "New introduction text..."
 
 === insert
 
-Fügt Inhalt relativ zu einer Sektion ein.
+Inserts content relative to a section.
 
 [source,bash]
 ----
 dacli insert <PATH> --position before|after|append --content "..."
 ----
 
-**Beispiel:**
+**Example:**
 [source,bash]
 ----
 $ dacli insert architecture --position after --content "== New Section\n\nContent..."
@@ -217,31 +217,31 @@ $ dacli insert architecture --position after --content "== New Section\n\nConten
 
 [cols="1,3"]
 |===
-| Code | Bedeutung
+| Code | Meaning
 
-| 0 | Erfolg
-| 1 | Allgemeiner Fehler
-| 2 | Ungültige Argumente
-| 3 | Pfad nicht gefunden
-| 4 | Validierungsfehler
-| 5 | Schreibfehler
+| 0 | Success
+| 1 | General error
+| 2 | Invalid arguments
+| 3 | Path not found
+| 4 | Validation error
+| 5 | Write error
 |===
 
-== LLM-Integration Beispiel
+== LLM Integration Example
 
-Ein LLM kann das CLI über Bash-Tools verwenden:
+An LLM can use the CLI via Bash tools:
 
 [source,bash]
 ----
-# Struktur abfragen
+# Query structure
 structure=$(dacli structure --max-depth 2 --docs-root /project/docs)
 
-# Nach Thema suchen
+# Search for topic
 results=$(dacli search "database" | jq '.results[].path')
 
-# Sektion lesen
+# Read section
 content=$(dacli section architecture.decisions)
 
-# Dokumentation aktualisieren
+# Update documentation
 dacli update api.endpoints --content "Updated API documentation..."
 ----

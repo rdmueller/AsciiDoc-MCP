@@ -10,34 +10,34 @@ ifndef::imagesdir[:imagesdir: ../../images]
 :sectnums:
 :icons: font
 
-== Einführung
+== Introduction
 
-Dieses Dokument beschreibt die Use-Cases des MCP Documentation Servers basierend auf dem PRD.
-Jeder Use-Case enthält eine Beschreibung, Vorbedingungen, Ablauf und ein Activity-Diagramm.
+This document describes the use cases of the MCP Documentation Server based on the PRD.
+Each use case contains a description, preconditions, flow, and an activity diagram.
 
-== Akteure
+== Actors
 
 [cols="1,3"]
 |===
-| Akteur | Beschreibung
+| Actor | Description
 
 | **LLM Client**
-| Ein MCP-kompatibler Client (z.B. Claude, GPT), der über das MCP-Protokoll mit dem Server kommuniziert.
+| An MCP-compatible client (e.g., Claude, GPT) that communicates with the server via the MCP protocol.
 
 | **Software Developer**
-| Entwickler, der Code-Dokumentation mit LLM-Unterstützung analysiert und pflegt.
+| Developer who analyzes and maintains code documentation with LLM assistance.
 
 | **Software Architect**
-| Architekt, der technische Dokumentation (z.B. arc42) mit LLM-Unterstützung verwaltet.
+| Architect who manages technical documentation (e.g., arc42) with LLM assistance.
 
 | **Documentation Engineer**
-| Dokumentations-Spezialist, der große Dokumentationsprojekte verwaltet.
+| Documentation specialist who manages large documentation projects.
 
 | **System Administrator**
-| Betreibt und konfiguriert den MCP Documentation Server.
+| Operates and configures the MCP Documentation Server.
 |===
 
-== Systemgrenzen
+== System Boundaries
 
 [plantuml, system-boundary, svg]
 ----
@@ -51,14 +51,14 @@ actor "Architect" as arch
 actor "Doc Engineer" as doc
 
 rectangle "MCP Documentation Server" {
-  usecase "UC-01: Dokumentstruktur abrufen" as UC01
-  usecase "UC-02: Sektion lesen" as UC02
-  usecase "UC-03: Sektion aktualisieren" as UC03
-  usecase "UC-04: Inhalt suchen" as UC04
-  usecase "UC-05: Elemente filtern" as UC05
-  usecase "UC-06: Metadaten abrufen" as UC06
-  usecase "UC-07: Struktur validieren" as UC07
-  usecase "UC-08: Server initialisieren" as UC08
+  usecase "UC-01: Get document structure" as UC01
+  usecase "UC-02: Read section" as UC02
+  usecase "UC-03: Update section" as UC03
+  usecase "UC-04: Search content" as UC04
+  usecase "UC-05: Filter elements" as UC05
+  usecase "UC-06: Get metadata" as UC06
+  usecase "UC-07: Validate structure" as UC07
+  usecase "UC-08: Initialize server" as UC08
 }
 
 llm --> UC01
@@ -78,61 +78,61 @@ UC08 <-- UC02 : <<include>>
 @enduml
 ----
 
-== Use-Cases
+== Use Cases
 
-=== UC-01: Dokumentstruktur abrufen
+=== UC-01: Get Document Structure
 
 [cols="1,3"]
 |===
 | **ID** | UC-01
-| **Name** | Dokumentstruktur abrufen (get_structure)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client benötigt Übersicht über Dokumentationsstruktur
+| **Name** | Get document structure (get_structure)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client needs overview of documentation structure
 |===
 
-==== Beschreibung
-Der LLM Client ruft die hierarchische Struktur eines Dokumentationsprojekts ab, um einen Überblick über verfügbare Kapitel und Sektionen zu erhalten.
+==== Description
+The LLM Client retrieves the hierarchical structure of a documentation project to get an overview of available chapters and sections.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
-* Dokumentationsprojekt ist konfiguriert
+==== Preconditions
+* Server is started and index is built
+* Documentation project is configured
 
-==== Nachbedingungen
-* Client erhält strukturierte Übersicht (Table of Contents)
+==== Postconditions
+* Client receives structured overview (Table of Contents)
 
-==== Hauptablauf
-1. Client sendet `get_structure(max_depth)` Anfrage
-2. Server konsultiert den In-Memory-Index
-3. Server filtert Struktur nach `max_depth`
-4. Server gibt hierarchische Struktur zurück
+==== Main Flow
+1. Client sends `get_structure(max_depth)` request
+2. Server consults the in-memory index
+3. Server filters structure by `max_depth`
+4. Server returns hierarchical structure
 
-==== Alternativabläufe
-* **A1: Leeres Projekt** - Server gibt leere Struktur zurück
-* **A2: Ungültige max_depth** - Server verwendet Standardwert
+==== Alternative Flows
+* **A1: Empty project** - Server returns empty structure
+* **A2: Invalid max_depth** - Server uses default value
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc01-activity, svg]
 ----
 @startuml
 start
-:Client sendet get_structure(max_depth);
+:Client sends get_structure(max_depth);
 
-if (Index vorhanden?) then (ja)
-  :Struktur aus Index laden;
+if (Index available?) then (yes)
+  :Load structure from index;
   
-  if (max_depth angegeben?) then (ja)
-    :Struktur nach Tiefe filtern;
-  else (nein)
-    :Vollständige Struktur verwenden;
+  if (max_depth specified?) then (yes)
+    :Filter structure by depth;
+  else (no)
+    :Use complete structure;
   endif
   
-  :Struktur als JSON formatieren;
-  :Response an Client senden;
-else (nein)
-  :Fehler: Index nicht initialisiert;
-  :Error-Response senden;
+  :Format structure as JSON;
+  :Send response to client;
+else (no)
+  :Error: Index not initialized;
+  :Send error response;
 endif
 
 stop
@@ -141,63 +141,63 @@ stop
 
 '''
 
-=== UC-02: Sektion lesen
+=== UC-02: Read Section
 
 [cols="1,3"]
 |===
 | **ID** | UC-02
-| **Name** | Sektion lesen (get_section)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client benötigt Inhalt einer spezifischen Sektion
+| **Name** | Read section (get_section)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client needs content of a specific section
 |===
 
-==== Beschreibung
-Der LLM Client liest den Inhalt einer spezifischen Sektion anhand ihres hierarchischen Pfads.
+==== Description
+The LLM Client reads the content of a specific section by its hierarchical path.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
-* Angefragter Pfad existiert im Projekt
+==== Preconditions
+* Server is started and index is built
+* Requested path exists in the project
 
-==== Nachbedingungen
-* Client erhält Inhalt der Sektion
+==== Postconditions
+* Client receives section content
 
-==== Hauptablauf
-1. Client sendet `get_section(path)` Anfrage
-2. Server sucht Pfad im Index
-3. Server ermittelt Datei und Zeilennummern
-4. Server liest relevante Zeilen aus Datei
-5. Server gibt Inhalt zurück
+==== Main Flow
+1. Client sends `get_section(path)` request
+2. Server searches path in index
+3. Server determines file and line numbers
+4. Server reads relevant lines from file
+5. Server returns content
 
-==== Alternativabläufe
-* **A1: Pfad nicht gefunden** - Server gibt 404 mit Fehlermeldung zurück
-* **A2: Datei nicht lesbar** - Server gibt 500 mit Fehlermeldung zurück
+==== Alternative Flows
+* **A1: Path not found** - Server returns 404 with error message
+* **A2: File not readable** - Server returns 500 with error message
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc02-activity, svg]
 ----
 @startuml
 start
-:Client sendet get_section(path);
+:Client sends get_section(path);
 
-:Pfad im Index suchen;
+:Search path in index;
 
-if (Pfad gefunden?) then (ja)
-  :SectionLocation aus Index holen;
+if (Path found?) then (yes)
+  :Get SectionLocation from index;
   note right: file, start_line, end_line
   
-  :Datei öffnen;
+  :Open file;
   
-  if (Datei lesbar?) then (ja)
-    :Zeilen start_line bis end_line lesen;
-    :Content als Response senden;
-  else (nein)
-    :HTTP 500 - Datei nicht lesbar;
+  if (File readable?) then (yes)
+    :Read lines from start_line to end_line;
+    :Send content as response;
+  else (no)
+    :HTTP 500 - File not readable;
   endif
   
-else (nein)
-  :HTTP 404 - Pfad nicht gefunden;
+else (no)
+  :HTTP 404 - Path not found;
 endif
 
 stop
@@ -206,75 +206,75 @@ stop
 
 '''
 
-=== UC-03: Sektion aktualisieren
+=== UC-03: Update Section
 
 [cols="1,3"]
 |===
 | **ID** | UC-03
-| **Name** | Sektion aktualisieren (update_section)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client möchte Inhalt einer Sektion ändern
+| **Name** | Update section (update_section)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client wants to modify section content
 |===
 
-==== Beschreibung
-Der LLM Client aktualisiert den Inhalt einer spezifischen Sektion. Die Änderung wird atomar durchgeführt.
+==== Description
+The LLM Client updates the content of a specific section. The change is performed atomically.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
-* Angefragter Pfad existiert im Projekt
-* Dateisystem ist beschreibbar
+==== Preconditions
+* Server is started and index is built
+* Requested path exists in the project
+* File system is writable
 
-==== Nachbedingungen
-* Sektion enthält neuen Inhalt
-* Index ist aktualisiert
-* Originaldatei ist bei Fehler unverändert
+==== Postconditions
+* Section contains new content
+* Index is updated
+* Original file is unchanged on error
 
-==== Hauptablauf
-1. Client sendet `update_section(path, content)` Anfrage
-2. Server sucht Pfad im Index
-3. Server erstellt Backup der Originaldatei
-4. Server schreibt neuen Inhalt in temporäre Datei
-5. Server ersetzt Originaldatei atomar
-6. Server aktualisiert Index
-7. Server löscht Backup
-8. Server bestätigt Erfolg
+==== Main Flow
+1. Client sends `update_section(path, content)` request
+2. Server searches path in index
+3. Server creates backup of original file
+4. Server writes new content to temporary file
+5. Server atomically replaces original file
+6. Server updates index
+7. Server deletes backup
+8. Server confirms success
 
-==== Alternativabläufe
-* **A1: Pfad nicht gefunden** - Server gibt 404 zurück
-* **A2: Schreibfehler** - Server stellt Backup wieder her, gibt 500 zurück
-* **A3: Index-Update fehlgeschlagen** - Warnung loggen, Erfolg melden
+==== Alternative Flows
+* **A1: Path not found** - Server returns 404
+* **A2: Write error** - Server restores backup, returns 500
+* **A3: Index update failed** - Log warning, report success
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc03-activity, svg]
 ----
 @startuml
 start
-:Client sendet update_section(path, content);
+:Client sends update_section(path, content);
 
-:Pfad im Index suchen;
+:Search path in index;
 
-if (Pfad gefunden?) then (ja)
-  :SectionLocation ermitteln;
+if (Path found?) then (yes)
+  :Determine SectionLocation;
   
-  :Backup erstellen (.bak);
+  :Create backup (.bak);
   
-  :Neuen Inhalt in .tmp schreiben;
+  :Write new content to .tmp;
   
-  if (Schreiben erfolgreich?) then (ja)
-    :Originaldatei durch .tmp ersetzen;
-    :Backup löschen;
-    :Index aktualisieren;
+  if (Write successful?) then (yes)
+    :Replace original file with .tmp;
+    :Delete backup;
+    :Update index;
     :HTTP 200 - Success;
-  else (nein)
-    :Temporäre Datei löschen;
-    :Backup wiederherstellen;
-    :HTTP 500 - Schreibfehler;
+  else (no)
+    :Delete temporary file;
+    :Restore backup;
+    :HTTP 500 - Write error;
   endif
   
-else (nein)
-  :HTTP 404 - Pfad nicht gefunden;
+else (no)
+  :HTTP 404 - Path not found;
 endif
 
 stop
@@ -283,61 +283,61 @@ stop
 
 '''
 
-=== UC-04: Inhalt suchen
+=== UC-04: Search Content
 
 [cols="1,3"]
 |===
 | **ID** | UC-04
-| **Name** | Inhalt suchen (search_content)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client sucht nach bestimmtem Inhalt
+| **Name** | Search content (search_content)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client searches for specific content
 |===
 
-==== Beschreibung
-Der LLM Client sucht nach Text innerhalb des Dokumentationsprojekts und erhält eine Liste der Fundstellen mit Kontext.
+==== Description
+The LLM Client searches for text within the documentation project and receives a list of matches with context.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
+==== Preconditions
+* Server is started and index is built
 
-==== Nachbedingungen
-* Client erhält Liste der Treffer mit Pfaden und Kontext
+==== Postconditions
+* Client receives list of matches with paths and context
 
-==== Hauptablauf
-1. Client sendet `search_content(query)` Anfrage
-2. Server durchsucht indexierte Inhalte
-3. Server sammelt Treffer mit Kontext
-4. Server gibt Ergebnisliste zurück
+==== Main Flow
+1. Client sends `search_content(query)` request
+2. Server searches indexed content
+3. Server collects matches with context
+4. Server returns result list
 
-==== Alternativabläufe
-* **A1: Keine Treffer** - Server gibt leere Liste zurück
-* **A2: Ungültige Query** - Server gibt 400 mit Fehlermeldung zurück
+==== Alternative Flows
+* **A1: No matches** - Server returns empty list
+* **A2: Invalid query** - Server returns 400 with error message
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc04-activity, svg]
 ----
 @startuml
 start
-:Client sendet search_content(query);
+:Client sends search_content(query);
 
-if (Query valide?) then (ja)
-  :Suchindex konsultieren;
+if (Query valid?) then (yes)
+  :Consult search index;
   
-  :Für jede indizierte Sektion|
-  if (Query in Sektion?) then (ja)
-    :Treffer mit Kontext speichern;
+  :For each indexed section|
+  if (Query in section?) then (yes)
+    :Store match with context;
   endif
   
-  if (Treffer gefunden?) then (ja)
-    :Treffer nach Relevanz sortieren;
-    :HTTP 200 mit Trefferliste;
-  else (nein)
-    :HTTP 200 mit leerer Liste;
+  if (Matches found?) then (yes)
+    :Sort matches by relevance;
+    :HTTP 200 with match list;
+  else (no)
+    :HTTP 200 with empty list;
   endif
   
-else (nein)
-  :HTTP 400 - Ungültige Query;
+else (no)
+  :HTTP 400 - Invalid query;
 endif
 
 stop
@@ -346,60 +346,60 @@ stop
 
 '''
 
-=== UC-05: Elemente nach Typ filtern
+=== UC-05: Filter Elements by Type
 
 [cols="1,3"]
 |===
 | **ID** | UC-05
-| **Name** | Elemente nach Typ filtern (get_elements)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client benötigt spezifische Elementtypen
+| **Name** | Filter elements by type (get_elements)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client needs specific element types
 |===
 
-==== Beschreibung
-Der LLM Client ruft alle Elemente eines bestimmten Typs ab (z.B. Diagramme, Tabellen, Code-Blöcke).
+==== Description
+The LLM Client retrieves all elements of a specific type (e.g., diagrams, tables, code blocks).
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
+==== Preconditions
+* Server is started and index is built
 
-==== Nachbedingungen
-* Client erhält Liste aller Elemente des angeforderten Typs
+==== Postconditions
+* Client receives list of all elements of the requested type
 
-==== Hauptablauf
-1. Client sendet `get_elements(type)` Anfrage
-2. Server filtert Index nach Elementtyp
-3. Server gibt Liste der Elemente mit Pfaden zurück
+==== Main Flow
+1. Client sends `get_elements(type)` request
+2. Server filters index by element type
+3. Server returns list of elements with paths
 
-==== Unterstützte Elementtypen
+==== Supported Element Types
 * `diagram` - PlantUML, Mermaid, etc.
-* `table` - AsciiDoc/Markdown Tabellen
-* `code` - Code-Blöcke
-* `list` - Listen (geordnet/ungeordnet)
-* `image` - Eingebettete Bilder
+* `table` - AsciiDoc/Markdown tables
+* `code` - Code blocks
+* `list` - Lists (ordered/unordered)
+* `image` - Embedded images
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc05-activity, svg]
 ----
 @startuml
 start
-:Client sendet get_elements(type);
+:Client sends get_elements(type);
 
-if (Typ unterstützt?) then (ja)
-  :Index nach Typ filtern;
+if (Type supported?) then (yes)
+  :Filter index by type;
   
-  :Elemente sammeln;
+  :Collect elements;
   note right
-    Für jedes Element:
-    - Pfad
-    - Vorschau/Titel
+    For each element:
+    - Path
+    - Preview/Title
     - Position
   end note
   
-  :HTTP 200 mit Elementliste;
-else (nein)
-  :HTTP 400 - Unbekannter Typ;
+  :HTTP 200 with element list;
+else (no)
+  :HTTP 400 - Unknown type;
 endif
 
 stop
@@ -408,67 +408,67 @@ stop
 
 '''
 
-=== UC-06: Metadaten abrufen
+=== UC-06: Get Metadata
 
 [cols="1,3"]
 |===
 | **ID** | UC-06
-| **Name** | Metadaten abrufen (get_metadata)
-| **Akteur** | LLM Client
-| **Priorität** | Should-Have
-| **Auslöser** | Client benötigt Informationen über Dokument/Sektion
+| **Name** | Get metadata (get_metadata)
+| **Actor** | LLM Client
+| **Priority** | Should-Have
+| **Trigger** | Client needs information about document/section
 |===
 
-==== Beschreibung
-Der LLM Client ruft Metadaten über das Projekt oder eine spezifische Sektion ab.
+==== Description
+The LLM Client retrieves metadata about the project or a specific section.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
+==== Preconditions
+* Server is started and index is built
 
-==== Nachbedingungen
-* Client erhält Metadaten
+==== Postconditions
+* Client receives metadata
 
-==== Hauptablauf
-1. Client sendet `get_metadata(path?)` Anfrage
-2. Server ermittelt Metadaten aus Index und Dateisystem
-3. Server gibt Metadaten zurück
+==== Main Flow
+1. Client sends `get_metadata(path?)` request
+2. Server determines metadata from index and file system
+3. Server returns metadata
 
-==== Rückgabewerte
-* Wortanzahl
-* Letzte Änderung
-* Dateipfad
-* Anzahl Unterabschnitte
-* Include-Abhängigkeiten
+==== Return Values
+* Word count
+* Last modified
+* File path
+* Number of subsections
+* Include dependencies
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc06-activity, svg]
 ----
 @startuml
 start
-:Client sendet get_metadata(path?);
+:Client sends get_metadata(path?);
 
-if (Pfad angegeben?) then (ja)
-  :Sektion im Index suchen;
+if (Path specified?) then (yes)
+  :Search section in index;
   
-  if (Gefunden?) then (ja)
-    :Sektions-Metadaten sammeln;
-  else (nein)
+  if (Found?) then (yes)
+    :Collect section metadata;
+  else (no)
     :HTTP 404;
     stop
   endif
-else (nein)
-  :Projekt-Metadaten sammeln;
+else (no)
+  :Collect project metadata;
 endif
 
-:Datei-Stats abrufen;
+:Retrieve file stats;
 note right: last_modified, size
 
-:Wortanzahl berechnen;
+:Calculate word count;
 
-:Include-Dependencies auflösen;
+:Resolve include dependencies;
 
-:HTTP 200 mit Metadaten;
+:HTTP 200 with metadata;
 
 stop
 @enduml
@@ -476,56 +476,56 @@ stop
 
 '''
 
-=== UC-07: Struktur validieren
+=== UC-07: Validate Structure
 
 [cols="1,3"]
 |===
 | **ID** | UC-07
-| **Name** | Struktur validieren (validate_structure)
-| **Akteur** | LLM Client
-| **Priorität** | Should-Have
-| **Auslöser** | Client möchte Konsistenz prüfen
+| **Name** | Validate structure (validate_structure)
+| **Actor** | LLM Client
+| **Priority** | Should-Have
+| **Trigger** | Client wants to check consistency
 |===
 
-==== Beschreibung
-Der LLM Client validiert die Struktur des Dokumentationsprojekts auf Konsistenz und Vollständigkeit.
+==== Description
+The LLM Client validates the structure of the documentation project for consistency and completeness.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
+==== Preconditions
+* Server is started and index is built
 
-==== Nachbedingungen
-* Client erhält Validierungsergebnis
+==== Postconditions
+* Client receives validation result
 
-==== Prüfungen
-* Unaufgelöste Includes
-* Zirkuläre Includes
-* Verwaiste Dateien
-* Fehlende Referenzen
-* Ungültige Pfade
+==== Checks
+* Unresolved includes
+* Circular includes
+* Orphaned files
+* Missing references
+* Invalid paths
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc07-activity, svg]
 ----
 @startuml
 start
-:Client sendet validate_structure();
+:Client sends validate_structure();
 
-:Validierungsergebnisse initialisieren;
+:Initialize validation results;
 
-:Includes prüfen;
-note right: Unaufgelöste, Zirkuläre
+:Check includes;
+note right: Unresolved, Circular
 
-:Cross-References prüfen;
+:Check cross-references;
 
-:Verwaiste Dateien identifizieren;
+:Identify orphaned files;
 
-:Strukturelle Integrität prüfen;
+:Check structural integrity;
 
-if (Fehler gefunden?) then (ja)
-  :HTTP 200 mit Fehlerliste;
-else (nein)
-  :HTTP 200 - Struktur valide;
+if (Errors found?) then (yes)
+  :HTTP 200 with error list;
+else (no)
+  :HTTP 200 - Structure valid;
 endif
 
 stop
@@ -534,78 +534,78 @@ stop
 
 '''
 
-=== UC-08: Server initialisieren
+=== UC-08: Initialize Server
 
 [cols="1,3"]
 |===
 | **ID** | UC-08
-| **Name** | Server initialisieren
-| **Akteur** | System (beim Start)
-| **Priorität** | Must-Have
-| **Auslöser** | Server wird gestartet
+| **Name** | Initialize server
+| **Actor** | System (at startup)
+| **Priority** | Must-Have
+| **Trigger** | Server is started
 |===
 
-==== Beschreibung
-Beim Start scannt und indiziert der Server das konfigurierte Dokumentationsprojekt.
+==== Description
+At startup, the server scans and indexes the configured documentation project.
 
-==== Vorbedingungen
-* Dokumentationsprojekt-Pfad ist konfiguriert
-* Dateien sind lesbar
+==== Preconditions
+* Documentation project path is configured
+* Files are readable
 
-==== Nachbedingungen
-* In-Memory-Index ist aufgebaut
-* Server ist bereit für Anfragen
+==== Postconditions
+* In-memory index is built
+* Server is ready for requests
 
-==== Hauptablauf
-1. Server liest Konfiguration
-2. Server scannt Projektverzeichnis nach .adoc/.md Dateien
-3. Server parst jede Datei
-4. Server löst Include-Direktiven auf
-5. Server baut hierarchischen Index auf
-6. Server meldet Bereitschaft
+==== Main Flow
+1. Server reads configuration
+2. Server scans project directory for .adoc/.md files
+3. Server parses each file
+4. Server resolves include directives
+5. Server builds hierarchical index
+6. Server reports readiness
 
-==== Alternativabläufe
-* **A1: Keine Dateien gefunden** - Server startet mit leerem Index, loggt Warnung
-* **A2: Parse-Fehler** - Server loggt Fehler, überspringt Datei, fährt fort
-* **A3: Zirkuläre Includes** - Server erkennt Zyklus, bricht Include ab, loggt Warnung
+==== Alternative Flows
+* **A1: No files found** - Server starts with empty index, logs warning
+* **A2: Parse error** - Server logs error, skips file, continues
+* **A3: Circular includes** - Server detects cycle, aborts include, logs warning
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc08-activity, svg]
 ----
 @startuml
 start
-:Konfiguration laden;
-:Projektpfad ermitteln;
+:Load configuration;
+:Determine project path;
 
-:Dateien scannen (*.adoc, *.md);
+:Scan files (*.adoc, *.md);
 
-if (Dateien gefunden?) then (ja)
+if (Files found?) then (yes)
   
-  while (Weitere Dateien?) is (ja)
-    :Nächste Datei laden;
+  while (More files?) is (yes)
+    :Load next file;
     
-    :Parser aufrufen;
+    :Call parser;
     
-    if (Parse erfolgreich?) then (ja)
-      :AST erstellen;
+    if (Parse successful?) then (yes)
+      :Create AST;
       
-      :Includes auflösen;
-      note right: Rekursiv, mit Zykluserkennung
+      :Resolve includes;
+      note right: Recursive, with cycle detection
       
-      :Sektionen in Index einfügen;
-    else (nein)
-      :Fehler loggen;
-      :Datei überspringen;
+      :Insert sections into index;
+    else (no)
+      :Log error;
+      :Skip file;
     endif
-  endwhile (nein)
+  endwhile (no)
   
-  :Index finalisieren;
-  :Server bereit;
+  :Finalize index;
+  :Server ready;
   
-else (nein)
-  :Warnung: Keine Dateien;
-  :Leerer Index;
+else (no)
+  :Warning: No files;
+  :Empty index;
 endif
 
 stop
@@ -614,67 +614,67 @@ stop
 
 '''
 
-=== UC-09: Inhalt einfügen
+=== UC-09: Insert Content
 
 [cols="1,3"]
 |===
 | **ID** | UC-09
-| **Name** | Inhalt einfügen (insert_at)
-| **Akteur** | LLM Client
-| **Priorität** | Must-Have
-| **Auslöser** | Client möchte neuen Inhalt hinzufügen
+| **Name** | Insert content (insert_at)
+| **Actor** | LLM Client
+| **Priority** | Must-Have
+| **Trigger** | Client wants to add new content
 |===
 
-==== Beschreibung
-Der LLM Client fügt neuen Inhalt an einer bestimmten Position ein (vor, nach oder innerhalb einer Sektion).
+==== Description
+The LLM Client inserts new content at a specific position (before, after, or within a section).
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
-* Angefragter Pfad existiert
-* Dateisystem ist beschreibbar
+==== Preconditions
+* Server is started and index is built
+* Requested path exists
+* File system is writable
 
-==== Nachbedingungen
-* Neuer Inhalt ist eingefügt
-* Index ist aktualisiert
+==== Postconditions
+* New content is inserted
+* Index is updated
 
-==== Hauptablauf
-1. Client sendet `insert_at(path, position, content)` Anfrage
-2. Server validiert Position (before|after|append)
-3. Server ermittelt Einfügeposition in Datei
-4. Server führt atomare Schreiboperation durch
-5. Server aktualisiert Index
-6. Server bestätigt Erfolg
+==== Main Flow
+1. Client sends `insert_at(path, position, content)` request
+2. Server validates position (before|after|append)
+3. Server determines insertion position in file
+4. Server performs atomic write operation
+5. Server updates index
+6. Server confirms success
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc09-activity, svg]
 ----
 @startuml
 start
-:Client sendet insert_at(path, position, content);
+:Client sends insert_at(path, position, content);
 
-:Pfad und Position validieren;
+:Validate path and position;
 
-if (Valide?) then (ja)
-  :Zielzeile ermitteln;
+if (Valid?) then (yes)
+  :Determine target line;
   
   switch (position)
   case (before)
-    :Zeile = start_line;
+    :Line = start_line;
   case (after)
-    :Zeile = end_line + 1;
+    :Line = end_line + 1;
   case (append)
-    :Zeile = innerhalb Sektion;
+    :Line = within section;
   endswitch
   
-  :Backup erstellen;
-  :Inhalt einfügen;
-  :Atomar speichern;
-  :Index aktualisieren;
+  :Create backup;
+  :Insert content;
+  :Save atomically;
+  :Update index;
   
   :HTTP 200 - Success;
-else (nein)
-  :HTTP 400 - Ungültige Parameter;
+else (no)
+  :HTTP 400 - Invalid parameters;
 endif
 
 stop
@@ -683,101 +683,101 @@ stop
 
 '''
 
-=== UC-10: Element ersetzen
+=== UC-10: Replace Element
 
 [cols="1,3"]
 |===
 | **ID** | UC-10
-| **Name** | Element ersetzen (replace_element)
-| **Akteur** | LLM Client
-| **Priorität** | Should-Have
-| **Auslöser** | Client möchte spezifisches Element ersetzen
+| **Name** | Replace element (replace_element)
+| **Actor** | LLM Client
+| **Priority** | Should-Have
+| **Trigger** | Client wants to replace a specific element
 |===
 
-==== Beschreibung
-Der LLM Client ersetzt ein spezifisches Element (z.B. Tabelle, Code-Block) innerhalb einer Sektion.
+==== Description
+The LLM Client replaces a specific element (e.g., table, code block) within a section.
 
-==== Vorbedingungen
-* Server ist gestartet und Index ist aufgebaut
-* Element existiert an der angegebenen Position
+==== Preconditions
+* Server is started and index is built
+* Element exists at the specified position
 
-==== Nachbedingungen
-* Element ist ersetzt
-* Index ist aktualisiert
+==== Postconditions
+* Element is replaced
+* Index is updated
 
-==== Hauptablauf
-1. Client sendet `replace_element(path, element_index, content)` Anfrage
-2. Server lokalisiert Element
-3. Server validiert neuen Inhalt
-4. Server führt atomare Ersetzung durch
-5. Server aktualisiert Index
-6. Server bestätigt Erfolg
+==== Main Flow
+1. Client sends `replace_element(path, element_index, content)` request
+2. Server locates element
+3. Server validates new content
+4. Server performs atomic replacement
+5. Server updates index
+6. Server confirms success
 
-==== Activity-Diagramm
+==== Activity Diagram
 
 [plantuml, uc10-activity, svg]
 ----
 @startuml
 start
-:Client sendet replace_element(path, element_index, content);
+:Client sends replace_element(path, element_index, content);
 
-:Sektion laden;
+:Load section;
 
-:Element an Index lokalisieren;
+:Locate element at index;
 
-if (Element gefunden?) then (ja)
-  :Element-Grenzen ermitteln;
+if (Element found?) then (yes)
+  :Determine element boundaries;
   
-  :Backup erstellen;
-  :Element durch neuen Inhalt ersetzen;
-  :Atomar speichern;
-  :Index aktualisieren;
+  :Create backup;
+  :Replace element with new content;
+  :Save atomically;
+  :Update index;
   
   :HTTP 200 - Success;
-else (nein)
-  :HTTP 404 - Element nicht gefunden;
+else (no)
+  :HTTP 404 - Element not found;
 endif
 
 stop
 @enduml
 ----
 
-== Use-Case-Übersicht
+== Use Case Overview
 
 [cols="1,2,1,1"]
 |===
-| ID | Name | Priorität | API-Gruppe
+| ID | Name | Priority | API Group
 
-| UC-01 | Dokumentstruktur abrufen | Must-Have | Navigation
-| UC-02 | Sektion lesen | Must-Have | Navigation
-| UC-03 | Sektion aktualisieren | Must-Have | Manipulation
-| UC-04 | Inhalt suchen | Must-Have | Content-Access
-| UC-05 | Elemente nach Typ filtern | Must-Have | Content-Access
-| UC-06 | Metadaten abrufen | Should-Have | Meta-Info
-| UC-07 | Struktur validieren | Should-Have | Meta-Info
-| UC-08 | Server initialisieren | Must-Have | System
-| UC-09 | Inhalt einfügen | Must-Have | Manipulation
-| UC-10 | Element ersetzen | Should-Have | Manipulation
+| UC-01 | Get document structure | Must-Have | Navigation
+| UC-02 | Read section | Must-Have | Navigation
+| UC-03 | Update section | Must-Have | Manipulation
+| UC-04 | Search content | Must-Have | Content-Access
+| UC-05 | Filter elements by type | Must-Have | Content-Access
+| UC-06 | Get metadata | Should-Have | Meta-Info
+| UC-07 | Validate structure | Should-Have | Meta-Info
+| UC-08 | Initialize server | Must-Have | System
+| UC-09 | Insert content | Must-Have | Manipulation
+| UC-10 | Replace element | Should-Have | Manipulation
 |===
 
-== Anhang: Glossar
+== Appendix: Glossary
 
 [cols="1,3"]
 |===
-| Begriff | Definition
+| Term | Definition
 
-| **Hierarchischer Pfad**
-| Punkt-separierter Pfad zu einer Sektion, z.B. `chapter-1.section-2`
+| **Hierarchical Path**
+| Dot-separated path to a section, e.g., `chapter-1.section-2`
 
-| **Include-Direktive**
-| AsciiDoc-Anweisung zum Einbinden externer Dateien: `include::datei.adoc[]`
+| **Include Directive**
+| AsciiDoc instruction for including external files: `include::file.adoc[]`
 
-| **Atomare Schreiboperation**
-| Operation, die entweder vollständig oder gar nicht durchgeführt wird
+| **Atomic Write Operation**
+| Operation that is either completed entirely or not at all
 
-| **In-Memory-Index**
-| Speicherresidente Datenstruktur für schnelle Pfad-zu-Position-Lookups
+| **In-Memory Index**
+| Memory-resident data structure for fast path-to-position lookups
 
 | **SectionLocation**
-| Datenstruktur mit Datei, Start- und Endzeile einer Sektion
+| Data structure with file, start, and end line of a section
 |===

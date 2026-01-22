@@ -10,65 +10,65 @@ ifndef::imagesdir[:imagesdir: ../../images]
 :sectnums:
 :icons: font
 
-== Übersicht
+== Overview
 
-Dieses Dokument definiert die Akzeptanzkriterien im Gherkin-Format (Given-When-Then).
-Diese Szenarien können direkt als Basis für automatisierte Tests verwendet werden.
+This document defines the acceptance criteria in Gherkin format (Given-When-Then).
+These scenarios can be used directly as a basis for automated tests.
 
-== Feature: Dokumentstruktur abrufen (UC-01)
+== Feature: Get Document Structure (UC-01)
 
 [source,gherkin]
 ----
-Feature: Dokumentstruktur abrufen
-  Als LLM Client
-  Möchte ich die hierarchische Struktur eines Dokumentationsprojekts abrufen
-  Um einen Überblick über verfügbare Inhalte zu erhalten
+Feature: Get document structure
+  As an LLM Client
+  I want to retrieve the hierarchical structure of a documentation project
+  To get an overview of available content
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And das Projekt enthält folgende Struktur:
-      | Pfad                  | Titel                |
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the project contains the following structure:
+      | Path                  | Title                |
       | introduction          | 1. Introduction      |
       | introduction.goals    | 1.1 Goals            |
       | introduction.scope    | 1.2 Scope            |
       | constraints           | 2. Constraints       |
       | constraints.technical | 2.1 Technical        |
 
-  Scenario: Vollständige Struktur abrufen
-    When ich GET /structure aufrufe
-    Then erhalte ich HTTP Status 200
-    And die Response enthält alle 5 Sektionen
-    And die Struktur ist hierarchisch verschachtelt
+  Scenario: Retrieve complete structure
+    When I call GET /structure
+    Then I receive HTTP Status 200
+    And the response contains all 5 sections
+    And the structure is hierarchically nested
 
-  Scenario: Struktur mit Tiefenbegrenzung abrufen
-    When ich GET /structure?max_depth=1 aufrufe
-    Then erhalte ich HTTP Status 200
-    And die Response enthält nur Sektionen der Ebene 1
-    And "introduction" hat keine children
-    And "constraints" hat keine children
+  Scenario: Retrieve structure with depth limit
+    When I call GET /structure?max_depth=1
+    Then I receive HTTP Status 200
+    And the response contains only sections of level 1
+    And "introduction" has no children
+    And "constraints" has no children
 
-  Scenario: Struktur bei leerem Projekt
-    Given das Projekt enthält keine Dokumente
-    When ich GET /structure aufrufe
-    Then erhalte ich HTTP Status 200
-    And die Response enthält eine leere Struktur
-    And total_sections ist 0
+  Scenario: Structure for empty project
+    Given the project contains no documents
+    When I call GET /structure
+    Then I receive HTTP Status 200
+    And the response contains an empty structure
+    And total_sections is 0
 ----
 
-== Feature: Sektion lesen (UC-02)
+== Feature: Read Section (UC-02)
 
 [source,gherkin]
 ----
-Feature: Sektion lesen
-  Als LLM Client
-  Möchte ich den Inhalt einer spezifischen Sektion lesen
-  Um gezielt auf Dokumentationsinhalte zuzugreifen
+Feature: Read section
+  As an LLM Client
+  I want to read the content of a specific section
+  To access documentation content in a targeted manner
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And die Sektion "introduction.goals" existiert mit Inhalt:
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the section "introduction.goals" exists with content:
       """
       == Goals
       
@@ -77,508 +77,508 @@ Feature: Sektion lesen
       * Goal 2
       """
 
-  Scenario: Existierende Sektion lesen
-    When ich GET /section/introduction.goals aufrufe
-    Then erhalte ich HTTP Status 200
-    And die Response enthält den vollständigen Sektionsinhalt
-    And das Feld "path" ist "introduction.goals"
-    And das Feld "format" ist "asciidoc"
+  Scenario: Read existing section
+    When I call GET /section/introduction.goals
+    Then I receive HTTP Status 200
+    And the response contains the complete section content
+    And the field "path" is "introduction.goals"
+    And the field "format" is "asciidoc"
 
-  Scenario: Nicht existierende Sektion anfordern
-    When ich GET /section/nonexistent.path aufrufe
-    Then erhalte ich HTTP Status 404
-    And der Fehlercode ist "PATH_NOT_FOUND"
-    And die Fehlermeldung enthält "nonexistent.path"
+  Scenario: Request non-existing section
+    When I call GET /section/nonexistent.path
+    Then I receive HTTP Status 404
+    And the error code is "PATH_NOT_FOUND"
+    And the error message contains "nonexistent.path"
 
-  Scenario: Sektion mit URL-encodiertem Pfad lesen
-    Given die Sektion "chapter-1.section-2" existiert
-    When ich GET /section/chapter-1.section-2 aufrufe
-    Then erhalte ich HTTP Status 200
+  Scenario: Read section with URL-encoded path
+    Given the section "chapter-1.section-2" exists
+    When I call GET /section/chapter-1.section-2
+    Then I receive HTTP Status 200
 
-  Scenario: Location-Informationen sind korrekt
-    When ich GET /section/introduction.goals aufrufe
-    Then enthält die Response ein "location" Objekt
-    And "location.file" ist ein relativer Dateipfad
-    And "location.start_line" ist größer als 0
-    And "location.end_line" ist größer oder gleich "location.start_line"
+  Scenario: Location information is correct
+    When I call GET /section/introduction.goals
+    Then the response contains a "location" object
+    And "location.file" is a relative file path
+    And "location.start_line" is greater than 0
+    And "location.end_line" is greater than or equal to "location.start_line"
 ----
 
-== Feature: Sektion aktualisieren (UC-03)
+== Feature: Update Section (UC-03)
 
 [source,gherkin]
 ----
-Feature: Sektion aktualisieren
-  Als LLM Client
-  Möchte ich den Inhalt einer Sektion aktualisieren
-  Um Dokumentation zu pflegen und zu verbessern
+Feature: Update section
+  As an LLM Client
+  I want to update the content of a section
+  To maintain and improve documentation
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And die Sektion "introduction.goals" existiert
-    And das Dateisystem ist beschreibbar
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the section "introduction.goals" exists
+    And the file system is writable
 
-  Scenario: Sektion erfolgreich aktualisieren
-    When ich PUT /section/introduction.goals aufrufe mit:
+  Scenario: Successfully update section
+    When I call PUT /section/introduction.goals with:
       """
       {
         "content": "== Goals\n\nUpdated goals content."
       }
       """
-    Then erhalte ich HTTP Status 200
-    And das Feld "success" ist true
-    And der neue Inhalt ist in der Datei gespeichert
-    And der Index ist aktualisiert
+    Then I receive HTTP Status 200
+    And the field "success" is true
+    And the new content is saved in the file
+    And the index is updated
 
-  Scenario: Titel beim Update beibehalten
-    Given die Sektion hat den Titel "1.1 Goals"
-    When ich PUT /section/introduction.goals aufrufe mit:
+  Scenario: Preserve title on update
+    Given the section has the title "1.1 Goals"
+    When I call PUT /section/introduction.goals with:
       """
       {
         "content": "New content without title",
         "preserve_title": true
       }
       """
-    Then erhalte ich HTTP Status 200
-    And der Titel "1.1 Goals" ist erhalten geblieben
+    Then I receive HTTP Status 200
+    And the title "1.1 Goals" is preserved
 
-  Scenario: Nicht existierende Sektion aktualisieren
-    When ich PUT /section/nonexistent aufrufe mit:
+  Scenario: Update non-existing section
+    When I call PUT /section/nonexistent with:
       """
       {
         "content": "Some content"
       }
       """
-    Then erhalte ich HTTP Status 404
-    And der Fehlercode ist "PATH_NOT_FOUND"
+    Then I receive HTTP Status 404
+    And the error code is "PATH_NOT_FOUND"
 
-  Scenario: Atomare Schreiboperation bei Fehler
-    Given das Schreiben der temporären Datei schlägt fehl
-    When ich PUT /section/introduction.goals aufrufe mit:
+  Scenario: Atomic write operation on error
+    Given writing to the temporary file fails
+    When I call PUT /section/introduction.goals with:
       """
       {
         "content": "New content"
       }
       """
-    Then erhalte ich HTTP Status 500
-    And der Fehlercode ist "WRITE_FAILED"
-    And die Originaldatei ist unverändert
-    And keine .tmp oder .bak Dateien verbleiben
+    Then I receive HTTP Status 500
+    And the error code is "WRITE_FAILED"
+    And the original file is unchanged
+    And no .tmp or .bak files remain
 
-  Scenario: Hash-Werte für Änderungsverfolgung
-    When ich PUT /section/introduction.goals aufrufe mit gültigem content
-    Then enthält die Response "previous_hash"
-    And enthält die Response "new_hash"
-    And "previous_hash" unterscheidet sich von "new_hash"
+  Scenario: Hash values for change tracking
+    When I call PUT /section/introduction.goals with valid content
+    Then the response contains "previous_hash"
+    And the response contains "new_hash"
+    And "previous_hash" differs from "new_hash"
 ----
 
-== Feature: Inhalt suchen (UC-04)
+== Feature: Search Content (UC-04)
 
 [source,gherkin]
 ----
-Feature: Inhalt suchen
-  Als LLM Client
-  Möchte ich nach Inhalten im Dokumentationsprojekt suchen
-  Um relevante Informationen schnell zu finden
+Feature: Search content
+  As an LLM Client
+  I want to search for content in the documentation project
+  To quickly find relevant information
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And das Projekt enthält Sektionen mit verschiedenen Inhalten
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the project contains sections with various content
 
-  Scenario: Erfolgreiche Suche mit Treffern
-    Given eine Sektion enthält den Text "atomic write operation"
-    When ich POST /search aufrufe mit:
+  Scenario: Successful search with matches
+    Given a section contains the text "atomic write operation"
+    When I call POST /search with:
       """
       {
         "query": "atomic write"
       }
       """
-    Then erhalte ich HTTP Status 200
-    And die Ergebnisliste enthält mindestens 1 Treffer
-    And jeder Treffer hat einen "path"
-    And jeder Treffer hat einen "context" mit dem Suchbegriff
-    And jeder Treffer hat einen "score" zwischen 0 und 1
+    Then I receive HTTP Status 200
+    And the result list contains at least 1 match
+    And each match has a "path"
+    And each match has a "context" with the search term
+    And each match has a "score" between 0 and 1
 
-  Scenario: Suche ohne Treffer
-    When ich POST /search aufrufe mit:
+  Scenario: Search without matches
+    When I call POST /search with:
       """
       {
         "query": "xyznonexistentterm"
       }
       """
-    Then erhalte ich HTTP Status 200
-    And die Ergebnisliste ist leer
-    And "total_results" ist 0
+    Then I receive HTTP Status 200
+    And the result list is empty
+    And "total_results" is 0
 
-  Scenario: Suche mit Scope-Einschränkung
-    When ich POST /search aufrufe mit:
+  Scenario: Search with scope restriction
+    When I call POST /search with:
       """
       {
         "query": "performance",
         "scope": "quality"
       }
       """
-    Then erhalte ich HTTP Status 200
-    And alle Treffer haben einen Pfad der mit "quality" beginnt
+    Then I receive HTTP Status 200
+    And all matches have a path starting with "quality"
 
-  Scenario: Case-sensitive Suche
-    Given eine Sektion enthält "Performance" aber nicht "performance"
-    When ich POST /search aufrufe mit:
+  Scenario: Case-sensitive search
+    Given a section contains "Performance" but not "performance"
+    When I call POST /search with:
       """
       {
         "query": "performance",
         "case_sensitive": true
       }
       """
-    Then enthält die Ergebnisliste nicht die Sektion mit "Performance"
+    Then the result list does not contain the section with "Performance"
 
-  Scenario: Ergebnisanzahl begrenzen
-    Given es gibt mehr als 10 Treffer für "section"
-    When ich POST /search aufrufe mit:
+  Scenario: Limit result count
+    Given there are more than 10 matches for "section"
+    When I call POST /search with:
       """
       {
         "query": "section",
         "max_results": 5
       }
       """
-    Then enthält die Ergebnisliste maximal 5 Treffer
+    Then the result list contains at most 5 matches
 ----
 
-== Feature: Elemente nach Typ filtern (UC-05)
+== Feature: Filter Elements by Type (UC-05)
 
 [source,gherkin]
 ----
-Feature: Elemente nach Typ filtern
-  Als LLM Client
-  Möchte ich Elemente eines bestimmten Typs abrufen
-  Um gezielt auf Diagramme, Tabellen oder Code zuzugreifen
+Feature: Filter elements by type
+  As an LLM Client
+  I want to retrieve elements of a specific type
+  To access diagrams, tables, or code in a targeted manner
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And das Projekt enthält:
-      | Typ     | Anzahl |
-      | diagram | 5      |
-      | table   | 8      |
-      | code    | 12     |
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the project contains:
+      | Type    | Count |
+      | diagram | 5     |
+      | table   | 8     |
+      | code    | 12    |
 
-  Scenario: Alle Diagramme abrufen
-    When ich GET /elements?type=diagram aufrufe
-    Then erhalte ich HTTP Status 200
-    And das Feld "type" ist "diagram"
-    And "count" ist 5
-    And jedes Element hat einen "path"
-    And jedes Element hat eine "location"
+  Scenario: Retrieve all diagrams
+    When I call GET /elements?type=diagram
+    Then I receive HTTP Status 200
+    And the field "type" is "diagram"
+    And "count" is 5
+    And each element has a "path"
+    And each element has a "location"
 
-  Scenario: Tabellen einer bestimmten Sektion
-    Given die Sektion "quality.performance" enthält 2 Tabellen
-    When ich GET /elements?type=table&path=quality.performance aufrufe
-    Then erhalte ich HTTP Status 200
-    And "count" ist 2
-    And alle Elemente haben path "quality.performance"
+  Scenario: Tables of a specific section
+    Given the section "quality.performance" contains 2 tables
+    When I call GET /elements?type=table&path=quality.performance
+    Then I receive HTTP Status 200
+    And "count" is 2
+    And all elements have path "quality.performance"
 
-  Scenario: Ungültiger Elementtyp
-    When ich GET /elements?type=charts aufrufe
-    Then erhalte ich HTTP Status 400
-    And der Fehlercode ist "INVALID_TYPE"
-    And die Response enthält gültige Typen
+  Scenario: Invalid element type
+    When I call GET /elements?type=charts
+    Then I receive HTTP Status 400
+    And the error code is "INVALID_TYPE"
+    And the response contains valid types
 
-  Scenario: Elementtyp ohne Treffer
-    Given das Projekt enthält keine Bilder
-    When ich GET /elements?type=image aufrufe
-    Then erhalte ich HTTP Status 200
-    And "count" ist 0
-    And "elements" ist ein leeres Array
+  Scenario: Element type without matches
+    Given the project contains no images
+    When I call GET /elements?type=image
+    Then I receive HTTP Status 200
+    And "count" is 0
+    And "elements" is an empty array
 ----
 
-== Feature: Metadaten abrufen (UC-06)
+== Feature: Get Metadata (UC-06)
 
 [source,gherkin]
 ----
-Feature: Metadaten abrufen
-  Als LLM Client
-  Möchte ich Metadaten über das Projekt oder Sektionen abrufen
-  Um Informationen über Umfang und Aktualität zu erhalten
+Feature: Get metadata
+  As an LLM Client
+  I want to retrieve metadata about the project or sections
+  To get information about scope and currency
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
+    Given the server is started
+    And the project "test-docs" is indexed
 
-  Scenario: Projekt-Metadaten abrufen
-    When ich GET /metadata aufrufe ohne path Parameter
-    Then erhalte ich HTTP Status 200
-    And die Response enthält "total_files"
-    And die Response enthält "total_sections"
-    And die Response enthält "total_words"
-    And die Response enthält "last_modified" im ISO 8601 Format
+  Scenario: Retrieve project metadata
+    When I call GET /metadata without path parameter
+    Then I receive HTTP Status 200
+    And the response contains "total_files"
+    And the response contains "total_sections"
+    And the response contains "total_words"
+    And the response contains "last_modified" in ISO 8601 format
 
-  Scenario: Sektions-Metadaten abrufen
-    When ich GET /metadata?path=introduction aufrufe
-    Then erhalte ich HTTP Status 200
-    And das Feld "path" ist "introduction"
-    And die Response enthält "word_count"
-    And die Response enthält "subsection_count"
+  Scenario: Retrieve section metadata
+    When I call GET /metadata?path=introduction
+    Then I receive HTTP Status 200
+    And the field "path" is "introduction"
+    And the response contains "word_count"
+    And the response contains "subsection_count"
 
-  Scenario: Metadaten für nicht existierenden Pfad
-    When ich GET /metadata?path=nonexistent aufrufe
-    Then erhalte ich HTTP Status 404
+  Scenario: Metadata for non-existing path
+    When I call GET /metadata?path=nonexistent
+    Then I receive HTTP Status 404
 ----
 
-== Feature: Struktur validieren (UC-07)
+== Feature: Validate Structure (UC-07)
 
 [source,gherkin]
 ----
-Feature: Struktur validieren
-  Als LLM Client
-  Möchte ich die Dokumentstruktur auf Konsistenz prüfen
-  Um Probleme frühzeitig zu erkennen
+Feature: Validate structure
+  As an LLM Client
+  I want to check the document structure for consistency
+  To detect problems early
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
+    Given the server is started
+    And the project "test-docs" is indexed
 
-  Scenario: Valide Struktur prüfen
-    Given das Projekt hat keine strukturellen Probleme
-    When ich POST /validate aufrufe
-    Then erhalte ich HTTP Status 200
-    And "valid" ist true
-    And "errors" ist ein leeres Array
+  Scenario: Check valid structure
+    Given the project has no structural problems
+    When I call POST /validate
+    Then I receive HTTP Status 200
+    And "valid" is true
+    And "errors" is an empty array
 
-  Scenario: Unaufgelöste Includes erkennen
-    Given die Datei "chapter.adoc" enthält "include::missing.adoc[]"
-    And die Datei "missing.adoc" existiert nicht
-    When ich POST /validate aufrufe
-    Then erhalte ich HTTP Status 200
-    And "valid" ist false
-    And "errors" enthält einen Eintrag mit type "unresolved_include"
+  Scenario: Detect unresolved includes
+    Given the file "chapter.adoc" contains "include::missing.adoc[]"
+    And the file "missing.adoc" does not exist
+    When I call POST /validate
+    Then I receive HTTP Status 200
+    And "valid" is false
+    And "errors" contains an entry with type "unresolved_include"
 
-  Scenario: Zirkuläre Includes erkennen
-    Given Datei A inkludiert Datei B
-    And Datei B inkludiert Datei A
-    When ich POST /validate aufrufe
-    Then erhalte ich HTTP Status 200
-    And "valid" ist false
-    And "errors" enthält einen Eintrag mit type "circular_include"
+  Scenario: Detect circular includes
+    Given File A includes File B
+    And File B includes File A
+    When I call POST /validate
+    Then I receive HTTP Status 200
+    And "valid" is false
+    And "errors" contains an entry with type "circular_include"
 
-  Scenario: Verwaiste Dateien als Warnung
-    Given die Datei "orphan.adoc" wird von keinem Dokument inkludiert
-    When ich POST /validate aufrufe
-    Then erhalte ich HTTP Status 200
-    And "warnings" enthält einen Eintrag mit type "orphaned_file"
+  Scenario: Orphaned files as warning
+    Given the file "orphan.adoc" is not included by any document
+    When I call POST /validate
+    Then I receive HTTP Status 200
+    And "warnings" contains an entry with type "orphaned_file"
 ----
 
-== Feature: Server-Initialisierung (UC-08)
+== Feature: Server Initialization (UC-08)
 
 [source,gherkin]
 ----
-Feature: Server-Initialisierung
-  Als System
-  Muss ich beim Start das Dokumentationsprojekt indizieren
-  Um schnelle Abfragen zu ermöglichen
+Feature: Server initialization
+  As a system
+  I must index the documentation project at startup
+  To enable fast queries
 
-  Scenario: Erfolgreiche Initialisierung
-    Given das Projektverzeichnis enthält AsciiDoc-Dateien
-    When der Server gestartet wird
-    Then ist der Index nach dem Start aufgebaut
-    And der Health-Endpunkt meldet "index_ready": true
+  Scenario: Successful initialization
+    Given the project directory contains AsciiDoc files
+    When the server is started
+    Then the index is built after startup
+    And the health endpoint reports "index_ready": true
 
-  Scenario: Initialisierung mit leerem Verzeichnis
-    Given das Projektverzeichnis ist leer
-    When der Server gestartet wird
-    Then startet der Server mit einem leeren Index
-    And es wird eine Warnung geloggt
+  Scenario: Initialization with empty directory
+    Given the project directory is empty
+    When the server is started
+    Then the server starts with an empty index
+    And a warning is logged
 
-  Scenario: Fehlertolerante Initialisierung
-    Given eine Datei im Projekt ist nicht parsebar
-    When der Server gestartet wird
-    Then wird die fehlerhafte Datei übersprungen
-    And es wird ein Fehler geloggt
-    And die anderen Dateien sind indiziert
+  Scenario: Fault-tolerant initialization
+    Given a file in the project is not parseable
+    When the server is started
+    Then the faulty file is skipped
+    And an error is logged
+    And the other files are indexed
 
-  Scenario: Include-Auflösung während Initialisierung
-    Given die Hauptdatei inkludiert drei Unterdateien
-    When der Server gestartet wird
-    Then sind alle inkludierten Sektionen im Index
-    And die Include-Beziehungen sind erfasst
+  Scenario: Include resolution during initialization
+    Given the main file includes three sub-files
+    When the server is started
+    Then all included sections are in the index
+    And the include relationships are captured
 ----
 
-== Feature: Inhalt einfügen (UC-09)
+== Feature: Insert Content (UC-09)
 
 [source,gherkin]
 ----
-Feature: Inhalt einfügen
-  Als LLM Client
-  Möchte ich neuen Inhalt an einer bestimmten Position einfügen
-  Um Dokumentation zu erweitern
+Feature: Insert content
+  As an LLM Client
+  I want to insert new content at a specific position
+  To extend documentation
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And die Sektion "introduction" existiert
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the section "introduction" exists
 
-  Scenario: Inhalt vor einer Sektion einfügen
-    When ich POST /section/introduction/insert aufrufe mit:
+  Scenario: Insert content before a section
+    When I call POST /section/introduction/insert with:
       """
       {
         "position": "before",
         "content": "== Preface\n\nThis is a preface."
       }
       """
-    Then erhalte ich HTTP Status 200
-    And der neue Inhalt steht vor der Sektion "introduction"
+    Then I receive HTTP Status 200
+    And the new content is before the section "introduction"
 
-  Scenario: Inhalt nach einer Sektion einfügen
-    When ich POST /section/introduction/insert aufrufe mit:
+  Scenario: Insert content after a section
+    When I call POST /section/introduction/insert with:
       """
       {
         "position": "after",
         "content": "== Summary\n\nThis is a summary."
       }
       """
-    Then erhalte ich HTTP Status 200
-    And der neue Inhalt steht nach der Sektion "introduction"
+    Then I receive HTTP Status 200
+    And the new content is after the section "introduction"
 
-  Scenario: Inhalt an Sektion anhängen
-    When ich POST /section/introduction/insert aufrufe mit:
+  Scenario: Append content to section
+    When I call POST /section/introduction/insert with:
       """
       {
         "position": "append",
         "content": "\n\nAdditional paragraph."
       }
       """
-    Then erhalte ich HTTP Status 200
-    And der neue Inhalt ist am Ende der Sektion "introduction"
+    Then I receive HTTP Status 200
+    And the new content is at the end of the section "introduction"
 
-  Scenario: Ungültige Position
-    When ich POST /section/introduction/insert aufrufe mit:
+  Scenario: Invalid position
+    When I call POST /section/introduction/insert with:
       """
       {
         "position": "invalid",
         "content": "Some content"
       }
       """
-    Then erhalte ich HTTP Status 400
-    And der Fehlercode ist "INVALID_POSITION"
+    Then I receive HTTP Status 400
+    And the error code is "INVALID_POSITION"
 ----
 
-== Feature: Element ersetzen (UC-10)
+== Feature: Replace Element (UC-10)
 
 [source,gherkin]
 ----
-Feature: Element ersetzen
-  Als LLM Client
-  Möchte ich ein spezifisches Element innerhalb einer Sektion ersetzen
-  Um gezielt Tabellen, Code-Blöcke oder Diagramme zu aktualisieren
+Feature: Replace element
+  As an LLM Client
+  I want to replace a specific element within a section
+  To update tables, code blocks, or diagrams in a targeted manner
 
   Background:
-    Given der Server ist gestartet
-    And das Projekt "test-docs" ist indiziert
-    And die Sektion "quality.performance" enthält eine Tabelle an Index 0
+    Given the server is started
+    And the project "test-docs" is indexed
+    And the section "quality.performance" contains a table at index 0
 
-  Scenario: Tabelle erfolgreich ersetzen
-    When ich PUT /element/quality.performance/0 aufrufe mit:
+  Scenario: Successfully replace table
+    When I call PUT /element/quality.performance/0 with:
       """
       {
         "content": "[cols=\"1,2\"]\n|===\n| New | Table\n|==="
       }
       """
-    Then erhalte ich HTTP Status 200
-    And "success" ist true
-    And die Tabelle in der Datei ist aktualisiert
+    Then I receive HTTP Status 200
+    And "success" is true
+    And the table in the file is updated
 
-  Scenario: Element an ungültigem Index
-    When ich PUT /element/quality.performance/99 aufrufe mit:
+  Scenario: Element at invalid index
+    When I call PUT /element/quality.performance/99 with:
       """
       {
         "content": "New content"
       }
       """
-    Then erhalte ich HTTP Status 404
-    And der Fehlercode ist "ELEMENT_NOT_FOUND"
+    Then I receive HTTP Status 404
+    And the error code is "ELEMENT_NOT_FOUND"
 
-  Scenario: Element in nicht existierender Sektion
-    When ich PUT /element/nonexistent/0 aufrufe mit:
+  Scenario: Element in non-existing section
+    When I call PUT /element/nonexistent/0 with:
       """
       {
         "content": "New content"
       }
       """
-    Then erhalte ich HTTP Status 404
-    And der Fehlercode ist "PATH_NOT_FOUND"
+    Then I receive HTTP Status 404
+    And the error code is "PATH_NOT_FOUND"
 ----
 
 == Feature: Non-Functional Requirements
 
 [source,gherkin]
 ----
-Feature: Performance-Anforderungen
-  Als System
-  Muss ich bestimmte Performance-Kriterien erfüllen
+Feature: Performance requirements
+  As a system
+  I must meet certain performance criteria
 
-  Scenario: Schnelle Antwortzeiten für Leseoperationen
-    Given ein Projekt mit 600 Seiten ist indiziert
-    When ich GET /section/some.path aufrufe
-    Then ist die Antwortzeit unter 2 Sekunden
+  Scenario: Fast response times for read operations
+    Given a project with 600 pages is indexed
+    When I call GET /section/some.path
+    Then the response time is under 2 seconds
 
-  Scenario: Akzeptable Indexierungszeit
-    Given ein Projekt mit 600 Seiten
-    When der Server gestartet wird
-    Then ist die Indexierung in unter 60 Sekunden abgeschlossen
+  Scenario: Acceptable indexing time
+    Given a project with 600 pages
+    When the server is started
+    Then indexing is completed in under 60 seconds
 
-  Scenario: Geringer Idle-Ressourcenverbrauch
-    Given der Server ist gestartet und idle
-    When keine Anfragen eingehen für 60 Sekunden
-    Then ist die CPU-Auslastung unter 5%
-    And der Speicherverbrauch ist stabil
+  Scenario: Low idle resource consumption
+    Given the server is started and idle
+    When no requests come in for 60 seconds
+    Then CPU utilization is under 5%
+    And memory consumption is stable
 ----
 
 [source,gherkin]
 ----
-Feature: Reliability-Anforderungen
-  Als System
-  Muss ich Datenintegrität gewährleisten
+Feature: Reliability requirements
+  As a system
+  I must ensure data integrity
 
-  Scenario: Atomare Schreiboperationen
-    Given eine Schreiboperation ist in Bearbeitung
-    When ein Fehler während des Schreibens auftritt
-    Then ist die Originaldatei unverändert
-    And es verbleiben keine temporären Dateien
+  Scenario: Atomic write operations
+    Given a write operation is in progress
+    When an error occurs during writing
+    Then the original file is unchanged
+    And no temporary files remain
 
-  Scenario: Graceful Error Handling
-    Given eine Datei ist nicht lesbar
-    When ich GET /section/path.to.file aufrufe
-    Then erhalte ich HTTP Status 500
-    And die Fehlermeldung ist aussagekräftig
-    And der Server bleibt stabil
+  Scenario: Graceful error handling
+    Given a file is not readable
+    When I call GET /section/path.to.file
+    Then I receive HTTP Status 500
+    And the error message is informative
+    And the server remains stable
 ----
 
 == Traceability Matrix
 
 [cols="1,2,2"]
 |===
-| Use-Case | API-Endpunkte | Akzeptanzszenarien
+| Use Case | API Endpoints | Acceptance Scenarios
 
-| UC-01 | GET /structure, GET /sections | 3 Szenarien
-| UC-02 | GET /section/{path} | 4 Szenarien
-| UC-03 | PUT /section/{path} | 5 Szenarien
-| UC-04 | POST /search | 5 Szenarien
-| UC-05 | GET /elements | 4 Szenarien
-| UC-06 | GET /metadata, GET /dependencies | 3 Szenarien
-| UC-07 | POST /validate | 4 Szenarien
-| UC-08 | (System-Startup) | 4 Szenarien
-| UC-09 | POST /section/{path}/insert | 4 Szenarien
-| UC-10 | PUT /element/{path}/{index} | 3 Szenarien
+| UC-01 | GET /structure, GET /sections | 3 scenarios
+| UC-02 | GET /section/{path} | 4 scenarios
+| UC-03 | PUT /section/{path} | 5 scenarios
+| UC-04 | POST /search | 5 scenarios
+| UC-05 | GET /elements | 4 scenarios
+| UC-06 | GET /metadata, GET /dependencies | 3 scenarios
+| UC-07 | POST /validate | 4 scenarios
+| UC-08 | (System Startup) | 4 scenarios
+| UC-09 | POST /section/{path}/insert | 4 scenarios
+| UC-10 | PUT /element/{path}/{index} | 3 scenarios
 |===
 
-== Anhang: Test-Daten-Spezifikation
+== Appendix: Test Data Specification
 
-=== Minimales Test-Projekt
+=== Minimal Test Project
 
 [source]
 ----
 test-docs/
-├── arc42.adoc           # Hauptdokument mit includes
+├── arc42.adoc           # Main document with includes
 ├── chapters/
 │   ├── 01_introduction.adoc
 │   ├── 02_constraints.adoc
@@ -587,7 +587,7 @@ test-docs/
     └── diagram.png
 ----
 
-=== Struktur der Test-Dokumente
+=== Structure of Test Documents
 
 [source,asciidoc]
 ----

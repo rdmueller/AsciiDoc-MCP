@@ -6,116 +6,116 @@ ifndef::imagesdir[:imagesdir: ../../images]
 
 :toc:
 
-= Markdown Parser - Komponentenspezifikation
+= Markdown Parser - Component Specification
 :sectnums:
 :icons: font
 
-== Einführung
+== Introduction
 
-Diese Spezifikation definiert den **MarkdownParser** - eine schlanke Komponente zum Parsen von GitHub Flavored Markdown (GFM) Dokumenten. Der Parser ist bewusst auf die Anforderungen dieses Projekts zugeschnitten und kein vollständiger GFM-Parser.
+This specification defines the **MarkdownParser** - a lightweight component for parsing GitHub Flavored Markdown (GFM) documents. The parser is intentionally tailored to the requirements of this project and is not a complete GFM parser.
 
-=== Zweck
+=== Purpose
 
-Der MarkdownParser dient dazu:
+The MarkdownParser serves to:
 
-1. **Dokumentstruktur erfassen**: Headings extrahieren und hierarchische Struktur aufbauen
-2. **Elemente identifizieren**: Code-Blöcke, Tabellen und Bilder als adressierbare Blöcke erkennen
-3. **Metadaten lesen**: YAML-Frontmatter parsen
-4. **Quelldatei-Mapping**: Zeilennummern für jedes Element erfassen
+1. **Capture document structure**: Extract headings and build hierarchical structure
+2. **Identify elements**: Recognize code blocks, tables, and images as addressable blocks
+3. **Read metadata**: Parse YAML frontmatter
+4. **Source file mapping**: Capture line numbers for each element
 
-=== Abgrenzung
+=== Scope Limitations
 
-Der Parser ist **kein** vollständiger Markdown-Renderer. Er:
+The parser is **not** a complete Markdown renderer. It:
 
-* Rendert kein HTML
-* Parst keine Inline-Formatierung (bold, italic, links im Text)
-* Analysiert keine Tabelleninhalte
-* Verarbeitet keine verschachtelten Listen im Detail
+* Does not render HTML
+* Does not parse inline formatting (bold, italic, inline links)
+* Does not analyze table contents
+* Does not process nested lists in detail
 
-== Unterstützte GFM-Features
+== Supported GFM Features
 
-=== Vollständig unterstützt
+=== Fully Supported
 
 [cols="2,3,2"]
 |===
-| Feature | Beschreibung | Verwendung
+| Feature | Description | Usage
 
 | **ATX Headings**
-| `# H1` bis `###### H6`
-| Dokumentstruktur
+| `# H1` to `###### H6`
+| Document structure
 
 | **Fenced Code Blocks**
 | ````language ... ````
-| Element-Extraktion
+| Element extraction
 
 | **YAML Frontmatter**
-| `---` Block am Dateianfang
-| Metadaten
+| `---` block at file start
+| Metadata
 
 | **Images**
-| `![alt](url)` und `![alt](url "title")`
-| Element-Extraktion
+| `![alt](url)` and `![alt](url "title")`
+| Element extraction
 |===
 
-=== Erkannt (nicht detailliert geparst)
+=== Recognized (Not Parsed in Detail)
 
 [cols="2,3,2"]
 |===
-| Feature | Beschreibung | Behandlung
+| Feature | Description | Treatment
 
 | **Tables**
-| GFM Pipe-Tabellen
-| Als Block erkannt, Inhalt nicht analysiert
+| GFM pipe tables
+| Recognized as block, content not analyzed
 
 | **Task Lists**
-| `- [ ]` und `- [x]`
-| Als Liste erkannt
+| `- [ ]` and `- [x]`
+| Recognized as list
 
 | **Blockquotes**
 | `> quoted text`
-| Als Block erkannt
+| Recognized as block
 |===
 
-=== Nicht unterstützt
+=== Not Supported
 
-* Setext Headings (unterstrichen mit `===` oder `---`)
+* Setext Headings (underlined with `===` or `---`)
 * Inline HTML
 * Footnotes
 * Definition Lists
 * Math blocks (LaTeX)
 
-== Dokumentstruktur via Ordner-Hierarchie
+== Document Structure via Folder Hierarchy
 
-Im Gegensatz zum AsciiDoc-Parser verwendet der MarkdownParser **keine Include-Direktiven**. Stattdessen bildet die **Ordnerstruktur** die Dokumenthierarchie ab.
+Unlike the AsciiDoc parser, the MarkdownParser uses **no include directives**. Instead, the **folder structure** represents the document hierarchy.
 
-=== Strukturregeln
+=== Structure Rules
 
 [source,text]
 ----
 docs/
-├── index.md              # Dokument-Einleitung (optional)
+├── index.md              # Document introduction (optional)
 ├── 01_introduction/
-│   ├── index.md          # Kapitel-Einleitung (optional)
+│   ├── index.md          # Chapter introduction (optional)
 │   ├── 01_overview.md
 │   └── 02_goals.md
 ├── 02_architecture/
 │   ├── 01_constraints.md
 │   └── 02_decisions.md
-└── 03_appendix.md        # Einzeldatei als Kapitel
+└── 03_appendix.md        # Single file as chapter
 ----
 
-=== Sortierregeln
+=== Sorting Rules
 
-Die Reihenfolge von Dateien und Ordnern wird **alphabetisch** bestimmt:
+The order of files and folders is determined **alphabetically**:
 
-1. **Numerische Präfixe** werden korrekt sortiert: `01_`, `02_`, ... `10_`, `11_`
-2. **index.md** oder **README.md** erscheint immer zuerst in einem Ordner
-3. Ordner und Dateien auf gleicher Ebene werden gemeinsam sortiert
+1. **Numeric prefixes** are sorted correctly: `01_`, `02_`, ... `10_`, `11_`
+2. **index.md** or **README.md** always appears first in a folder
+3. Folders and files at the same level are sorted together
 
-.Sortierbeispiel
+.Sorting Example
 [cols="1,1"]
 |===
-| Dateisystem | Sortierte Reihenfolge
+| File System | Sorted Order
 
 a|
 ----
@@ -127,18 +127,18 @@ README.md
 
 a|
 ----
-README.md      (1. - Sonderregel)
-01_intro.md    (2. - numerisch)
-02_details.md  (3. - numerisch)
-10_appendix.md (4. - numerisch)
+README.md      (1st - special rule)
+01_intro.md    (2nd - numeric)
+02_details.md  (3rd - numeric)
+10_appendix.md (4th - numeric)
 ----
 |===
 
-=== Hierarchie-Mapping
+=== Hierarchy Mapping
 
 [cols="2,2,2"]
 |===
-| Dateisystem | Hierarchischer Pfad | Heading-Level
+| File System | Hierarchical Path | Heading Level
 
 | `docs/index.md` → `# Title`
 | `/title`
@@ -146,31 +146,31 @@ README.md      (1. - Sonderregel)
 
 | `docs/01_intro/index.md` → `# Intro`
 | `/intro`
-| H1 (Kapitel)
+| H1 (Chapter)
 
 | `docs/01_intro/01_overview.md` → `# Overview`
 | `/intro/overview`
-| H1 (wird zu H2 im Kontext)
+| H1 (becomes H2 in context)
 
 | `docs/01_intro/01_overview.md` → `## Details`
 | `/intro/overview/details`
-| H2 (wird zu H3 im Kontext)
+| H2 (becomes H3 in context)
 |===
 
 == YAML Frontmatter
 
-Der Parser unterstützt YAML-Frontmatter am Dateianfang für Metadaten.
+The parser supports YAML frontmatter at the file start for metadata.
 
 === Format
 
 [source,markdown]
 ----
 ---
-title: Dokumenttitel
-author: Max Mustermann
+title: Document Title
+author: John Doe
 date: 2024-01-15
 tags: [architecture, design]
-custom_field: beliebiger Wert
+custom_field: arbitrary value
 ---
 
 # Heading
@@ -178,43 +178,43 @@ custom_field: beliebiger Wert
 Content...
 ----
 
-=== Unterstützte Datentypen
+=== Supported Data Types
 
-* **String**: `title: "Mein Dokument"`
+* **String**: `title: "My Document"`
 * **Number**: `order: 42`
 * **Boolean**: `draft: true`
 * **Date**: `date: 2024-01-15`
 * **List**: `tags: [a, b, c]`
-* **Nested Objects**: `author: { name: "Max", email: "max@example.com" }`
+* **Nested Objects**: `author: { name: "John", email: "john@example.com" }`
 
-=== Reservierte Felder
+=== Reserved Fields
 
 [cols="1,2,2"]
 |===
-| Feld | Beschreibung | Standardwert
+| Field | Description | Default Value
 
 | `title`
-| Dokumenttitel (überschreibt H1)
-| Erster H1 oder Dateiname
+| Document title (overrides H1)
+| First H1 or filename
 
 | `order`
-| Explizite Sortierreihenfolge
-| Alphabetisch nach Dateiname
+| Explicit sort order
+| Alphabetical by filename
 
 | `draft`
-| Dokument ist Entwurf (wird ignoriert)
+| Document is draft (will be ignored)
 | `false`
 
 | `exclude`
-| Dokument von Index ausschließen
+| Exclude document from index
 | `false`
 |===
 
-== Extrahierbare Elemente
+== Extractable Elements
 
-Der Parser identifiziert folgende Elemente als eigenständige, adressierbare Blöcke:
+The parser identifies the following elements as standalone, addressable blocks:
 
-=== Code-Blöcke
+=== Code Blocks
 
 [source,markdown]
 ----
@@ -224,19 +224,19 @@ def hello():
 ```
 ----
 
-.Extrahierte Informationen
+.Extracted Information
 [cols="1,2"]
 |===
-| Attribut | Wert
+| Attribute | Value
 
 | `type` | `code`
 | `language` | `python`
-| `start_line` | Zeile des öffnenden ````
-| `end_line` | Zeile des schließenden ````
-| `content` | Rohinhalt (ohne Fence)
+| `start_line` | Line of opening ````
+| `end_line` | Line of closing ````
+| `content` | Raw content (without fence)
 |===
 
-=== Tabellen
+=== Tables
 
 [source,markdown]
 ----
@@ -245,40 +245,40 @@ def hello():
 | Cell 1   | Cell 2   |
 ----
 
-.Extrahierte Informationen
+.Extracted Information
 [cols="1,2"]
 |===
-| Attribut | Wert
+| Attribute | Value
 
 | `type` | `table`
-| `start_line` | Erste Zeile der Tabelle
-| `end_line` | Letzte Zeile der Tabelle
-| `columns` | Anzahl Spalten (aus Header)
-| `rows` | Anzahl Datenzeilen
+| `start_line` | First line of table
+| `end_line` | Last line of table
+| `columns` | Number of columns (from header)
+| `rows` | Number of data rows
 |===
 
-NOTE: Tabelleninhalte werden nicht detailliert geparst. Nur Struktur-Metadaten werden erfasst.
+NOTE: Table contents are not parsed in detail. Only structural metadata is captured.
 
-=== Bilder
+=== Images
 
 [source,markdown]
 ----
-![Alt-Text](path/to/image.png "Optional Title")
+![Alt Text](path/to/image.png "Optional Title")
 ----
 
-.Extrahierte Informationen
+.Extracted Information
 [cols="1,2"]
 |===
-| Attribut | Wert
+| Attribute | Value
 
 | `type` | `image`
-| `alt` | `Alt-Text`
+| `alt` | `Alt Text`
 | `src` | `path/to/image.png`
-| `title` | `Optional Title` (oder leer)
-| `line` | Zeilennummer
+| `title` | `Optional Title` (or empty)
+| `line` | Line number
 |===
 
-== Datenmodelle
+== Data Models
 
 === MarkdownDocument
 
@@ -286,7 +286,7 @@ NOTE: Tabelleninhalte werden nicht detailliert geparst. Nur Struktur-Metadaten w
 ----
 @dataclass
 class MarkdownDocument:
-    """Repräsentiert ein geparstes Markdown-Dokument."""
+    """Represents a parsed Markdown document."""
     file_path: Path
     frontmatter: dict[str, Any]
     title: str
@@ -300,12 +300,12 @@ class MarkdownDocument:
 ----
 @dataclass
 class MarkdownSection:
-    """Eine Sektion (Heading) im Dokument."""
+    """A section (heading) in the document."""
     title: str
     level: int                    # 1-6
     start_line: int
     end_line: int
-    path: str                     # Hierarchischer Pfad
+    path: str                     # Hierarchical path
     children: list[MarkdownSection]
 ----
 
@@ -315,12 +315,12 @@ class MarkdownSection:
 ----
 @dataclass
 class MarkdownElement:
-    """Ein extrahierbares Element (Code, Tabelle, Bild)."""
+    """An extractable element (code, table, image)."""
     type: Literal["code", "table", "image"]
     start_line: int
     end_line: int
-    attributes: dict[str, Any]    # Typ-spezifische Attribute
-    parent_section: str           # Pfad der umgebenden Sektion
+    attributes: dict[str, Any]    # Type-specific attributes
+    parent_section: str           # Path of containing section
 ----
 
 === FolderDocument
@@ -329,163 +329,163 @@ class MarkdownElement:
 ----
 @dataclass
 class FolderDocument:
-    """Ein Dokument aus mehreren Markdown-Dateien."""
+    """A document from multiple Markdown files."""
     root_path: Path
-    documents: list[MarkdownDocument]  # Sortiert
-    structure: DocumentStructure       # Kombinierte Hierarchie
+    documents: list[MarkdownDocument]  # Sorted
+    structure: DocumentStructure       # Combined hierarchy
 ----
 
-== Parser-Verhalten
+== Parser Behavior
 
-=== Fehlerbehandlung
+=== Error Handling
 
 [cols="2,3"]
 |===
-| Situation | Verhalten
+| Situation | Behavior
 
-| Ungültiges Frontmatter
-| Warnung loggen, Frontmatter als leer behandeln
+| Invalid frontmatter
+| Log warning, treat frontmatter as empty
 
-| Datei nicht lesbar
-| Exception werfen, Datei überspringen
+| File not readable
+| Throw exception, skip file
 
-| Ungültige UTF-8 Kodierung
-| Exception werfen mit Hinweis auf Kodierung
+| Invalid UTF-8 encoding
+| Throw exception with encoding hint
 
-| Leere Datei
-| Leeres Dokument zurückgeben (keine Sektionen)
+| Empty file
+| Return empty document (no sections)
 
-| Datei ohne Headings
-| Gesamter Inhalt als implizite Root-Sektion
+| File without headings
+| Entire content as implicit root section
 |===
 
-=== Performance-Anforderungen
+=== Performance Requirements
 
-* Parsing einer einzelnen Datei: < 50ms
-* Parsing eines Ordners mit 100 Dateien: < 2s
-* Speicherverbrauch: < 10KB pro geparster Datei (ohne Inhalt)
+* Parsing a single file: < 50ms
+* Parsing a folder with 100 files: < 2s
+* Memory consumption: < 10KB per parsed file (without content)
 
 == Acceptance Criteria
 
-=== AC-MD-01: Heading-Extraktion
+=== AC-MD-01: Heading Extraction
 
 [source,gherkin]
 ----
-Scenario: Headings werden korrekt extrahiert
-  Given eine Markdown-Datei mit folgendem Inhalt:
+Scenario: Headings are correctly extracted
+  Given a Markdown file with the following content:
     """
-    # Haupttitel
+    # Main Title
 
-    ## Unterkapitel 1
+    ## Subchapter 1
 
     Text...
 
-    ## Unterkapitel 2
+    ## Subchapter 2
 
-    ### Sub-Unterkapitel
+    ### Sub-subchapter
     """
-  When der Parser die Datei verarbeitet
-  Then werden 4 Sektionen extrahiert
-  And die Hierarchie ist:
+  When the parser processes the file
+  Then 4 sections are extracted
+  And the hierarchy is:
     | path                              | level |
-    | /haupttitel                       | 1     |
-    | /haupttitel/unterkapitel-1        | 2     |
-    | /haupttitel/unterkapitel-2        | 2     |
-    | /haupttitel/unterkapitel-2/sub-unterkapitel | 3 |
+    | /main-title                       | 1     |
+    | /main-title/subchapter-1          | 2     |
+    | /main-title/subchapter-2          | 2     |
+    | /main-title/subchapter-2/sub-subchapter | 3 |
 ----
 
-=== AC-MD-02: Frontmatter-Parsing
+=== AC-MD-02: Frontmatter Parsing
 
 [source,gherkin]
 ----
-Scenario: YAML Frontmatter wird korrekt geparst
-  Given eine Markdown-Datei mit folgendem Inhalt:
+Scenario: YAML frontmatter is correctly parsed
+  Given a Markdown file with the following content:
     """
     ---
-    title: Mein Dokument
-    author: Max Mustermann
+    title: My Document
+    author: John Doe
     tags: [design, architecture]
     ---
 
     # Content
     """
-  When der Parser die Datei verarbeitet
-  Then ist frontmatter["title"] gleich "Mein Dokument"
-  And ist frontmatter["author"] gleich "Max Mustermann"
-  And ist frontmatter["tags"] eine Liste mit 2 Elementen
+  When the parser processes the file
+  Then frontmatter["title"] equals "My Document"
+  And frontmatter["author"] equals "John Doe"
+  And frontmatter["tags"] is a list with 2 elements
 ----
 
-=== AC-MD-03: Code-Block-Extraktion
-
-[source,gherkin]
-----
-Scenario: Fenced Code Blocks werden extrahiert
-  Given eine Markdown-Datei mit einem Python-Code-Block
-  When der Parser die Datei verarbeitet
-  Then enthält elements einen Eintrag vom Typ "code"
-  And ist dessen language gleich "python"
-  And sind start_line und end_line korrekt gesetzt
-----
-
-=== AC-MD-04: Tabellen-Erkennung
+=== AC-MD-03: Code Block Extraction
 
 [source,gherkin]
 ----
-Scenario: GFM-Tabellen werden als Blöcke erkannt
-  Given eine Markdown-Datei mit einer 3-Spalten-Tabelle
-  When der Parser die Datei verarbeitet
-  Then enthält elements einen Eintrag vom Typ "table"
-  And ist columns gleich 3
+Scenario: Fenced code blocks are extracted
+  Given a Markdown file with a Python code block
+  When the parser processes the file
+  Then elements contains an entry of type "code"
+  And its language equals "python"
+  And start_line and end_line are correctly set
 ----
 
-=== AC-MD-05: Ordner-Struktur
+=== AC-MD-04: Table Recognition
 
 [source,gherkin]
 ----
-Scenario: Ordner-Hierarchie wird korrekt abgebildet
-  Given ein Ordner mit folgender Struktur:
-    | Pfad                    |
+Scenario: GFM tables are recognized as blocks
+  Given a Markdown file with a 3-column table
+  When the parser processes the file
+  Then elements contains an entry of type "table"
+  And columns equals 3
+----
+
+=== AC-MD-05: Folder Structure
+
+[source,gherkin]
+----
+Scenario: Folder hierarchy is correctly mapped
+  Given a folder with the following structure:
+    | Path                    |
     | index.md                |
     | 01_intro/index.md       |
     | 01_intro/01_details.md  |
     | 02_chapter.md           |
-  When der Parser den Ordner verarbeitet
-  Then ist die Dokumentreihenfolge:
+  When the parser processes the folder
+  Then the document order is:
     | index.md                |
     | 01_intro/index.md       |
     | 01_intro/01_details.md  |
     | 02_chapter.md           |
 ----
 
-=== AC-MD-06: Sortierung mit Präfixen
+=== AC-MD-06: Sorting with Prefixes
 
 [source,gherkin]
 ----
-Scenario: Numerische Präfixe werden korrekt sortiert
-  Given ein Ordner mit Dateien: 10_z.md, 2_b.md, 1_a.md, README.md
-  When der Parser den Ordner verarbeitet
-  Then ist die Reihenfolge: README.md, 1_a.md, 2_b.md, 10_z.md
+Scenario: Numeric prefixes are correctly sorted
+  Given a folder with files: 10_z.md, 2_b.md, 1_a.md, README.md
+  When the parser processes the folder
+  Then the order is: README.md, 1_a.md, 2_b.md, 10_z.md
 ----
 
-== Schnittstellen
+== Interfaces
 
-=== Parser-Interface
+=== Parser Interface
 
 [source,python]
 ----
 class MarkdownParser:
-    """Parser für GitHub Flavored Markdown Dokumente."""
+    """Parser for GitHub Flavored Markdown documents."""
 
     def parse_file(self, file_path: Path) -> MarkdownDocument:
-        """Parst eine einzelne Markdown-Datei."""
+        """Parses a single Markdown file."""
         ...
 
     def parse_folder(self, folder_path: Path) -> FolderDocument:
-        """Parst einen Ordner mit Markdown-Dateien."""
+        """Parses a folder with Markdown files."""
         ...
 
     def get_section(self, doc: MarkdownDocument, path: str) -> MarkdownSection | None:
-        """Findet eine Sektion anhand ihres hierarchischen Pfads."""
+        """Finds a section by its hierarchical path."""
         ...
 
     def get_elements(
@@ -493,25 +493,25 @@ class MarkdownParser:
         doc: MarkdownDocument,
         element_type: str | None = None
     ) -> list[MarkdownElement]:
-        """Gibt alle Elemente zurück, optional gefiltert nach Typ."""
+        """Returns all elements, optionally filtered by type."""
         ...
 ----
 
-== Implementierungshinweise
+== Implementation Notes
 
-=== Empfohlene Bibliotheken
+=== Recommended Libraries
 
-* **PyYAML** oder **ruamel.yaml**: Für Frontmatter-Parsing
-* **regex** (statt re): Für bessere Unicode-Unterstützung
+* **PyYAML** or **ruamel.yaml**: For frontmatter parsing
+* **regex** (instead of re): For better Unicode support
 
-=== Regex-Patterns
+=== Regex Patterns
 
 [source,python]
 ----
 # ATX Heading
 HEADING_PATTERN = r'^(#{1,6})\s+(.+?)(?:\s+#*)?$'
 
-# Fenced Code Block (öffnend)
+# Fenced Code Block (opening)
 CODE_FENCE_OPEN = r'^(`{3,}|~{3,})(\w*)?$'
 
 # YAML Frontmatter
@@ -524,7 +524,7 @@ IMAGE_PATTERN = r'!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)'
 TABLE_ROW_PATTERN = r'^\|(.+)\|$'
 ----
 
-=== Zustandsautomat für Parsing
+=== State Machine for Parsing
 
 [plantuml, md-parser-states, svg]
 ----
@@ -533,22 +533,22 @@ skinparam StateBackgroundColor LightBlue
 skinparam StateBorderColor Navy
 
 [*] --> Start
-Start --> Frontmatter : "---" am Anfang
-Start --> Content : Kein Frontmatter
+Start --> Frontmatter : "---" at start
+Start --> Content : No frontmatter
 
-Frontmatter --> Content : "---" (Ende)
-Frontmatter --> Frontmatter : YAML-Zeilen
+Frontmatter --> Content : "---" (end)
+Frontmatter --> Frontmatter : YAML lines
 
-Content --> Heading : # gefunden
-Content --> CodeBlock : ``` gefunden
-Content --> Table : | ... | gefunden
-Content --> Content : Andere Zeilen
+Content --> Heading : # found
+Content --> CodeBlock : ``` found
+Content --> Table : | ... | found
+Content --> Content : Other lines
 
-Heading --> Content : Nächste Zeile
-CodeBlock --> CodeBlock : Inhalt
-CodeBlock --> Content : ``` (Ende)
+Heading --> Content : Next line
+CodeBlock --> CodeBlock : Content
+CodeBlock --> Content : ``` (end)
 Table --> Table : | ... |
-Table --> Content : Keine Tabellenzeile
+Table --> Content : No table row
 
 Content --> [*] : EOF
 @enduml
