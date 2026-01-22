@@ -49,6 +49,18 @@ def create_parser() -> argparse.ArgumentParser:
         help="Root directory containing documentation files. "
         "Can also be set via PROJECT_PATH environment variable.",
     )
+    parser.add_argument(
+        "--no-gitignore",
+        action="store_true",
+        default=False,
+        help="Include files that would normally be excluded by .gitignore patterns.",
+    )
+    parser.add_argument(
+        "--include-hidden",
+        action="store_true",
+        default=False,
+        help="Include files in hidden directories (starting with '.').",
+    )
     return parser
 
 
@@ -96,7 +108,11 @@ def main() -> int:
         return 1
 
     # Create and run MCP server
-    mcp = create_mcp_server(docs_root=docs_root)
+    mcp = create_mcp_server(
+        docs_root=docs_root,
+        respect_gitignore=not args.no_gitignore,
+        include_hidden=args.include_hidden,
+    )
 
     # Run with stdio transport (default for MCP)
     mcp.run()

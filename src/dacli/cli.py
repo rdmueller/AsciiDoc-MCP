@@ -45,11 +45,21 @@ EXIT_WRITE_ERROR = 5
 class CliContext:
     """Shared context for CLI commands."""
 
-    def __init__(self, docs_root: Path, output_format: str, pretty: bool, quiet: bool = False):
+    def __init__(
+        self,
+        docs_root: Path,
+        output_format: str,
+        pretty: bool,
+        quiet: bool = False,
+        respect_gitignore: bool = True,
+        include_hidden: bool = False,
+    ):
         self.docs_root = docs_root
         self.output_format = output_format
         self.pretty = pretty
         self.quiet = quiet
+        self.respect_gitignore = respect_gitignore
+        self.include_hidden = include_hidden
 
         # Configure logging level based on quiet flag
         if quiet:
@@ -61,7 +71,14 @@ class CliContext:
         self.markdown_parser = MarkdownStructureParser()
 
         # Build index
-        _build_index(docs_root, self.index, self.asciidoc_parser, self.markdown_parser)
+        _build_index(
+            docs_root,
+            self.index,
+            self.asciidoc_parser,
+            self.markdown_parser,
+            respect_gitignore=respect_gitignore,
+            include_hidden=include_hidden,
+        )
 
 
 def format_output(ctx: CliContext, data: dict) -> str:
@@ -129,15 +146,42 @@ pass_context = click.make_pass_decorator(CliContext)
     default=False,
     help="Suppress warning messages (errors are still shown)",
 )
+@click.option(
+    "--no-gitignore",
+    is_flag=True,
+    default=False,
+    help="Include files that would normally be excluded by .gitignore patterns",
+)
+@click.option(
+    "--include-hidden",
+    is_flag=True,
+    default=False,
+    help="Include files in hidden directories (starting with '.')",
+)
 @click.version_option(version=__version__, prog_name="dacli")
 @click.pass_context
-def cli(ctx, docs_root: Path, output_format: str, pretty: bool, quiet: bool):
+def cli(
+    ctx,
+    docs_root: Path,
+    output_format: str,
+    pretty: bool,
+    quiet: bool,
+    no_gitignore: bool,
+    include_hidden: bool,
+):
     """dacli - Docs-As-Code CLI.
 
     Access documentation structure, content, and metadata from the command line.
     Designed for LLM integration via bash/shell commands.
     """
-    ctx.obj = CliContext(docs_root, output_format, pretty, quiet)
+    ctx.obj = CliContext(
+        docs_root,
+        output_format,
+        pretty,
+        quiet,
+        respect_gitignore=not no_gitignore,
+        include_hidden=include_hidden,
+    )
 
 
 @cli.command()

@@ -397,3 +397,124 @@ Content from doc2.
         assert result_quiet.exit_code == 0
         # Output should be the same
         assert result_normal.output == result_quiet.output
+
+
+class TestCliGitignoreOptions:
+    """Test --no-gitignore and --include-hidden options."""
+
+    def test_no_gitignore_option_in_help(self):
+        """--no-gitignore option should be listed in help."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+
+        assert result.exit_code == 0
+        assert "--no-gitignore" in result.output
+
+    def test_include_hidden_option_in_help(self):
+        """--include-hidden option should be listed in help."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+
+        assert result.exit_code == 0
+        assert "--include-hidden" in result.output
+
+    def test_no_gitignore_includes_ignored_files(self, tmp_path):
+        """--no-gitignore should include files matching .gitignore patterns."""
+        from dacli.cli import cli
+
+        # Create .gitignore that ignores 'ignored/' directory
+        (tmp_path / ".gitignore").write_text("ignored/\n")
+
+        # Create docs in both normal and ignored directories
+        (tmp_path / "visible.adoc").write_text("= Visible Doc\n\n== Section\n\nContent.")
+        ignored_dir = tmp_path / "ignored"
+        ignored_dir.mkdir()
+        (ignored_dir / "hidden.adoc").write_text("= Hidden Doc\n\n== Secret\n\nSecret content.")
+
+        runner = CliRunner()
+
+        # Without --no-gitignore: should only see visible doc
+        result_normal = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--format", "json", "metadata"]
+        )
+        assert result_normal.exit_code == 0
+        data_normal = json.loads(result_normal.output)
+        assert data_normal["total_files"] == 1
+
+        # With --no-gitignore: should see both docs
+        result_with_ignored = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--no-gitignore", "--format", "json", "metadata"]
+        )
+        assert result_with_ignored.exit_code == 0
+        data_with_ignored = json.loads(result_with_ignored.output)
+        assert data_with_ignored["total_files"] == 2
+
+    def test_include_hidden_includes_hidden_directories(self, tmp_path):
+        """--include-hidden should include files in hidden directories."""
+        from dacli.cli import cli
+
+        # Create docs in both normal and hidden directories
+        (tmp_path / "visible.adoc").write_text("= Visible Doc\n\n== Section\n\nContent.")
+        hidden_dir = tmp_path / ".hidden"
+        hidden_dir.mkdir()
+        (hidden_dir / "secret.adoc").write_text("= Secret Doc\n\n== Secret\n\nSecret content.")
+
+        runner = CliRunner()
+
+        # Without --include-hidden: should only see visible doc
+        result_normal = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--format", "json", "metadata"]
+        )
+        assert result_normal.exit_code == 0
+        data_normal = json.loads(result_normal.output)
+        assert data_normal["total_files"] == 1
+
+        # With --include-hidden: should see both docs
+        result_with_hidden = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--include-hidden", "--format", "json", "metadata"],
+        )
+        assert result_with_hidden.exit_code == 0
+        data_with_hidden = json.loads(result_with_hidden.output)
+        assert data_with_hidden["total_files"] == 2
+
+    def test_both_options_combined(self, tmp_path):
+        """--no-gitignore and --include-hidden can be used together."""
+        from dacli.cli import cli
+
+        # Create .gitignore
+        (tmp_path / ".gitignore").write_text("ignored/\n")
+
+        # Create visible doc
+        (tmp_path / "visible.adoc").write_text("= Visible\n\n== S1\n\nC1.")
+
+        # Create ignored doc
+        ignored_dir = tmp_path / "ignored"
+        ignored_dir.mkdir()
+        (ignored_dir / "ignored.adoc").write_text("= Ignored\n\n== S2\n\nC2.")
+
+        # Create hidden doc
+        hidden_dir = tmp_path / ".hidden"
+        hidden_dir.mkdir()
+        (hidden_dir / "hidden.adoc").write_text("= Hidden\n\n== S3\n\nC3.")
+
+        runner = CliRunner()
+
+        # With both options: should see all 3 docs
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(tmp_path),
+                "--no-gitignore",
+                "--include-hidden",
+                "--format", "json",
+                "metadata",
+            ],
+        )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["total_files"] == 3

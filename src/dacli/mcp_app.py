@@ -39,12 +39,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
+def create_mcp_server(
+    docs_root: Path | str | None = None,
+    *,
+    respect_gitignore: bool = True,
+    include_hidden: bool = False,
+) -> FastMCP:
     """Create and configure the MCP server.
 
     Args:
         docs_root: Root directory containing documentation files.
                    If None, uses current directory.
+        respect_gitignore: If True, exclude files matching .gitignore patterns.
+        include_hidden: If True, include files in hidden directories.
 
     Returns:
         Configured FastMCP instance with all tools registered.
@@ -69,7 +76,14 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
     markdown_parser = MarkdownStructureParser()
 
     # Build initial index
-    _build_index(docs_root, index, asciidoc_parser, markdown_parser)
+    _build_index(
+        docs_root,
+        index,
+        asciidoc_parser,
+        markdown_parser,
+        respect_gitignore=respect_gitignore,
+        include_hidden=include_hidden,
+    )
 
     def rebuild_index() -> None:
         """Rebuild the index after file modifications.
@@ -77,7 +91,14 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         This ensures the index reflects the current state of the file system
         after write operations like update_section or insert_content.
         """
-        _build_index(docs_root, index, asciidoc_parser, markdown_parser)
+        _build_index(
+            docs_root,
+            index,
+            asciidoc_parser,
+            markdown_parser,
+            respect_gitignore=respect_gitignore,
+            include_hidden=include_hidden,
+        )
 
     # Register tools
     @mcp.tool()
@@ -650,6 +671,9 @@ def _build_index(
     index: StructureIndex,
     asciidoc_parser: AsciidocStructureParser,
     markdown_parser: MarkdownStructureParser,
+    *,
+    respect_gitignore: bool = True,
+    include_hidden: bool = False,
 ) -> None:
     """Build the structure index from documents in docs_root.
 
@@ -658,11 +682,15 @@ def _build_index(
         index: StructureIndex to populate
         asciidoc_parser: Parser for AsciiDoc files
         markdown_parser: Parser for Markdown files
+        respect_gitignore: If True, exclude files matching .gitignore patterns
+        include_hidden: If True, include files in hidden directories
     """
     documents: list[Document] = []
 
-    # Find and parse AsciiDoc files (respecting gitignore)
-    for adoc_file in find_doc_files(docs_root, "*.adoc"):
+    # Find and parse AsciiDoc files
+    for adoc_file in find_doc_files(
+        docs_root, "*.adoc", respect_gitignore=respect_gitignore, include_hidden=include_hidden
+    ):
         try:
             doc = asciidoc_parser.parse_file(adoc_file)
             documents.append(doc)
@@ -670,8 +698,10 @@ def _build_index(
             # Log but continue with other files
             logger.warning("Failed to parse %s: %s", adoc_file, e)
 
-    # Find and parse Markdown files (respecting gitignore)
-    for md_file in find_doc_files(docs_root, "*.md"):
+    # Find and parse Markdown files
+    for md_file in find_doc_files(
+        docs_root, "*.md", respect_gitignore=respect_gitignore, include_hidden=include_hidden
+    ):
         # Skip common non-doc files
         if md_file.name in ("CLAUDE.md", "README.md"):
             continue

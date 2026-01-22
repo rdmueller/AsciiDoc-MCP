@@ -47,6 +47,12 @@ uv run dacli search "authentication" --max-results 10
 
 # Validate structure
 uv run dacli validate
+
+# Include gitignored files
+uv run dacli --docs-root /path/to/docs --no-gitignore structure
+
+# Include hidden directories
+uv run dacli --docs-root /path/to/docs --include-hidden structure
 ```
 
 All commands output text by default for human readability. Use `--format json` or `--format yaml` for machine-parseable output, and `--pretty` for formatted JSON output.
@@ -57,6 +63,12 @@ For full CLI documentation, see [06_cli_specification.adoc](src/docs/spec/06_cli
 
 ```bash
 uv run dacli-mcp --docs-root /path/to/your/docs
+
+# Include gitignored files
+uv run dacli-mcp --docs-root /path/to/your/docs --no-gitignore
+
+# Include hidden directories  
+uv run dacli-mcp --docs-root /path/to/your/docs --include-hidden
 ```
 
 #### Claude Desktop Configuration

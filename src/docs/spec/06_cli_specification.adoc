@@ -17,6 +17,9 @@ Options:
   --docs-root PATH    Dokumentations-Wurzelverzeichnis (default: $PROJECT_PATH oder cwd)
   --format FORMAT     Ausgabeformat: text (default), json, yaml
   --pretty            Formatierte Ausgabe für Menschen
+  --quiet, -q         Unterdrückt Warnmeldungen
+  --no-gitignore      Dateien einbeziehen, die normalerweise durch .gitignore-Muster ausgeschlossen würden
+  --include-hidden    Dateien in versteckten Verzeichnissen (beginnend mit '.') einbeziehen
   --version           Zeigt Version
   --help              Zeigt Hilfe
 ----
