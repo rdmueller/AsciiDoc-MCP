@@ -567,3 +567,47 @@ class TestOptimisticLocking:
         assert result.data["success"] is True
         assert "previous_hash" in result.data
         assert "new_hash" in result.data
+
+
+# =============================================================================
+# Metadata Tests (Issue #10)
+# =============================================================================
+
+
+class TestGetMetadata:
+    """Tests for get_metadata tool (UC-06)."""
+
+    async def test_get_metadata_project_returns_stats(self, mcp_client: Client):
+        """get_metadata without path returns project-level metadata."""
+        result = await mcp_client.call_tool("get_metadata", arguments={})
+
+        assert "path" in result.data
+        assert result.data["path"] is None
+        assert "total_sections" in result.data
+        assert "total_files" in result.data
+        assert "total_words" in result.data
+        assert isinstance(result.data["total_words"], int)
+        assert "last_modified" in result.data
+        assert "formats" in result.data
+
+    async def test_get_metadata_section_returns_details(self, mcp_client: Client):
+        """get_metadata with path returns section-level metadata."""
+        result = await mcp_client.call_tool(
+            "get_metadata", arguments={"path": "introduction"}
+        )
+
+        assert result.data["path"] == "introduction"
+        assert "title" in result.data
+        assert "file" in result.data
+        assert "word_count" in result.data
+        assert isinstance(result.data["word_count"], int)
+        assert "last_modified" in result.data
+        assert "subsection_count" in result.data
+
+    async def test_get_metadata_invalid_path_returns_error(self, mcp_client: Client):
+        """get_metadata with invalid path returns error."""
+        result = await mcp_client.call_tool(
+            "get_metadata", arguments={"path": "nonexistent-section"}
+        )
+
+        assert "error" in result.data

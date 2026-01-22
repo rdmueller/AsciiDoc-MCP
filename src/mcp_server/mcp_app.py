@@ -10,11 +10,13 @@ Tools:
     - get_elements: Get elements (code, tables, images)
     - update_section: Update section content
     - insert_content: Insert content relative to a section
+    - get_metadata: Get project or section metadata
 """
 
 import hashlib
 import logging
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -498,6 +500,96 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
             }
         except (FileReadError, FileWriteError) as e:
             return {"success": False, "error": f"Failed to insert content: {e}"}
+
+    @mcp.tool()
+    def get_metadata(path: str | None = None) -> dict:
+        """Get metadata about the project or a specific section.
+
+        Use this tool to retrieve statistics and metadata. Without a path,
+        returns project-level metadata. With a path, returns section-level
+        metadata including word count and file information.
+
+        Args:
+            path: Optional hierarchical path to a section. If None, returns
+                  project-level metadata.
+
+        Returns:
+            For project: 'path' (null), 'total_files', 'total_sections',
+            'total_words', 'last_modified', 'formats'.
+            For section: 'path', 'title', 'file', 'word_count',
+            'last_modified', 'subsection_count'.
+        """
+        if path is None:
+            # Project-level metadata
+            stats = index.stats()
+            files = set(index._file_to_sections.keys())
+
+            # Calculate total words from all section content
+            total_words = 0
+            for content in index._section_content.values():
+                total_words += len(content.split())
+
+            # Find latest modification time
+            last_modified = None
+            for file_path in files:
+                if file_path.exists():
+                    mtime = file_path.stat().st_mtime
+                    if last_modified is None or mtime > last_modified:
+                        last_modified = mtime
+
+            # Detect formats from file extensions
+            formats = set()
+            for file_path in files:
+                ext = file_path.suffix.lower()
+                if ext == ".adoc":
+                    formats.add("asciidoc")
+                elif ext == ".md":
+                    formats.add("markdown")
+
+            return {
+                "path": None,
+                "total_files": len(files),
+                "total_sections": stats["total_sections"],
+                "total_words": total_words,
+                "last_modified": (
+                    datetime.fromtimestamp(last_modified, tz=UTC).isoformat()
+                    if last_modified
+                    else None
+                ),
+                "formats": sorted(formats),
+            }
+        else:
+            # Section-level metadata
+            normalized_path = path.lstrip("/")
+            section = index.get_section(normalized_path)
+
+            if section is None:
+                return {"error": f"Section '{normalized_path}' not found"}
+
+            # Get word count from section content
+            content = index._section_content.get(normalized_path, "")
+            word_count = len(content.split())
+
+            # Get file modification time
+            file_path = section.source_location.file
+            last_modified = None
+            if file_path.exists():
+                mtime = file_path.stat().st_mtime
+                last_modified = datetime.fromtimestamp(
+                    mtime, tz=UTC
+                ).isoformat()
+
+            # Count subsections
+            subsection_count = len(section.children)
+
+            return {
+                "path": normalized_path,
+                "title": section.title,
+                "file": str(file_path),
+                "word_count": word_count,
+                "last_modified": last_modified,
+                "subsection_count": subsection_count,
+            }
 
     return mcp
 
