@@ -8,52 +8,9 @@ The MCP Documentation Server enables LLM interaction with AsciiDoc and Markdown 
 
 == Prerequisites
 
-=== Python 3.12+
-
-The server requires Python 3.12 or later.
-
-**Check your Python version:**
-[source,bash]
-----
-python3 --version
-----
-
-If you need to install or upgrade Python:
-
-[tabs]
-====
-Linux (Ubuntu/Debian)::
-+
-[source,bash]
-----
-sudo apt update
-sudo apt install python3.12 python3.12-venv
-----
-
-Linux (Fedora)::
-+
-[source,bash]
-----
-sudo dnf install python3.12
-----
-
-macOS::
-+
-[source,bash]
-----
-# Using Homebrew
-brew install python@3.12
-----
-
-Windows::
-+
-Download from https://www.python.org/downloads/ and run the installer.
-Ensure "Add Python to PATH" is checked during installation.
-====
-
 === uv Package Manager
 
-The project uses https://github.com/astral-sh/uv[uv] for fast, reliable Python package management.
+The only prerequisite is https://github.com/astral-sh/uv[uv], which handles Python installation automatically.
 
 **Install uv:**
 
@@ -72,13 +29,6 @@ Windows (PowerShell)::
 ----
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ----
-
-Using pip::
-+
-[source,bash]
-----
-pip install uv
-----
 ====
 
 **Verify installation:**
@@ -86,6 +36,8 @@ pip install uv
 ----
 uv --version
 ----
+
+NOTE: uv will automatically download and manage Python 3.12+ when you run `uv sync`. You do not need to install Python separately.
 
 == Installation
 
@@ -264,12 +216,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Reload shell (or open a new terminal)
 source ~/.bashrc  # or ~/.zshrc
 ----
-
-==== "Python 3.12 is required"
-
-Your Python version is too old.
-
-**Solution:** Install Python 3.12+ as described in the Prerequisites section.
 
 ==== "Module not found" errors
 
