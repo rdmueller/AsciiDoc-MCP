@@ -637,8 +637,7 @@ def create_mcp_server(
         for adoc_file in find_doc_files(docs_root, "*.adoc"):
             all_doc_files.add(adoc_file.resolve())
         for md_file in find_doc_files(docs_root, "*.md"):
-            if md_file.name not in ("CLAUDE.md", "README.md"):
-                all_doc_files.add(md_file.resolve())
+            all_doc_files.add(md_file.resolve())
 
         # Check for orphaned files (files not indexed)
         indexed_resolved = {f.resolve() for f in indexed_files}
@@ -702,9 +701,6 @@ def _build_index(
     for md_file in find_doc_files(
         docs_root, "*.md", respect_gitignore=respect_gitignore, include_hidden=include_hidden
     ):
-        # Skip common non-doc files
-        if md_file.name in ("CLAUDE.md", "README.md"):
-            continue
         try:
             md_doc = markdown_parser.parse_file(md_file)
             # Convert MarkdownDocument to Document

@@ -756,6 +756,78 @@ class TestCliHelpImprovements:
         assert "Examples:" in result.output or "dacli" in result.output
 
 
+class TestCliReadmeInclusion:
+    """Test that README.md and CLAUDE.md are included in indexing (Issue #107)."""
+
+    def test_readme_is_indexed_and_searchable(self, tmp_path):
+        """README.md should be indexed and searchable."""
+        from dacli.cli import cli
+
+        # Create README.md with searchable content
+        readme = tmp_path / "README.md"
+        readme.write_text("""# Project Documentation
+
+## Authentication
+
+This section covers authentication mechanisms.
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "search", "authentication"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["total_results"] > 0, "README.md content should be searchable"
+
+    def test_claude_md_is_indexed_and_searchable(self, tmp_path):
+        """CLAUDE.md should be indexed and searchable."""
+        from dacli.cli import cli
+
+        # Create CLAUDE.md with searchable content
+        claude_md = tmp_path / "CLAUDE.md"
+        claude_md.write_text("""# Claude Instructions
+
+## Configuration
+
+Special configuration for Claude assistant.
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "search", "configuration"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["total_results"] > 0, "CLAUDE.md content should be searchable"
+
+    def test_readme_appears_in_structure(self, tmp_path):
+        """README.md should appear in document structure."""
+        from dacli.cli import cli
+
+        readme = tmp_path / "README.md"
+        readme.write_text("""# My Project
+
+## Overview
+
+Project overview.
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "structure"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["total_sections"] > 0, "README.md sections should be in structure"
+
+
 class TestCliInsertCommand:
     """Test the 'insert' command."""
 

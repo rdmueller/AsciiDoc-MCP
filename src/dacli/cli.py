@@ -627,8 +627,7 @@ def validate(ctx: CliContext):
     for adoc_file in find_doc_files(ctx.docs_root, "*.adoc"):
         all_doc_files.add(adoc_file.resolve())
     for md_file in find_doc_files(ctx.docs_root, "*.md"):
-        if md_file.name not in ("CLAUDE.md", "README.md"):
-            all_doc_files.add(md_file.resolve())
+        all_doc_files.add(md_file.resolve())
 
     indexed_resolved = {f.resolve() for f in indexed_files}
     for doc_file in all_doc_files:
