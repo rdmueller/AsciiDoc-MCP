@@ -34,6 +34,12 @@ IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"([^\"]*)\")?\)")
 UNORDERED_LIST_PATTERN = re.compile(r"^[\s]*[-*+]\s+.+$")
 ORDERED_LIST_PATTERN = re.compile(r"^[\s]*\d+\.\s+.+$")
 
+# Setext heading patterns (for warning detection - not supported)
+# H1: line of text followed by line of ='s (at least 3)
+SETEXT_H1_UNDERLINE = re.compile(r"^={3,}\s*$")
+# H2: line of text followed by line of -'s (at least 3)
+SETEXT_H2_UNDERLINE = re.compile(r"^-{3,}\s*$")
+
 
 def slugify(text: str) -> str:
     """Convert text to URL-friendly slug.
@@ -260,7 +266,17 @@ class MarkdownStructureParser:
         section_stack: list[Section] = []
         document_title = ""
 
+        # Track previous lines for Setext detection
+        prev_line = ""
+        prev_prev_line = ""
+
         for line_num, line in enumerate(lines, start=1 + line_offset):
+            # Detect Setext headings and warn (not supported per spec)
+            self._warn_setext_heading(
+                line, prev_line, prev_prev_line, line_num, file_path
+            )
+            prev_prev_line = prev_line
+            prev_line = line
             match = HEADING_PATTERN.match(line)
             if not match:
                 continue
@@ -295,6 +311,50 @@ class MarkdownStructureParser:
             section_stack.append(section)
 
         return sections, document_title
+
+    def _warn_setext_heading(
+        self,
+        current_line: str,
+        prev_line: str,
+        prev_prev_line: str,
+        line_num: int,
+        file_path: Path,
+    ) -> None:
+        """Warn if a Setext-style heading is detected.
+
+        Setext headings are not supported per spec. This method detects them
+        and logs a warning to help users understand why their document
+        structure might look incorrect.
+
+        Args:
+            current_line: Current line being processed
+            prev_line: Previous line
+            prev_prev_line: Line before previous (for horizontal rule check)
+            line_num: Current line number (1-based)
+            file_path: Source file path
+        """
+        # Check for Setext H1 (===)
+        if SETEXT_H1_UNDERLINE.match(current_line):
+            # Previous line must be non-empty text (potential heading text)
+            if prev_line.strip() and not prev_line.startswith("#"):
+                logger.warning(
+                    f"Setext-style heading detected at {file_path}:{line_num - 1}. "
+                    f"Setext headings (underlined with '===') are not supported. "
+                    f"Use ATX-style headings (# Heading) instead."
+                )
+                return
+
+        # Check for Setext H2 (---)
+        if SETEXT_H2_UNDERLINE.match(current_line):
+            # Setext H2: previous line must be non-empty text (heading text)
+            # Horizontal rule: previous line is blank/empty
+            # If prev_line has text, it's a Setext heading
+            if prev_line.strip() and not prev_line.startswith("#"):
+                logger.warning(
+                    f"Setext-style heading detected at {file_path}:{line_num - 1}. "
+                    f"Setext headings (underlined with '---') are not supported. "
+                    f"Use ATX-style headings (## Heading) instead."
+                )
 
     # NOTE: `file_path` is accepted for API compatibility with the AsciiDoc
     # parser but is not used by the Markdown implementation.

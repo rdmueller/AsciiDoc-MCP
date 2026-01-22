@@ -1195,3 +1195,183 @@ code
         code_elements = parser.get_elements(doc, "code")
         assert len(code_elements) == 1
         assert code_elements[0].type == "code"
+
+
+class TestSetextHeadingWarnings:
+    """Tests for Setext heading detection and warnings (Issue #124).
+
+    Setext headings are not supported but should trigger warnings to help
+    users understand why their document structure might look incorrect.
+    """
+
+    def test_setext_h1_triggers_warning(self, caplog):
+        """Setext H1 (===) triggers a warning."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# ATX Heading
+
+Some content.
+
+Setext Title
+============
+
+More content.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+
+            with caplog.at_level(logging.WARNING):
+                parser.parse_file(Path(f.name))
+
+        # Warning should be logged
+        assert "Setext" in caplog.text or "setext" in caplog.text
+        # Line number should be in the warning (format: :5 or :6)
+        assert ":5" in caplog.text or ":6" in caplog.text
+
+    def test_setext_h2_triggers_warning(self, caplog):
+        """Setext H2 (---) triggers a warning."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Main Title
+
+Setext Section
+--------------
+
+Content here.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+
+            with caplog.at_level(logging.WARNING):
+                parser.parse_file(Path(f.name))
+
+        # Warning should be logged
+        assert "Setext" in caplog.text or "setext" in caplog.text
+
+    def test_setext_heading_not_added_as_section(self, caplog):
+        """Setext headings should NOT be added as sections."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Main Title
+
+## ATX Section
+
+Setext Title
+============
+
+Content.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+
+            with caplog.at_level(logging.WARNING):
+                doc = parser.parse_file(Path(f.name))
+
+        # Should only have 2 sections: Main Title and ATX Section
+        all_sections = []
+
+        def collect(sections):
+            for s in sections:
+                all_sections.append(s.title)
+                collect(s.children)
+
+        collect(doc.sections)
+        assert "Main Title" in all_sections
+        assert "ATX Section" in all_sections
+        assert "Setext Title" not in all_sections
+
+    def test_horizontal_rule_does_not_trigger_warning(self, caplog):
+        """Horizontal rule (--- with blank before) should NOT warn."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Title
+
+Some content.
+
+---
+
+More content after horizontal rule.
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+
+            with caplog.at_level(logging.WARNING):
+                parser.parse_file(Path(f.name))
+
+        # No Setext warning should be logged (horizontal rule is different)
+        assert "Setext" not in caplog.text and "setext" not in caplog.text
+
+    def test_warning_includes_file_path(self, caplog):
+        """Warning should include the file path."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """Setext Title
+============
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+            file_path = Path(f.name)
+
+            with caplog.at_level(logging.WARNING):
+                parser.parse_file(file_path)
+
+        # Warning should mention the file
+        assert str(file_path) in caplog.text or file_path.name in caplog.text
+
+    def test_warning_suggests_atx_style(self, caplog):
+        """Warning should suggest using ATX-style headings."""
+        import logging
+
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """Setext Title
+============
+"""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False
+        ) as f:
+            f.write(content)
+            f.flush()
+
+            with caplog.at_level(logging.WARNING):
+                parser.parse_file(Path(f.name))
+
+        # Warning should suggest ATX style
+        assert "ATX" in caplog.text or "#" in caplog.text
