@@ -42,6 +42,119 @@ class TestCliBasic:
         assert "version" in result.output.lower() or "." in result.output
 
 
+class TestCliCommandAliases:
+    """Test command aliases for shorter typing."""
+
+    @pytest.fixture
+    def sample_docs(self, tmp_path):
+        """Create sample documentation files for testing."""
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Introduction
+
+Some introduction text about testing.
+
+== Architecture
+
+Architecture description.
+""")
+        return tmp_path
+
+    def test_str_alias_for_structure(self, sample_docs):
+        """'str' should work as alias for 'structure'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "str"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "sections" in data
+
+    def test_s_alias_for_search(self, sample_docs):
+        """'s' should work as alias for 'search'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "s", "testing"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "query" in data
+        assert data["query"] == "testing"
+
+    def test_sec_alias_for_section(self, sample_docs):
+        """'sec' should work as alias for 'section'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "sec", "introduction"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "title" in data
+
+    def test_meta_alias_for_metadata(self, sample_docs):
+        """'meta' should work as alias for 'metadata'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "meta"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "total_files" in data or "total_sections" in data
+
+    def test_el_alias_for_elements(self, sample_docs):
+        """'el' should work as alias for 'elements'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "el"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "elements" in data
+
+    def test_val_alias_for_validate(self, sample_docs):
+        """'val' should work as alias for 'validate'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "val"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "valid" in data
+
+    def test_lv_alias_for_sections_at_level(self, sample_docs):
+        """'lv' should work as alias for 'sections-at-level'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "lv", "1"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "level" in data
+        assert data["level"] == 1
+
+
 class TestCliStructureCommand:
     """Test the 'structure' command."""
 

@@ -6,14 +6,14 @@ Enables LLMs without MCP support to access documentation via bash/shell.
 Usage:
     dacli [OPTIONS] <COMMAND> [ARGS]
 
-Commands:
-    structure          Get hierarchical document structure
-    section            Read content of a specific section
-    sections-at-level  Get all sections at a specific level
-    search             Search documentation content
-    elements           Get elements (code, tables, images)
-    metadata           Get project or section metadata
-    validate           Validate document structure
+Commands (with aliases):
+    structure (str)    Get hierarchical document structure
+    metadata (meta)    Get project or section metadata
+    search (s)         Search documentation content
+    sections-at-level (lv)  Get all sections at a specific level
+    section (sec)      Read content of a specific section
+    elements (el)      Get elements (code, tables, images)
+    validate (val)     Validate document structure
     update             Update section content
     insert             Insert content relative to a section
 """
@@ -40,6 +40,33 @@ EXIT_INVALID_ARGS = 2
 EXIT_PATH_NOT_FOUND = 3
 EXIT_VALIDATION_ERROR = 4
 EXIT_WRITE_ERROR = 5
+
+# Command aliases for shorter typing
+COMMAND_ALIASES = {
+    "s": "search",
+    "sec": "section",
+    "str": "structure",
+    "meta": "metadata",
+    "el": "elements",
+    "val": "validate",
+    "lv": "sections-at-level",
+}
+
+
+class AliasedGroup(click.Group):
+    """A Click group that supports command aliases."""
+
+    def get_command(self, ctx, cmd_name):
+        """Resolve command name, checking aliases first."""
+        # Check if it's an alias
+        if cmd_name in COMMAND_ALIASES:
+            cmd_name = COMMAND_ALIASES[cmd_name]
+        return super().get_command(ctx, cmd_name)
+
+    def resolve_command(self, ctx, args):
+        """Resolve command and expand alias in args for better error messages."""
+        _, cmd, args = super().resolve_command(ctx, args)
+        return cmd.name if cmd else None, cmd, args
 
 
 class CliContext:
@@ -121,7 +148,7 @@ def _format_as_text(data: dict, indent: int = 0) -> str:
 pass_context = click.make_pass_decorator(CliContext)
 
 
-@click.group()
+@click.group(cls=AliasedGroup)
 @click.option(
     "--docs-root",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),

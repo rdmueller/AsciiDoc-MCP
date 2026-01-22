@@ -24,6 +24,31 @@ Options:
   --help              Show help
 ----
 
+== Command Aliases
+
+For faster typing, all commands have short aliases:
+
+[cols="1,2,3"]
+|===
+| Alias | Command | Description
+
+| `str` | `structure` | Show document structure
+| `meta` | `metadata` | Show project/section metadata
+| `s` | `search` | Search documentation
+| `lv` | `sections-at-level` | Sections at level N
+| `sec` | `section` | Read section content
+| `el` | `elements` | Get code/tables/images
+| `val` | `validate` | Validate structure
+|===
+
+**Example:**
+[source,bash]
+----
+# These are equivalent:
+dacli --format json search "API"
+dacli --format json s "API"
+----
+
 == Navigation Commands
 
 === structure
