@@ -19,4 +19,4 @@ Welcome to the MCP Documentation Server User Manual.
 
 The MCP Documentation Server enables LLM interaction with AsciiDoc and Markdown documentation projects through the Model Context Protocol (MCP).
 
-For architecture documentation, see the link:../arc42/arc42.adoc[arc42 documentation].
+For architecture documentation, see the link:../arc42/arc42.html[arc42 documentation].

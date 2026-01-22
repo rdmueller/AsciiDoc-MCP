@@ -122,17 +122,6 @@ options:
                         Root directory containing documentation files
 ----
 
-**Check the CLI:**
-[source,bash]
-----
-uv run dacli --version
-----
-
-Expected output:
-----
-dacli, version 0.1.0
-----
-
 == Configuration
 
 === Claude Desktop
