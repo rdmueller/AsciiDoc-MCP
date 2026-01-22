@@ -587,6 +587,234 @@ class TestInterfaceMethods:
         assert elements == []
 
 
+class TestDiagramElementDetection:
+    """Tests for diagram element detection with whitespace tolerance (Issue #122).
+
+    These tests verify that PlantUML, Mermaid, and Ditaa blocks are properly
+    detected even when there is whitespace after commas in the attribute list.
+    """
+
+    def test_plantuml_with_whitespace_after_commas(self):
+        """Test that PlantUML blocks with spaces after commas are detected."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        # Create a temporary test file with PlantUML block WITH spaces
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Diagrams
+
+[plantuml, sequence-diagram, svg]
+----
+@startuml
+Alice -> Bob: Hello
+@enduml
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            plantuml_elements = [e for e in doc.elements if e.type == "plantuml"]
+            assert len(plantuml_elements) == 1, (
+                f"Expected 1 PlantUML element, found {len(plantuml_elements)}. "
+                "PlantUML blocks with whitespace after commas should be detected."
+            )
+            assert plantuml_elements[0].attributes.get("name") == "sequence-diagram"
+            assert plantuml_elements[0].attributes.get("format") == "svg"
+        finally:
+            temp_file.unlink()
+
+    def test_source_block_with_whitespace_after_comma(self):
+        """Test that source blocks with spaces after comma are detected."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        # Create a temporary test file with source block WITH space
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Code
+
+[source, python]
+----
+def hello():
+    print("Hello")
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            code_elements = [e for e in doc.elements if e.type == "code"]
+            assert len(code_elements) == 1, (
+                f"Expected 1 code element, found {len(code_elements)}. "
+                "Source blocks with whitespace after comma should be detected."
+            )
+            assert code_elements[0].attributes.get("language") == "python"
+        finally:
+            temp_file.unlink()
+
+    def test_mermaid_block_is_extracted(self):
+        """Test that Mermaid blocks are extracted as elements."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Diagrams
+
+[mermaid]
+----
+graph LR
+    A --> B
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            mermaid_elements = [e for e in doc.elements if e.type == "mermaid"]
+            assert len(mermaid_elements) == 1, (
+                "Mermaid blocks should be extracted as 'mermaid' type elements"
+            )
+        finally:
+            temp_file.unlink()
+
+    def test_mermaid_block_with_name_attribute(self):
+        """Test that Mermaid blocks with name attribute are extracted."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Diagrams
+
+[mermaid, flowchart-example]
+----
+graph TD
+    Start --> Stop
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            mermaid_elements = [e for e in doc.elements if e.type == "mermaid"]
+            assert len(mermaid_elements) == 1
+            assert mermaid_elements[0].attributes.get("name") == "flowchart-example"
+        finally:
+            temp_file.unlink()
+
+    def test_ditaa_block_is_extracted(self):
+        """Test that Ditaa blocks are extracted as elements."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Diagrams
+
+[ditaa]
+----
++--------+   +-------+
+|        |-->|       |
+| cGRE   |   | cBLU  |
++--------+   +-------+
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            ditaa_elements = [e for e in doc.elements if e.type == "ditaa"]
+            assert len(ditaa_elements) == 1, (
+                "Ditaa blocks should be extracted as 'ditaa' type elements"
+            )
+        finally:
+            temp_file.unlink()
+
+    def test_ditaa_block_with_name_and_format(self):
+        """Test that Ditaa blocks with name and format are extracted."""
+        import tempfile
+        from pathlib import Path
+
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".adoc", delete=False, dir=FIXTURES_DIR
+        ) as f:
+            f.write(
+                """= Test Document
+
+== Diagrams
+
+[ditaa, architecture, png]
+----
++--------+
+|  Box   |
++--------+
+----
+"""
+            )
+            temp_file = Path(f.name)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(temp_file)
+
+            ditaa_elements = [e for e in doc.elements if e.type == "ditaa"]
+            assert len(ditaa_elements) == 1
+            assert ditaa_elements[0].attributes.get("name") == "architecture"
+            assert ditaa_elements[0].attributes.get("format") == "png"
+        finally:
+            temp_file.unlink()
+
+
 class TestCircularIncludeDetection:
     """Tests for circular include detection (AC-ADOC-04)."""
 

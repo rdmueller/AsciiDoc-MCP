@@ -477,7 +477,7 @@ class AsciidocSection:
 @dataclass
 class AsciidocElement:
     """An extractable element."""
-    type: Literal["code", "plantuml", "table", "image", "admonition"]
+    type: Literal["code", "plantuml", "mermaid", "ditaa", "table", "image", "admonition", "list"]
     source_location: SourceLocation
     attributes: dict[str, Any]          # Type-specific attributes
     parent_section: str                 # Path of containing section
@@ -771,6 +771,12 @@ SOURCE_BLOCK_PATTERN = r'^\[source(?:,\s*(\w+))?\]$'
 
 # PlantUML block start
 PLANTUML_PATTERN = r'^\[plantuml(?:,\s*([^,\]]+))?(?:,\s*(\w+))?\]$'
+
+# Mermaid block start (Issue #122)
+MERMAID_PATTERN = r'^\[mermaid(?:,\s*([^,\]]+))?(?:,\s*(\w+))?\]$'
+
+# Ditaa block start (Issue #122)
+DITAA_PATTERN = r'^\[ditaa(?:,\s*([^,\]]+))?(?:,\s*(\w+))?\]$'
 
 # Block delimiter
 BLOCK_DELIMITER = r'^(-{4,}|={4,}|\*{4,}|_{4,})$'

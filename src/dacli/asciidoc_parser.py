@@ -23,10 +23,17 @@ SECTION_PATTERN = re.compile(r"^(={1,6})\s+(.+?)(?:\s+=*)?$")
 ATTRIBUTE_PATTERN = re.compile(r"^:([a-zA-Z0-9_-]+):\s*(.*)$")
 INCLUDE_PATTERN = re.compile(r"^include::(.+?)\[(.*)\]$")
 
-# Element patterns
-CODE_BLOCK_START_PATTERN = re.compile(r"^\[source(?:,([a-zA-Z0-9_+-]+))?\]$")
+# Element patterns - with optional whitespace after commas
+CODE_BLOCK_START_PATTERN = re.compile(r"^\[source(?:,\s*([a-zA-Z0-9_+-]+))?\]$")
 PLANTUML_BLOCK_START_PATTERN = re.compile(
-    r"^\[plantuml(?:,([a-zA-Z0-9_-]+))?(?:,([a-zA-Z0-9_]+))?\]$"
+    r"^\[plantuml(?:,\s*([a-zA-Z0-9_-]+))?(?:,\s*([a-zA-Z0-9_]+))?\]$"
+)
+# Mermaid and Ditaa diagram patterns (Issue #122)
+MERMAID_BLOCK_START_PATTERN = re.compile(
+    r"^\[mermaid(?:,\s*([a-zA-Z0-9_-]+))?(?:,\s*([a-zA-Z0-9_]+))?\]$"
+)
+DITAA_BLOCK_START_PATTERN = re.compile(
+    r"^\[ditaa(?:,\s*([a-zA-Z0-9_-]+))?(?:,\s*([a-zA-Z0-9_]+))?\]$"
 )
 LISTING_DELIMITER_PATTERN = re.compile(r"^-{4,}$")
 TABLE_DELIMITER_PATTERN = re.compile(r"^\|===$")
@@ -540,8 +547,12 @@ class AsciidocStructureParser:
         current_section_path = ""
         pending_code_language: str | None = None
         pending_plantuml_info: tuple[str | None, str | None] | None = None
+        pending_mermaid_info: tuple[str | None, str | None] | None = None
+        pending_ditaa_info: tuple[str | None, str | None] | None = None
         in_code_block = False
         in_plantuml_block = False
+        in_mermaid_block = False
+        in_ditaa_block = False
         in_table = False
         current_list_type: str | None = None  # Track if we're in a list
 
@@ -575,9 +586,28 @@ class AsciidocStructureParser:
                 pending_plantuml_info = (name, fmt)
                 continue
 
+            # Detect mermaid block attribute [mermaid,name,format]
+            mermaid_attr_match = MERMAID_BLOCK_START_PATTERN.match(line_text)
+            if mermaid_attr_match:
+                name = mermaid_attr_match.group(1)
+                fmt = mermaid_attr_match.group(2)
+                pending_mermaid_info = (name, fmt)
+                continue
+
+            # Detect ditaa block attribute [ditaa,name,format]
+            ditaa_attr_match = DITAA_BLOCK_START_PATTERN.match(line_text)
+            if ditaa_attr_match:
+                name = ditaa_attr_match.group(1)
+                fmt = ditaa_attr_match.group(2)
+                pending_ditaa_info = (name, fmt)
+                continue
+
             # Detect listing delimiter ----
             if LISTING_DELIMITER_PATTERN.match(line_text):
-                if not in_code_block and not in_plantuml_block:
+                in_any_block = (
+                    in_code_block or in_plantuml_block or in_mermaid_block or in_ditaa_block
+                )
+                if not in_any_block:
                     if pending_plantuml_info is not None:
                         # Start of plantuml block
                         in_plantuml_block = True
@@ -588,20 +618,66 @@ class AsciidocStructureParser:
                             resolved_from=resolved_from,
                         )
                         # Only add attributes if they are not None
-                        attributes = {}
+                        attrs: dict[str, str] = {}
                         if name is not None:
-                            attributes["name"] = name
+                            attrs["name"] = name
                         if fmt is not None:
-                            attributes["format"] = fmt
+                            attrs["format"] = fmt
                         elements.append(
                             Element(
                                 type="plantuml",
                                 source_location=source_location,
-                                attributes=attributes,
+                                attributes=attrs,
                                 parent_section=current_section_path,
                             )
                         )
                         pending_plantuml_info = None
+                    elif pending_mermaid_info is not None:
+                        # Start of mermaid block
+                        in_mermaid_block = True
+                        name, fmt = pending_mermaid_info
+                        source_location = SourceLocation(
+                            file=source_file,
+                            line=line_num,
+                            resolved_from=resolved_from,
+                        )
+                        attrs = {}
+                        if name is not None:
+                            attrs["name"] = name
+                        if fmt is not None:
+                            attrs["format"] = fmt
+                        elements.append(
+                            Element(
+                                type="mermaid",
+                                source_location=source_location,
+                                attributes=attrs,
+                                parent_section=current_section_path,
+                            )
+                        )
+                        pending_mermaid_info = None
+                    elif pending_ditaa_info is not None:
+                        # Start of ditaa block
+                        in_ditaa_block = True
+                        name, fmt = pending_ditaa_info
+                        source_location = SourceLocation(
+                            file=source_file,
+                            line=line_num,
+                            resolved_from=resolved_from,
+                        )
+                        attrs = {}
+                        if name is not None:
+                            attrs["name"] = name
+                        if fmt is not None:
+                            attrs["format"] = fmt
+                        elements.append(
+                            Element(
+                                type="ditaa",
+                                source_location=source_location,
+                                attributes=attrs,
+                                parent_section=current_section_path,
+                            )
+                        )
+                        pending_ditaa_info = None
                     elif pending_code_language is not None:
                         # Start of code block
                         in_code_block = True
@@ -625,6 +701,12 @@ class AsciidocStructureParser:
                 elif in_plantuml_block:
                     # End of plantuml block
                     in_plantuml_block = False
+                elif in_mermaid_block:
+                    # End of mermaid block
+                    in_mermaid_block = False
+                elif in_ditaa_block:
+                    # End of ditaa block
+                    in_ditaa_block = False
                 continue
 
             # Detect table delimiter |===
