@@ -5,6 +5,7 @@ This manual provides detailed documentation for all available MCP tools, configu
 ## Table of Contents
 
 - [Configuration](#configuration)
+- [CLI Interface (dacli)](#cli-interface-dacli)
 - [Navigation Tools](#navigation-tools)
 - [Content Access Tools](#content-access-tools)
 - [Search](#search)
@@ -66,6 +67,106 @@ uv run python -m mcp_server [OPTIONS]
 Options:
   --docs-root PATH    Root directory containing documentation files
   --help              Show help message
+```
+
+---
+
+## CLI Interface (dacli)
+
+For LLMs without MCP support, all tools are available via the `dacli` command-line interface.
+
+### Installation
+
+```bash
+# dacli is included with the server
+uv sync
+```
+
+### Global Options
+
+```bash
+dacli [OPTIONS] COMMAND [ARGS]
+
+Options:
+  --docs-root PATH         Documentation root directory (default: current directory)
+  --format [json|yaml|text]  Output format (default: json)
+  --pretty                 Pretty-print output for human readability
+  --version                Show version
+  --help                   Show help
+```
+
+### Available Commands
+
+| Command | Description | MCP Equivalent |
+|---------|-------------|----------------|
+| `structure` | Get document structure | `get_structure` |
+| `section PATH` | Read section content | `get_section` |
+| `sections-at-level LEVEL` | Get sections at level | `get_sections_at_level` |
+| `search QUERY` | Search documentation | `search` |
+| `elements` | Get code/tables/images | `get_elements` |
+| `metadata [PATH]` | Get metadata | `get_metadata` |
+| `validate` | Validate structure | `validate_structure` |
+| `update PATH` | Update section | `update_section` |
+| `insert PATH` | Insert content | `insert_content` |
+
+### CLI Examples
+
+```bash
+# Get structure (max depth 2, pretty output)
+dacli --docs-root /path/to/docs --pretty structure --max-depth 2
+
+# Read a section
+dacli section introduction.goals
+
+# Search with scope
+dacli search "authentication" --scope security --max-results 10
+
+# Get all code blocks
+dacli elements --type code
+
+# Get project metadata
+dacli metadata
+
+# Get section metadata
+dacli metadata architecture.decisions
+
+# Validate structure
+dacli validate
+
+# Update a section
+dacli update api.endpoints --content "New content..."
+
+# Insert content after a section
+dacli insert architecture --position after --content "== New Section\n\nContent..."
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | General error |
+| 2 | Invalid arguments |
+| 3 | Path not found |
+| 4 | Validation error |
+| 5 | Write error |
+
+### LLM Integration Example
+
+```bash
+# An LLM can use dacli via bash tools:
+
+# Get structure
+structure=$(dacli structure --max-depth 2 --docs-root /project/docs)
+
+# Search and extract paths
+results=$(dacli search "database" | jq '.results[].path')
+
+# Read a section
+content=$(dacli section architecture.decisions)
+
+# Update documentation
+dacli update api.endpoints --content "Updated API documentation..."
 ```
 
 ---

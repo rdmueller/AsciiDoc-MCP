@@ -70,6 +70,34 @@ Add to your Claude Desktop config (`~/.config/claude-desktop/config.json` on Lin
 
 For detailed tool documentation, see the [User Manual](docs/user-manual.md).
 
+## CLI Interface (dacli)
+
+For LLMs without MCP support, a command-line interface is available:
+
+```bash
+# Install
+uv sync
+
+# Show help
+uv run dacli --help
+
+# Get document structure
+uv run dacli --docs-root /path/to/docs structure --max-depth 2
+
+# Read a section
+uv run dacli section introduction.goals
+
+# Search documentation
+uv run dacli search "authentication" --max-results 10
+
+# Validate structure
+uv run dacli validate
+```
+
+All commands output JSON by default for easy parsing. Use `--format yaml` or `--format text` for alternative formats, and `--pretty` for human-readable output.
+
+For full CLI documentation, see [06_cli_specification.adoc](src/docs/spec/06_cli_specification.adoc).
+
 ## Development
 
 ```bash
