@@ -979,3 +979,152 @@ Final thoughts.
         assert goals_pos != -1, "Goals section should exist"
         assert goals_pos > intro_pos, "Goals should be after Introduction"
         assert goals_pos < components_pos, "Goals should be before Components"
+
+    def test_insert_stdin_support(self, sample_docs):
+        """Insert command should read content from stdin when --content is '-' (Issue #113)."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        # Simulate stdin input
+        stdin_content = "== From Stdin\n\nContent from stdin.\n"
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs),
+                "--format", "json",
+                "insert", "introduction",
+                "--position", "after",
+                "--content", "-",
+            ],
+            input=stdin_content,
+        )
+
+        assert result.exit_code == 0
+
+        doc_file = sample_docs / "test.adoc"
+        content = doc_file.read_text()
+
+        # Content from stdin should be in the file
+        assert "From Stdin" in content
+        assert "Content from stdin" in content
+
+    def test_insert_adds_blank_line_before_heading(self, tmp_path):
+        """Insert should add blank line before heading when inserting after content (Issue #114)."""
+        from dacli.cli import cli
+
+        # Create a minimal doc without trailing blank line before next section
+        doc_file = tmp_path / "test.md"
+        doc_file.write_text("# Title\n\n## Section A\n\nContent A.\n## Section B\n\nContent B.\n")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(tmp_path),
+                "--format", "json",
+                "insert", "section-a",
+                "--position", "after",
+                "--content", "## New Section\\n\\nNew content.\\n",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        content = doc_file.read_text()
+
+        # There should be a blank line before the new heading
+        # The pattern "Content A.\n\n## New Section" indicates proper spacing
+        assert "Content A." in content
+        assert "## New Section" in content
+        # Check that we don't have "Content A.\n## New Section" (no blank line)
+        lines = content.split("\n")
+        for i, line in enumerate(lines):
+            if line.startswith("## New Section"):
+                # Previous non-empty content line should be followed by blank line
+                assert i > 0, "New section should not be first line"
+
+
+class TestCliUpdateCommand:
+    """Test the 'update' command."""
+
+    def test_update_preserves_heading_level_markdown(self, tmp_path):
+        """Update command should preserve heading level in Markdown (Issue #115)."""
+        from dacli.cli import cli
+
+        # Create a markdown doc with ## heading
+        doc_file = tmp_path / "test.md"
+        doc_file.write_text("# Title\n\n## Parent\n\nOriginal content.\n")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(tmp_path),
+                "--format", "json",
+                "update", "parent",
+                "--content", "New content.",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        content = doc_file.read_text()
+
+        # Heading level should still be ## (h2), not ### (h3)
+        assert "## Parent" in content
+        assert "### Parent" not in content
+        assert "New content" in content
+
+    def test_update_preserves_heading_level_asciidoc(self, tmp_path):
+        """Update command should preserve heading level in AsciiDoc."""
+        from dacli.cli import cli
+
+        # Create an asciidoc doc with == heading
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("= Title\n\n== Parent\n\nOriginal content.\n")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(tmp_path),
+                "--format", "json",
+                "update", "parent",
+                "--content", "New content.",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        content = doc_file.read_text()
+
+        # Heading level should still be == (h2), not === (h3)
+        assert "== Parent" in content
+        assert "=== Parent" not in content
+        assert "New content" in content
+
+    def test_update_stdin_support(self, tmp_path):
+        """Update command should read content from stdin when --content is '-' (Issue #113)."""
+        from dacli.cli import cli
+
+        doc_file = tmp_path / "test.md"
+        doc_file.write_text("# Title\n\n## Section\n\nOriginal content.\n")
+
+        runner = CliRunner()
+        stdin_content = "Updated from stdin."
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(tmp_path),
+                "--format", "json",
+                "update", "section",
+                "--content", "-",
+            ],
+            input=stdin_content,
+        )
+
+        assert result.exit_code == 0
+
+        content = doc_file.read_text()
+        assert "Updated from stdin" in content
+        assert "Original content" not in content

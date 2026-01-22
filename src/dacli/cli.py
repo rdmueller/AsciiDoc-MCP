@@ -696,8 +696,11 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
         click.echo(format_output(ctx, result))
         sys.exit(EXIT_ERROR)
 
-    # Process escape sequences (e.g., \n -> actual newline)
-    new_content = content.encode("utf-8").decode("unicode_escape")
+    # Process content: read from stdin if "-", otherwise process escape sequences
+    if content == "-":
+        new_content = sys.stdin.read()
+    else:
+        new_content = content.encode("utf-8").decode("unicode_escape")
     if preserve_title:
         stripped_content = new_content.lstrip()
         has_explicit_title = stripped_content.startswith("=") or stripped_content.startswith("#")
@@ -706,7 +709,7 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
             if file_ext in (".adoc", ".asciidoc"):
                 level_markers = "=" * (section_obj.level + 1)
             else:
-                level_markers = "#" * (section_obj.level + 1)
+                level_markers = "#" * section_obj.level
             new_content = f"{level_markers} {section_obj.title}\n\n{new_content}"
 
     if not new_content.endswith("\n"):
@@ -757,8 +760,11 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
     start_line = section_obj.source_location.line
     end_line = _get_section_end_line(section_obj, file_path, ctx.file_handler)
 
-    # Process escape sequences (e.g., \n -> actual newline)
-    insert_content = content.encode("utf-8").decode("unicode_escape")
+    # Process content: read from stdin if "-", otherwise process escape sequences
+    if content == "-":
+        insert_content = sys.stdin.read()
+    else:
+        insert_content = content.encode("utf-8").decode("unicode_escape")
     if not insert_content.endswith("\n"):
         insert_content += "\n"
 
@@ -767,15 +773,29 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
         previous_hash = hashlib.md5(file_content.encode("utf-8")).hexdigest()[:8]
         lines = file_content.splitlines(keepends=True)
 
+        # Ensure blank line before headings when inserting after content
+        stripped_insert = insert_content.lstrip()
+        starts_with_heading = stripped_insert.startswith("#") or stripped_insert.startswith("=")
+
         if position == "before":
             insert_line = start_line
             new_lines = lines[: start_line - 1] + [insert_content] + lines[start_line - 1 :]
         elif position == "after":
             insert_line = end_line + 1
+            # Add blank line before headings if previous line is not blank
+            if starts_with_heading and end_line > 0:
+                prev_line = lines[end_line - 1] if end_line <= len(lines) else ""
+                if prev_line.strip():
+                    insert_content = "\n" + insert_content
             new_lines = lines[:end_line] + [insert_content] + lines[end_line:]
         else:  # append - insert after all descendants
             append_line = _get_section_append_line(section_obj, ctx.index, ctx.file_handler)
             insert_line = append_line + 1
+            # Add blank line before headings if previous line is not blank
+            if starts_with_heading and append_line > 0:
+                prev_line = lines[append_line - 1] if append_line <= len(lines) else ""
+                if prev_line.strip():
+                    insert_content = "\n" + insert_content
             new_lines = lines[:append_line] + [insert_content] + lines[append_line:]
 
         new_file_content = "".join(new_lines)
