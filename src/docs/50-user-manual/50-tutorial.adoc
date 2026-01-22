@@ -16,21 +16,25 @@ The examples in this tutorial serve to illustrate the tool's functionality and o
 
 == Prerequisites
 
-The CLI is included with the MCP Documentation Server. Ensure you have:
+The CLI is included with the MCP Documentation Server. Install it globally:
 
 [source,bash]
 ----
-# Install dependencies
-uv sync
+# Clone and install
+git clone https://github.com/rdmueller/AsciiDoc-MCP.git
+cd AsciiDoc-MCP
+uv tool install .
 
 # Verify installation
-uv run dacli --version
+dacli --version
 ----
 
 Expected output:
 ----
 dacli, version 0.1.0
 ----
+
+NOTE: Alternatively, use `uv sync` and prefix all commands with `uv run`. See xref:10-installation.adoc[Installation Guide] for details.
 
 == Global Options
 
@@ -58,7 +62,7 @@ Get an overview of the documentation hierarchy:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs structure --max-depth 1
+dacli --docs-root /path/to/docs structure --max-depth 1
 ----
 
 Output:
@@ -78,7 +82,7 @@ To see nested sections, increase the depth:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs structure --max-depth 2
+dacli --docs-root /path/to/docs structure --max-depth 2
 ----
 
 === Example 2: Reading Section Content
@@ -87,7 +91,7 @@ Read a specific section by its path:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs section introduction
+dacli --docs-root /path/to/docs section introduction
 ----
 
 Output:
@@ -110,7 +114,7 @@ For nested sections, use dot notation:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs section architecture.decisions
+dacli --docs-root /path/to/docs section architecture.decisions
 ----
 
 === Example 3: Handling Non-Existent Sections
@@ -119,7 +123,7 @@ When requesting a section that doesn't exist, the CLI provides helpful suggestio
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs section intro
+dacli --docs-root /path/to/docs section intro
 ----
 
 Output (exit code 3):
@@ -143,7 +147,7 @@ Search for content across all documentation:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs search "authentication"
+dacli --docs-root /path/to/docs search "authentication"
 ----
 
 Output:
@@ -173,7 +177,7 @@ Limit results and scope the search:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs search "database" --scope architecture --max-results 5
+dacli --docs-root /path/to/docs search "database" --scope architecture --max-results 5
 ----
 
 === Example 5: Getting Sections at a Specific Level
@@ -182,7 +186,7 @@ List all chapters (level 1 sections):
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs sections-at-level 1
+dacli --docs-root /path/to/docs sections-at-level 1
 ----
 
 Output:
@@ -205,7 +209,7 @@ Get all code blocks from the documentation:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs elements --type code
+dacli --docs-root /path/to/docs elements --type code
 ----
 
 Output:
@@ -234,7 +238,7 @@ Filter by section:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs elements --type table --section architecture
+dacli --docs-root /path/to/docs elements --type table --section architecture
 ----
 
 === Example 7: Getting Metadata
@@ -243,7 +247,7 @@ Get project-level metadata:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs metadata
+dacli --docs-root /path/to/docs metadata
 ----
 
 Output:
@@ -263,7 +267,7 @@ Get section-level metadata:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs metadata architecture.decisions
+dacli --docs-root /path/to/docs metadata architecture.decisions
 ----
 
 Output:
@@ -285,7 +289,7 @@ Check for structural issues:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs validate
+dacli --docs-root /path/to/docs validate
 ----
 
 Output (when valid):
@@ -311,7 +315,7 @@ Update a section's content:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs update introduction --content "== Introduction
+dacli --docs-root /path/to/docs update introduction --content "== Introduction
 
 This is the updated introduction content.
 
@@ -334,7 +338,7 @@ Use optimistic locking to prevent concurrent edit conflicts:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs update introduction \
+dacli --docs-root /path/to/docs update introduction \
   --content "New content..." \
   --expected-hash a1b2c3d4
 ----
@@ -345,7 +349,7 @@ Insert a new section after an existing one:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs insert architecture \
+dacli --docs-root /path/to/docs insert architecture \
   --position after \
   --content "== New Architecture Section
 
@@ -376,7 +380,7 @@ Compact JSON for machine parsing:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs metadata
+dacli --docs-root /path/to/docs metadata
 ----
 
 ----
@@ -389,7 +393,7 @@ Formatted JSON for debugging:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs --pretty metadata
+dacli --docs-root /path/to/docs --pretty metadata
 ----
 
 [source,json]
@@ -408,7 +412,7 @@ YAML format:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs --format yaml metadata
+dacli --docs-root /path/to/docs --format yaml metadata
 ----
 
 [source,yaml]
@@ -425,7 +429,7 @@ Human-readable text format:
 
 [source,bash]
 ----
-uv run dacli --docs-root /path/to/docs --format text metadata
+dacli --docs-root /path/to/docs --format text metadata
 ----
 
 ----
@@ -458,20 +462,20 @@ A typical LLM workflow using dacli:
 [source,bash]
 ----
 # 1. Understand the documentation structure
-structure=$(uv run dacli --docs-root /project/docs structure --max-depth 2)
+structure=$(dacli --docs-root /project/docs structure --max-depth 2)
 
 # 2. Search for relevant content
-results=$(uv run dacli --docs-root /project/docs search "database configuration")
+results=$(dacli --docs-root /project/docs search "database configuration")
 
 # 3. Read the relevant section
-content=$(uv run dacli --docs-root /project/docs section deployment.database)
+content=$(dacli --docs-root /project/docs section deployment.database)
 
 # 4. Update the documentation
-uv run dacli --docs-root /project/docs update deployment.database \
+dacli --docs-root /project/docs update deployment.database \
   --content "Updated database configuration documentation..."
 
 # 5. Verify the structure is still valid
-uv run dacli --docs-root /project/docs validate
+dacli --docs-root /project/docs validate
 ----
 
 == Command Reference

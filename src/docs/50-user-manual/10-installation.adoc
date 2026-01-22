@@ -49,21 +49,65 @@ git clone https://github.com/rdmueller/AsciiDoc-MCP.git
 cd AsciiDoc-MCP
 ----
 
-=== Install Dependencies
+=== Option A: Global Installation (Recommended)
+
+Install `dacli` and `mcp-docs-server` as global commands:
+
+[source,bash]
+----
+uv tool install .
+----
+
+This installs the tools globally, so you can use them directly:
+
+[source,bash]
+----
+dacli --version
+mcp-docs-server --help
+----
+
+To update after pulling new changes:
+[source,bash]
+----
+uv tool install . --force
+----
+
+=== Option B: Development Mode
+
+For development or if you prefer using `uv run`:
 
 [source,bash]
 ----
 uv sync
 ----
 
-This creates a virtual environment and installs all required packages.
+This creates a virtual environment. Run commands with `uv run`:
+
+[source,bash]
+----
+uv run dacli --version
+uv run python -m mcp_server --help
+----
 
 === Verify Installation
+
+**Check the CLI:**
+[source,bash]
+----
+dacli --version
+# or: uv run dacli --version
+----
+
+Expected output:
+----
+dacli, version 0.1.0
+----
 
 **Check the MCP server:**
 [source,bash]
 ----
-uv run python -m mcp_server --help
+mcp-docs-server --help
+# or: uv run python -m mcp_server --help
 ----
 
 Expected output:
@@ -188,14 +232,16 @@ For LLMs without MCP support, use the `dacli` command-line interface:
 [source,bash]
 ----
 # Get documentation structure
-uv run dacli --docs-root /path/to/docs structure
+dacli --docs-root /path/to/docs structure
 
 # Search documentation
-uv run dacli --docs-root /path/to/docs search "authentication"
+dacli --docs-root /path/to/docs search "authentication"
 
 # Read a section
-uv run dacli --docs-root /path/to/docs section introduction
+dacli --docs-root /path/to/docs section introduction
 ----
+
+NOTE: If you used Option B (development mode), prefix commands with `uv run`.
 
 See the xref:50-tutorial.adoc[CLI Tutorial] for comprehensive examples.
 
