@@ -684,6 +684,13 @@ Triggert eine Neu-Indizierung.
 }
 ----
 
+== CLI Interface
+
+NOTE: Die CLI-Spezifikation befindet sich in einer separaten Datei: `06_cli_specification.adoc`
+
+Das CLI Interface ermöglicht die Nutzung aller MCP-Tools über die Kommandozeile,
+insbesondere für LLMs ohne MCP-Support.
+
 == Fehlercode-Referenz
 
 [cols="1,1,3"]

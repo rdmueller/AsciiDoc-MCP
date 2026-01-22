@@ -1,0 +1,244 @@
+= CLI Interface Specification
+:toc:
+:toclevels: 3
+
+== Übersicht
+
+Das CLI Interface ermöglicht die Nutzung aller MCP-Tools über die Kommandozeile.
+Dies ist besonders nützlich für LLMs, die keinen MCP-Support haben, aber Bash/Shell-Tools verwenden können.
+
+== Globale Optionen
+
+[source,bash]
+----
+mcp-docs [OPTIONS] <COMMAND> [ARGS]
+
+Options:
+  --docs-root PATH    Dokumentations-Wurzelverzeichnis (default: $PROJECT_PATH oder cwd)
+  --format FORMAT     Ausgabeformat: json (default), yaml, text
+  --pretty            Formatierte Ausgabe für Menschen
+  --version           Zeigt Version
+  --help              Zeigt Hilfe
+----
+
+== Navigation Commands
+
+=== structure
+
+Zeigt die hierarchische Dokumentstruktur.
+
+[source,bash]
+----
+mcp-docs structure [--max-depth N]
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs structure --max-depth 1
+{
+  "sections": [
+    {"path": "introduction", "title": "Introduction", "level": 1},
+    {"path": "architecture", "title": "Architecture", "level": 1}
+  ],
+  "total_sections": 15
+}
+----
+
+=== section
+
+Liest den Inhalt einer Sektion.
+
+[source,bash]
+----
+mcp-docs section <PATH>
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs section introduction.goals
+{
+  "path": "introduction.goals",
+  "title": "Goals",
+  "content": "== Goals\n\nThis section...",
+  "format": "asciidoc"
+}
+----
+
+=== sections-at-level
+
+Zeigt alle Sektionen auf einer bestimmten Ebene.
+
+[source,bash]
+----
+mcp-docs sections-at-level <LEVEL>
+----
+
+== Search & Elements Commands
+
+=== search
+
+Durchsucht die Dokumentation.
+
+[source,bash]
+----
+mcp-docs search <QUERY> [--scope PATH] [--max-results N]
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs search "authentication" --max-results 5
+{
+  "query": "authentication",
+  "results": [
+    {"path": "security.auth", "context": "...implements authentication...", "score": 0.95}
+  ],
+  "total_results": 1
+}
+----
+
+=== elements
+
+Listet Elemente (Code-Blöcke, Tabellen, etc.).
+
+[source,bash]
+----
+mcp-docs elements [--type TYPE] [--section PATH]
+----
+
+**Type-Optionen:** `code`, `table`, `image`, `diagram`, `list`, `admonition`
+
+== Meta-Information Commands
+
+=== metadata
+
+Zeigt Metadaten für Projekt oder Sektion.
+
+[source,bash]
+----
+mcp-docs metadata [PATH]
+----
+
+**Projekt-Metadaten (ohne PATH):**
+[source,bash]
+----
+$ mcp-docs metadata
+{
+  "total_files": 15,
+  "total_sections": 87,
+  "total_words": 12450,
+  "formats": ["asciidoc", "markdown"]
+}
+----
+
+**Sektions-Metadaten (mit PATH):**
+[source,bash]
+----
+$ mcp-docs metadata architecture.decisions
+{
+  "path": "architecture.decisions",
+  "title": "Architecture Decisions",
+  "word_count": 2340,
+  "subsection_count": 5
+}
+----
+
+=== validate
+
+Validiert die Dokumentstruktur.
+
+[source,bash]
+----
+mcp-docs validate
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs validate
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    {"type": "orphaned_file", "path": "unused.adoc"}
+  ],
+  "validation_time_ms": 45
+}
+----
+
+== Manipulation Commands
+
+=== update
+
+Aktualisiert den Inhalt einer Sektion.
+
+[source,bash]
+----
+mcp-docs update <PATH> --content "..." [--no-preserve-title] [--expected-hash HASH]
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs update introduction --content "New introduction text..."
+{
+  "success": true,
+  "path": "introduction",
+  "previous_hash": "a1b2c3d4",
+  "new_hash": "e5f6g7h8"
+}
+----
+
+=== insert
+
+Fügt Inhalt relativ zu einer Sektion ein.
+
+[source,bash]
+----
+mcp-docs insert <PATH> --position before|after|append --content "..."
+----
+
+**Beispiel:**
+[source,bash]
+----
+$ mcp-docs insert architecture --position after --content "== New Section\n\nContent..."
+{
+  "success": true,
+  "inserted_at": {"file": "arc42.adoc", "line": 150}
+}
+----
+
+== Exit Codes
+
+[cols="1,3"]
+|===
+| Code | Bedeutung
+
+| 0 | Erfolg
+| 1 | Allgemeiner Fehler
+| 2 | Ungültige Argumente
+| 3 | Pfad nicht gefunden
+| 4 | Validierungsfehler
+| 5 | Schreibfehler
+|===
+
+== LLM-Integration Beispiel
+
+Ein LLM kann das CLI über Bash-Tools verwenden:
+
+[source,bash]
+----
+# Struktur abfragen
+structure=$(mcp-docs structure --max-depth 2 --docs-root /project/docs)
+
+# Nach Thema suchen
+results=$(mcp-docs search "database" | jq '.results[].path')
+
+# Sektion lesen
+content=$(mcp-docs section architecture.decisions)
+
+# Dokumentation aktualisieren
+mcp-docs update api.endpoints --content "Updated API documentation..."
+----
