@@ -50,19 +50,20 @@ class CliContext:
         docs_root: Path,
         output_format: str,
         pretty: bool,
-        quiet: bool = False,
+        verbose: bool = False,
         respect_gitignore: bool = True,
         include_hidden: bool = False,
     ):
         self.docs_root = docs_root
         self.output_format = output_format
         self.pretty = pretty
-        self.quiet = quiet
+        self.verbose = verbose
         self.respect_gitignore = respect_gitignore
         self.include_hidden = include_hidden
 
-        # Configure logging level based on quiet flag
-        if quiet:
+        # Configure logging level based on verbose flag
+        # Default is quiet (ERROR only), verbose enables WARNING
+        if not verbose:
             logging.getLogger().setLevel(logging.ERROR)
 
         self.index = StructureIndex()
@@ -141,10 +142,10 @@ pass_context = click.make_pass_decorator(CliContext)
     help="Pretty-print output for human readability",
 )
 @click.option(
-    "--quiet", "-q",
+    "--verbose", "-v",
     is_flag=True,
     default=False,
-    help="Suppress warning messages (errors are still shown)",
+    help="Show warning messages (default: only errors are shown)",
 )
 @click.option(
     "--no-gitignore",
@@ -165,7 +166,7 @@ def cli(
     docs_root: Path,
     output_format: str,
     pretty: bool,
-    quiet: bool,
+    verbose: bool,
     no_gitignore: bool,
     include_hidden: bool,
 ):
@@ -178,7 +179,7 @@ def cli(
         docs_root,
         output_format,
         pretty,
-        quiet,
+        verbose,
         respect_gitignore=not no_gitignore,
         include_hidden=include_hidden,
     )

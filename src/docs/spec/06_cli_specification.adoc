@@ -17,7 +17,7 @@ Options:
   --docs-root PATH    Documentation root directory (default: $PROJECT_PATH or cwd)
   --format FORMAT     Output format: text (default), json, yaml
   --pretty            Formatted output for humans
-  --quiet, -q         Suppress warning messages
+  --verbose, -v       Show warning messages (default: only errors shown)
   --no-gitignore      Include files that would normally be excluded by .gitignore patterns
   --include-hidden    Include files in hidden directories (starting with '.')
   --version           Show version

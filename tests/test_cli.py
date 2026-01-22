@@ -282,8 +282,8 @@ Content.
         json.loads(result.output)  # Still valid JSON
 
 
-class TestCliQuietOption:
-    """Test the --quiet/-q option for suppressing warnings."""
+class TestCliVerboseOption:
+    """Test the --verbose/-v option for showing warnings."""
 
     @pytest.fixture
     def docs_with_duplicates(self, tmp_path):
@@ -305,62 +305,55 @@ Content from doc2.
 """)
         return tmp_path
 
-    def test_quiet_option_in_help(self):
-        """--quiet option should be listed in help."""
+    def test_verbose_option_in_help(self):
+        """--verbose option should be listed in help."""
         from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
 
         assert result.exit_code == 0
-        assert "--quiet" in result.output or "-q" in result.output
+        assert "--verbose" in result.output or "-v" in result.output
 
-    def test_quiet_short_option_in_help(self):
-        """Short -q option should be available."""
+    def test_verbose_short_option_in_help(self):
+        """Short -v option should be available."""
         from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
 
         assert result.exit_code == 0
-        assert "-q" in result.output
+        assert "-v" in result.output
 
-    def test_quiet_suppresses_warnings(self, docs_with_duplicates):
-        """--quiet should suppress warning messages to stderr."""
+    def test_default_suppresses_warnings(self, docs_with_duplicates):
+        """By default (without --verbose), warnings should be suppressed."""
         from dacli.cli import cli
 
         runner = CliRunner()
 
-        # Without quiet - command should work
-        result_normal = runner.invoke(
+        # Default (no verbose) - command should work with clean output
+        result_default = runner.invoke(
             cli, ["--docs-root", str(docs_with_duplicates), "--format", "json", "structure"]
         )
-        assert result_normal.exit_code == 0
+        assert result_default.exit_code == 0
+        # Output should be valid JSON (no warnings polluting it)
+        json.loads(result_default.output)
 
-        # With quiet - command should also work
-        result_quiet = runner.invoke(
-            cli,
-            ["--docs-root", str(docs_with_duplicates), "--quiet", "--format", "json", "structure"],
-        )
-        assert result_quiet.exit_code == 0
-        # Output should be valid JSON
-        json.loads(result_quiet.output)
-
-    def test_quiet_short_form_works(self, docs_with_duplicates):
-        """-q short form should work the same as --quiet."""
+    def test_verbose_short_form_works(self, docs_with_duplicates):
+        """-v short form should work the same as --verbose."""
         from dacli.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(docs_with_duplicates), "-q", "--format", "json", "structure"]
+            cli, ["--docs-root", str(docs_with_duplicates), "-v", "--format", "json", "structure"]
         )
 
         assert result.exit_code == 0
         # Output should be valid JSON
         json.loads(result.output)
 
-    def test_quiet_still_shows_errors(self, tmp_path):
-        """--quiet should still show error messages."""
+    def test_default_still_shows_errors(self, tmp_path):
+        """Default mode should still show error messages."""
         from dacli.cli import cli
 
         runner = CliRunner()
@@ -370,14 +363,14 @@ Content from doc2.
 
         result = runner.invoke(
             cli,
-            ["--docs-root", str(tmp_path), "--quiet", "section", "nonexistent"],
+            ["--docs-root", str(tmp_path), "section", "nonexistent"],
         )
 
         # Should fail with PATH_NOT_FOUND (exit code 3)
         assert result.exit_code == 3
 
-    def test_quiet_does_not_affect_output(self, tmp_path):
-        """--quiet should not affect the JSON/text output."""
+    def test_verbose_does_not_affect_output(self, tmp_path):
+        """--verbose should not affect the JSON/text output content."""
         from dacli.cli import cli
 
         doc = tmp_path / "test.adoc"
@@ -385,18 +378,18 @@ Content from doc2.
 
         runner = CliRunner()
 
-        # Compare output with and without quiet
-        result_normal = runner.invoke(
+        # Compare output with and without verbose (single file, no warnings)
+        result_default = runner.invoke(
             cli, ["--docs-root", str(tmp_path), "structure"]
         )
-        result_quiet = runner.invoke(
-            cli, ["--docs-root", str(tmp_path), "--quiet", "structure"]
+        result_verbose = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--verbose", "structure"]
         )
 
-        assert result_normal.exit_code == 0
-        assert result_quiet.exit_code == 0
-        # Output should be the same
-        assert result_normal.output == result_quiet.output
+        assert result_default.exit_code == 0
+        assert result_verbose.exit_code == 0
+        # Output should be the same when there are no warnings
+        assert result_default.output == result_verbose.output
 
 
 class TestCliGitignoreOptions:
