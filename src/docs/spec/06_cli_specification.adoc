@@ -15,7 +15,7 @@ dacli [OPTIONS] <COMMAND> [ARGS]
 
 Options:
   --docs-root PATH    Dokumentations-Wurzelverzeichnis (default: $PROJECT_PATH oder cwd)
-  --format FORMAT     Ausgabeformat: json (default), yaml, text
+  --format FORMAT     Ausgabeformat: text (default), json, yaml
   --pretty            Formatierte Ausgabe für Menschen
   --version           Zeigt Version
   --help              Zeigt Hilfe

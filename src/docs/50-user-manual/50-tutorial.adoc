@@ -46,7 +46,7 @@ dacli [OPTIONS] COMMAND [ARGS]
 
 Options:
   --docs-root DIRECTORY      Documentation root directory (default: current directory)
-  --format [json|yaml|text]  Output format (default: json)
+  --format [json|yaml|text]  Output format (default: text)
   --pretty                   Pretty-print output for human readability
   --version                  Show the version and exit
   --help                     Show help message
@@ -374,13 +374,13 @@ Position options:
 
 == Output Formats
 
-=== JSON (Default)
+=== JSON
 
 Compact JSON for machine parsing:
 
 [source,bash]
 ----
-dacli --docs-root /path/to/docs metadata
+dacli --docs-root /path/to/docs --format json metadata
 ----
 
 ----
@@ -393,7 +393,7 @@ Formatted JSON for debugging:
 
 [source,bash]
 ----
-dacli --docs-root /path/to/docs --pretty metadata
+dacli --docs-root /path/to/docs --format json --pretty metadata
 ----
 
 [source,json]
@@ -423,7 +423,7 @@ total_sections: 87
 total_words: 12450
 ----
 
-=== Text
+=== Text (Default)
 
 Human-readable text format:
 

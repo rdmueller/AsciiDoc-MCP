@@ -94,7 +94,7 @@ uv run dacli search "authentication" --max-results 10
 uv run dacli validate
 ```
 
-All commands output JSON by default for easy parsing. Use `--format yaml` or `--format text` for alternative formats, and `--pretty` for human-readable output.
+All commands output text by default for human readability. Use `--format json` or `--format yaml` for machine-parseable output, and `--pretty` for formatted JSON output.
 
 For full CLI documentation, see [06_cli_specification.adoc](src/docs/spec/06_cli_specification.adoc).
 

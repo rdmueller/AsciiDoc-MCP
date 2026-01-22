@@ -114,8 +114,8 @@ pass_context = click.make_pass_decorator(CliContext)
     "--format",
     "output_format",
     type=click.Choice(["json", "yaml", "text"]),
-    default="json",
-    help="Output format (default: json)",
+    default="text",
+    help="Output format (default: text)",
 )
 @click.option(
     "--pretty",

@@ -62,12 +62,14 @@ Architecture description.
 """)
         return tmp_path
 
-    def test_structure_returns_json(self, sample_docs):
-        """structure command should return valid JSON by default."""
+    def test_structure_returns_json_when_requested(self, sample_docs):
+        """structure command should return valid JSON when --format json is specified."""
         from mcp_server.cli import cli
 
         runner = CliRunner()
-        result = runner.invoke(cli, ["--docs-root", str(sample_docs), "structure"])
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "structure"]
+        )
 
         assert result.exit_code == 0
         # Should be valid JSON
@@ -80,7 +82,8 @@ Architecture description.
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "structure", "--max-depth", "1"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "structure", "--max-depth", "1"],
         )
 
         assert result.exit_code == 0
@@ -104,12 +107,13 @@ Introduction content here.
         return tmp_path
 
     def test_section_returns_content(self, sample_docs):
-        """section command should return section content as JSON."""
+        """section command should return section content as JSON when requested."""
         from mcp_server.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "section", "introduction"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "section", "introduction"],
         )
 
         # Exit code 0 for found, 3 for not found
@@ -123,7 +127,8 @@ Introduction content here.
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "section", "nonexistent"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "section", "nonexistent"],
         )
 
         assert result.exit_code == 3  # PATH_NOT_FOUND
@@ -147,12 +152,13 @@ This section covers authentication topics.
         return tmp_path
 
     def test_search_returns_results(self, sample_docs):
-        """search command should return JSON results."""
+        """search command should return JSON results when requested."""
         from mcp_server.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "search", "authentication"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "search", "authentication"],
         )
 
         assert result.exit_code == 0
@@ -181,7 +187,9 @@ Content.
         from mcp_server.cli import cli
 
         runner = CliRunner()
-        result = runner.invoke(cli, ["--docs-root", str(sample_docs), "metadata"])
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "metadata"]
+        )
 
         assert result.exit_code == 0
         data = json.loads(result.output)
@@ -193,7 +201,7 @@ Content.
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "metadata", "section-one"]
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "metadata", "section-one"]
         )
 
         # Exit code 0 for found, 3 for not found
@@ -222,7 +230,9 @@ Content.
         from mcp_server.cli import cli
 
         runner = CliRunner()
-        result = runner.invoke(cli, ["--docs-root", str(sample_docs), "validate"])
+        result = runner.invoke(
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "validate"]
+        )
 
         assert result.exit_code in (0, 4)  # 0 = valid, 4 = validation errors
         data = json.loads(result.output)
@@ -244,24 +254,26 @@ Content.
 """)
         return tmp_path
 
-    def test_json_format_is_default(self, sample_docs):
-        """Default output should be JSON."""
+    def test_text_format_is_default(self, sample_docs):
+        """Default output should be text format."""
         from mcp_server.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(cli, ["--docs-root", str(sample_docs), "structure"])
 
         assert result.exit_code == 0
-        # Should be valid JSON
-        json.loads(result.output)
+        # Should be text format (not JSON)
+        # Text format uses key: value style
+        assert "sections:" in result.output or "total_sections:" in result.output
 
-    def test_pretty_flag_formats_output(self, sample_docs):
-        """--pretty flag should format output for readability."""
+    def test_pretty_flag_formats_json_output(self, sample_docs):
+        """--pretty flag should format JSON output for readability."""
         from mcp_server.cli import cli
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "--pretty", "structure"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "--pretty", "structure"],
         )
 
         assert result.exit_code == 0
@@ -321,13 +333,14 @@ Content from doc2.
 
         # Without quiet - command should work
         result_normal = runner.invoke(
-            cli, ["--docs-root", str(docs_with_duplicates), "structure"]
+            cli, ["--docs-root", str(docs_with_duplicates), "--format", "json", "structure"]
         )
         assert result_normal.exit_code == 0
 
         # With quiet - command should also work
         result_quiet = runner.invoke(
-            cli, ["--docs-root", str(docs_with_duplicates), "--quiet", "structure"]
+            cli,
+            ["--docs-root", str(docs_with_duplicates), "--quiet", "--format", "json", "structure"],
         )
         assert result_quiet.exit_code == 0
         # Output should be valid JSON
@@ -339,7 +352,7 @@ Content from doc2.
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(docs_with_duplicates), "-q", "structure"]
+            cli, ["--docs-root", str(docs_with_duplicates), "-q", "--format", "json", "structure"]
         )
 
         assert result.exit_code == 0
