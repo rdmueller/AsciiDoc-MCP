@@ -39,6 +39,9 @@ uv add --dev <package-name>
 # Run tests
 uv run pytest
 
+# Run tests with HTML report
+uv run pytest --html=report.html --self-contained-html
+
 # Run single test
 uv run pytest tests/path/to/test.py::test_function_name
 ```
@@ -79,6 +82,9 @@ Section paths use dot-notation without document title prefix:
 ## Documentation Structure
 
 ```
+docs/
+└── user-manual.md   # User documentation for MCP tools
+
 src/docs/
 ├── arc42/           # Architecture documentation (arc42 template)
 │   └── chapters/    # Individual architecture chapters
@@ -129,14 +135,31 @@ Located in `src/docs/arc42/chapters/09_architecture_decisions.adoc`:
 
 ## Parser Specifics
 
-### AsciiDoc Parser
+### AsciiDoc Structure Parser (`AsciidocStructureParser`)
 - Resolves `include::[]` directives recursively
 - Tracks original file path and line numbers for every element
 - Builds AST with source-map information
+- Detects circular includes
 
-### Markdown Parser (GFM)
+### Markdown Structure Parser (`MarkdownStructureParser`)
 - Folder hierarchy = document structure (no includes)
 - Sorting: `index.md`/`README.md` first, then alphabetic with numeric prefix support
-- Extracts: headings (structure), code blocks, tables, images (as addressable blocks)
+- Extracts: headings (structure), code blocks (with content), tables, images
 - YAML frontmatter support for metadata
+
+## Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_structure` | Get hierarchical document structure |
+| `get_section` | Read content of a specific section |
+| `get_sections_at_level` | Get all sections at a nesting level |
+| `search` | Full-text search across documentation |
+| `get_elements` | Get code blocks, tables, images, etc. |
+| `get_metadata` | Get project or section metadata |
+| `validate_structure` | Validate documentation structure |
+| `update_section` | Update section content (with optimistic locking) |
+| `insert_content` | Insert content before/after sections |
+
+For detailed tool documentation, see `docs/user-manual.md`.
 
