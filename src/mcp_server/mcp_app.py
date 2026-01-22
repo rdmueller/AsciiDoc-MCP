@@ -25,6 +25,7 @@ from fastmcp import FastMCP
 from mcp_server import __version__
 from mcp_server.asciidoc_parser import AsciidocStructureParser
 from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteError
+from mcp_server.file_utils import find_doc_files
 from mcp_server.markdown_parser import MarkdownStructureParser
 from mcp_server.models import Document, Section
 from mcp_server.structure_index import StructureIndex
@@ -610,11 +611,11 @@ def create_mcp_server(docs_root: Path | str | None = None) -> FastMCP:
         # Get all indexed files
         indexed_files = set(index._file_to_sections.keys())
 
-        # Get all doc files in docs_root
+        # Get all doc files in docs_root (respecting gitignore)
         all_doc_files: set[Path] = set()
-        for adoc_file in docs_root.rglob("*.adoc"):
+        for adoc_file in find_doc_files(docs_root, "*.adoc"):
             all_doc_files.add(adoc_file.resolve())
-        for md_file in docs_root.rglob("*.md"):
+        for md_file in find_doc_files(docs_root, "*.md"):
             if md_file.name not in ("CLAUDE.md", "README.md"):
                 all_doc_files.add(md_file.resolve())
 
@@ -660,8 +661,8 @@ def _build_index(
     """
     documents: list[Document] = []
 
-    # Find and parse AsciiDoc files
-    for adoc_file in docs_root.rglob("*.adoc"):
+    # Find and parse AsciiDoc files (respecting gitignore)
+    for adoc_file in find_doc_files(docs_root, "*.adoc"):
         try:
             doc = asciidoc_parser.parse_file(adoc_file)
             documents.append(doc)
@@ -669,8 +670,8 @@ def _build_index(
             # Log but continue with other files
             logger.warning("Failed to parse %s: %s", adoc_file, e)
 
-    # Find and parse Markdown files
-    for md_file in docs_root.rglob("*.md"):
+    # Find and parse Markdown files (respecting gitignore)
+    for md_file in find_doc_files(docs_root, "*.md"):
         # Skip common non-doc files
         if md_file.name in ("CLAUDE.md", "README.md"):
             continue

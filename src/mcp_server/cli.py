@@ -27,6 +27,7 @@ import click
 from mcp_server import __version__
 from mcp_server.asciidoc_parser import AsciidocStructureParser
 from mcp_server.file_handler import FileReadError, FileSystemHandler, FileWriteError
+from mcp_server.file_utils import find_doc_files
 from mcp_server.markdown_parser import MarkdownStructureParser
 from mcp_server.mcp_app import _build_index, _get_section_end_line
 from mcp_server.structure_index import StructureIndex
@@ -382,9 +383,9 @@ def validate(ctx: CliContext):
     indexed_files = set(ctx.index._file_to_sections.keys())
 
     all_doc_files: set[Path] = set()
-    for adoc_file in ctx.docs_root.rglob("*.adoc"):
+    for adoc_file in find_doc_files(ctx.docs_root, "*.adoc"):
         all_doc_files.add(adoc_file.resolve())
-    for md_file in ctx.docs_root.rglob("*.md"):
+    for md_file in find_doc_files(ctx.docs_root, "*.md"):
         if md_file.name not in ("CLAUDE.md", "README.md"):
             all_doc_files.add(md_file.resolve())
 
