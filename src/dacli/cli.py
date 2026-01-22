@@ -52,9 +52,21 @@ COMMAND_ALIASES = {
     "lv": "sections-at-level",
 }
 
+# Command groups for organized help output (story-based ordering)
+COMMAND_GROUPS = {
+    "Discover": ["structure", "metadata"],
+    "Find": ["search", "sections-at-level"],
+    "Read": ["section", "elements"],
+    "Validate": ["validate"],
+    "Edit": ["update", "insert"],
+}
+
+# Reverse lookup: command -> alias
+COMMAND_TO_ALIAS = {v: k for k, v in COMMAND_ALIASES.items()}
+
 
 class AliasedGroup(click.Group):
-    """A Click group that supports command aliases."""
+    """A Click group that supports command aliases, typo suggestions, and grouped help."""
 
     def get_command(self, ctx, cmd_name):
         """Resolve command name, checking aliases first."""
@@ -64,9 +76,65 @@ class AliasedGroup(click.Group):
         return super().get_command(ctx, cmd_name)
 
     def resolve_command(self, ctx, args):
-        """Resolve command and expand alias in args for better error messages."""
-        _, cmd, args = super().resolve_command(ctx, args)
-        return cmd.name if cmd else None, cmd, args
+        """Resolve command with typo suggestions for unknown commands."""
+        try:
+            return super().resolve_command(ctx, args)
+        except click.UsageError as e:
+            # Check if this is an unknown command error
+            if args and "No such command" in str(e):
+                cmd_name = args[0]
+                suggestion = self._get_suggestion(cmd_name)
+                if suggestion:
+                    raise click.UsageError(
+                        f"No such command '{cmd_name}'.\n\n"
+                        f"Did you mean: {suggestion}"
+                    ) from e
+            raise
+
+    def _get_suggestion(self, cmd_name: str) -> str | None:
+        """Find similar command names using fuzzy matching."""
+        import difflib
+
+        # Get all valid command names and aliases
+        all_names = list(self.commands.keys()) + list(COMMAND_ALIASES.keys())
+
+        # Find close matches
+        matches = difflib.get_close_matches(cmd_name, all_names, n=1, cutoff=0.6)
+        return matches[0] if matches else None
+
+    def format_commands(self, ctx, formatter):
+        """Write commands in story-based groups."""
+        commands = []
+        for subcommand in self.list_commands(ctx):
+            cmd = self.get_command(ctx, subcommand)
+            if cmd is None or cmd.hidden:
+                continue
+            commands.append((subcommand, cmd))
+
+        if not commands:
+            return
+
+        # Build command lookup
+        cmd_lookup = {name: cmd for name, cmd in commands}
+
+        # Format commands by group
+        for group_name, group_cmds in COMMAND_GROUPS.items():
+            rows = []
+            for cmd_name in group_cmds:
+                if cmd_name in cmd_lookup:
+                    cmd = cmd_lookup[cmd_name]
+                    help_text = cmd.get_short_help_str(limit=formatter.width)
+                    # Add alias info
+                    alias = COMMAND_TO_ALIAS.get(cmd_name, "")
+                    if alias:
+                        display_name = f"{cmd_name} ({alias})"
+                    else:
+                        display_name = cmd_name
+                    rows.append((display_name, help_text))
+
+            if rows:
+                with formatter.section(group_name):
+                    formatter.write_dl(rows)
 
 
 class CliContext:
@@ -212,7 +280,12 @@ def cli(
     )
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli structure                    # Full structure
+  dacli structure --max-depth 1      # Only top-level sections
+  dacli --format json str            # JSON output using alias
+""")
 @click.option("--max-depth", type=int, default=None, help="Maximum depth to return")
 @pass_context
 def structure(ctx: CliContext, max_depth: int | None):
@@ -221,7 +294,12 @@ def structure(ctx: CliContext, max_depth: int | None):
     click.echo(format_output(ctx, result))
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli section introduction           # Read 'introduction' section
+  dacli section api.endpoints          # Read nested section
+  dacli --format json sec api          # JSON output using alias
+""")
 @click.argument("path")
 @pass_context
 def section(ctx: CliContext, path: str):
@@ -275,7 +353,12 @@ def section(ctx: CliContext, path: str):
         sys.exit(EXIT_ERROR)
 
 
-@cli.command("sections-at-level")
+@cli.command("sections-at-level", epilog="""
+Examples:
+  dacli sections-at-level 1        # All top-level chapters
+  dacli sections-at-level 2        # All second-level sections
+  dacli --format json lv 1         # JSON output using alias
+""")
 @click.argument("level", type=int)
 @pass_context
 def sections_at_level(ctx: CliContext, level: int):
@@ -289,7 +372,13 @@ def sections_at_level(ctx: CliContext, level: int):
     click.echo(format_output(ctx, result))
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli search "authentication"              # Search all docs
+  dacli search "API" --scope api             # Search within 'api' section
+  dacli search "error" --max-results 5       # Limit results
+  dacli --format json s "database"           # JSON output using alias
+""")
 @click.argument("query")
 @click.option("--scope", default=None, help="Path prefix to limit search scope")
 @click.option("--max-results", type=int, default=50, help="Maximum results to return")
@@ -318,7 +407,14 @@ def search(ctx: CliContext, query: str, scope: str | None, max_results: int):
     click.echo(format_output(ctx, result))
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli elements                         # All elements
+  dacli elements --type code             # Only code blocks
+  dacli elements --type table            # Only tables
+  dacli elements --section api           # Elements in 'api' section
+  dacli --format json el --type image    # JSON output using alias
+""")
 @click.option("--type", "element_type", default=None,
               help="Element type: code, table, image, diagram, list")
 @click.option("--section", "section_path", default=None,
@@ -379,7 +475,12 @@ def elements(ctx: CliContext, element_type: str | None, section_path: str | None
     click.echo(format_output(ctx, result))
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli metadata                     # Project-level metadata
+  dacli metadata introduction        # Section metadata
+  dacli --format json meta           # JSON output using alias
+""")
 @click.argument("path", required=False, default=None)
 @pass_context
 def metadata(ctx: CliContext, path: str | None):
@@ -455,7 +556,11 @@ def metadata(ctx: CliContext, path: str | None):
         click.echo(format_output(ctx, result))
 
 
-@cli.command()
+@cli.command(epilog="""
+Examples:
+  dacli validate                     # Check for issues
+  dacli --format json val            # JSON output using alias
+""")
 @pass_context
 def validate(ctx: CliContext):
     """Validate the document structure."""

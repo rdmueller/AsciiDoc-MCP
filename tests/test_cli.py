@@ -624,3 +624,120 @@ class TestCliGitignoreOptions:
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["total_files"] == 3
+
+
+class TestCliHelpImprovements:
+    """Test help system improvements: grouped commands, typo suggestions, examples."""
+
+    def test_help_shows_command_groups(self):
+        """Help output should organize commands into story-based groups."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+
+        assert result.exit_code == 0
+        # Check for group headers
+        assert "Discover" in result.output
+        assert "Find" in result.output
+        assert "Read" in result.output
+        assert "Validate" in result.output
+        assert "Edit" in result.output
+
+    def test_help_shows_command_aliases(self):
+        """Help output should show aliases in parentheses."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+
+        assert result.exit_code == 0
+        # Check for alias display format
+        assert "(str)" in result.output  # structure alias
+        assert "(s)" in result.output    # search alias
+        assert "(sec)" in result.output  # section alias
+
+    def test_typo_suggestion_for_similar_command(self):
+        """Typo in command name should suggest correct command."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        # "serch" is close to "search"
+        result = runner.invoke(cli, ["serch", "test"])
+
+        assert result.exit_code != 0
+        assert "Did you mean" in result.output
+        assert "search" in result.output or "s" in result.output
+
+    def test_typo_suggestion_for_structure(self):
+        """Typo 'strcuture' should suggest 'structure'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["strcuture"])
+
+        assert result.exit_code != 0
+        assert "Did you mean" in result.output
+        assert "structure" in result.output or "str" in result.output
+
+    def test_typo_suggestion_for_validate(self):
+        """Typo 'vaildate' should suggest 'validate'."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["vaildate"])
+
+        assert result.exit_code != 0
+        assert "Did you mean" in result.output
+        assert "validate" in result.output or "val" in result.output
+
+    def test_no_suggestion_for_completely_different_input(self):
+        """Completely different input should not suggest anything."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["xyz123"])
+
+        assert result.exit_code != 0
+        # Should have error but possibly no suggestion
+        assert "No such command" in result.output
+
+    def test_structure_command_help_has_example(self):
+        """'structure --help' should show usage examples."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["structure", "--help"])
+
+        assert result.exit_code == 0
+        assert "Examples:" in result.output or "dacli" in result.output
+
+    def test_search_command_help_has_example(self):
+        """'search --help' should show usage examples."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["search", "--help"])
+
+        assert result.exit_code == 0
+        assert "Examples:" in result.output or "dacli" in result.output
+
+    def test_section_command_help_has_example(self):
+        """'section --help' should show usage examples."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["section", "--help"])
+
+        assert result.exit_code == 0
+        assert "Examples:" in result.output or "dacli" in result.output
+
+    def test_validate_command_help_has_example(self):
+        """'validate --help' should show usage examples."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["validate", "--help"])
+
+        assert result.exit_code == 0
+        assert "Examples:" in result.output or "dacli" in result.output
