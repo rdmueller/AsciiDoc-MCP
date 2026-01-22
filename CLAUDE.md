@@ -92,7 +92,8 @@ src/docs/
     ├── 01_use_cases.adoc          # Use cases with activity diagrams
     ├── 02_api_specification.adoc  # OpenAPI-style API spec
     ├── 03_acceptance_criteria.adoc # Gherkin scenarios
-    └── 04_markdown_parser.adoc    # Markdown parser component spec
+    ├── 04_markdown_parser.adoc    # Markdown parser component spec
+    └── 06_cli_specification.adoc  # CLI interface specification
 ```
 
 ## Specification Conventions
