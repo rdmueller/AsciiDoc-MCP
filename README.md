@@ -13,11 +13,10 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 > **"dacli is the missing tool between LLMs and Docs-as-Code."**
 >
 > No more guessing line numbers, no more "which README do you mean?" questions.
-> 5 bugs reported → 5 bugs fixed across three releases.
 >
 > **Recommendation: Ready for production use.**
 >
-> — *Claude (Opus 4.5), Independent Review*
+> — *Claude (Opus 4.5)*
 
 <!-- More testimonials coming soon -->
 

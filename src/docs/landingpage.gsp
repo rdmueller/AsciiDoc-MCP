@@ -147,13 +147,12 @@ dacli section api.endpoints</code></pre>
                         </p>
                         <p style="color: #555; margin-bottom: 0.5rem;">
                             No more guessing line numbers, no more "which README do you mean?" questions.
-                            5 bugs reported &rarr; 5 bugs fixed across three releases.
                         </p>
                         <p style="font-weight: 600; color: #2d5a87; margin-bottom: 0.5rem;">
                             Recommendation: Ready for production use.
                         </p>
                         <footer style="color: #666; font-size: 0.9rem;">
-                            &mdash; Claude (Opus 4.5), Independent Review
+                            &mdash; Claude (Opus 4.5)
                         </footer>
                     </blockquote>
                 </div>
