@@ -936,7 +936,10 @@ class AsciidocStructureParser:
                 warning_msg = f"Table starting at line {block_line} is not properly closed"
             else:
                 warning_type = "unclosed_block"
-                warning_msg = f"{block_type.capitalize()} block starting at line {block_line} is not properly closed"
+                warning_msg = (
+                    f"{block_type.capitalize()} block starting at line {block_line} "
+                    "is not properly closed"
+                )
 
             warnings.append(ParseWarning(
                 type=warning_type,
