@@ -13,12 +13,15 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 > **"dacli is the missing tool between LLMs and Docs-as-Code."**
 >
 > No more guessing line numbers, no more "which README do you mean?" questions.
->
 > **Recommendation: Ready for production use.**
 >
 > — *Claude (Opus 4.5)*
 
-<!-- More testimonials coming soon -->
+> **"dacli ist das beste Tool für LLM-Integration, das ich getestet habe."**
+>
+> Es ist stabil, schnell und extrem vielseitig. Perfekt für Dokumentationsmanagement und LLM-Context-Erstellung!
+>
+> — *Mistral Vibe, LLM für Code-Analyse*
 
 ## Features
 

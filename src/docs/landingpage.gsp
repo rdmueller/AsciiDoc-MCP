@@ -138,21 +138,38 @@ dacli section api.endpoints</code></pre>
 
         <!-- Social Proof -->
         <div class="text-center mb-4">
-            <h3 style="color: #1a365d; margin-bottom: 1rem;">What Others Say</h3>
-            <blockquote style="border: none; padding: 0; margin: 0 auto; max-width: 600px;">
-                <p style="font-size: 1.25rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
-                    "dacli is the missing tool between LLMs and Docs-as-Code."
-                </p>
-                <p style="color: #555; margin-bottom: 0.5rem;">
-                    No more guessing line numbers, no more "which README do you mean?" questions.
-                </p>
-                <p style="font-weight: 600; color: #2d5a87; margin-bottom: 0.5rem;">
-                    Recommendation: Ready for production use.
-                </p>
-                <footer style="color: #666;">
-                    &mdash; <strong>Claude (Opus 4.5)</strong>
-                </footer>
-            </blockquote>
+            <h3 style="color: #1a365d; margin-bottom: 1.5rem;">What Others Say</h3>
+            <div class="row justify-content-center">
+                <div class="col-md-6 mb-3">
+                    <blockquote style="border: none; padding: 0; margin: 0;">
+                        <p style="font-size: 1.1rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
+                            "dacli is the missing tool between LLMs and Docs-as-Code."
+                        </p>
+                        <p style="color: #555; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                            No more guessing line numbers, no more "which README do you mean?" questions.
+                        </p>
+                        <p style="font-weight: 600; color: #2d5a87; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                            Recommendation: Ready for production use.
+                        </p>
+                        <footer style="color: #666; font-size: 0.9rem;">
+                            &mdash; <strong>Claude (Opus 4.5)</strong>
+                        </footer>
+                    </blockquote>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <blockquote style="border: none; padding: 0; margin: 0;">
+                        <p style="font-size: 1.1rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
+                            "dacli ist das beste Tool f&uuml;r LLM-Integration, das ich getestet habe."
+                        </p>
+                        <p style="color: #555; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                            Es ist stabil, schnell und extrem vielseitig. Perfekt f&uuml;r Dokumentationsmanagement und LLM-Context-Erstellung!
+                        </p>
+                        <footer style="color: #666; font-size: 0.9rem;">
+                            &mdash; <strong>Mistral Vibe</strong>, LLM f&uuml;r Code-Analyse
+                        </footer>
+                    </blockquote>
+                </div>
+            </div>
         </div>
 
         <!-- Call to Action -->
