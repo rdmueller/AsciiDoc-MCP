@@ -969,7 +969,7 @@ class TestEdgeCases:
             parser.parse_file(FIXTURES_DIR / "nonexistent.adoc")
 
     def test_parse_empty_file(self):
-        """Test that parsing empty file returns document with no sections."""
+        """Test that parsing empty file returns document with root section (Issue #145)."""
         from dacli.asciidoc_parser import AsciidocStructureParser
 
         # Create empty file
@@ -979,8 +979,11 @@ class TestEdgeCases:
         try:
             parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
             doc = parser.parse_file(empty_file)
-            assert doc.title == ""
-            assert doc.sections == []
+            # Empty files now create a root section with filename as title (Issue #145)
+            assert doc.title == "empty"
+            assert len(doc.sections) == 1
+            assert doc.sections[0].title == "empty"
+            assert doc.sections[0].level == 0
         finally:
             empty_file.unlink()
 
@@ -1168,3 +1171,75 @@ class TestElementEndLine:
         )
         assert warning.source_location.line == 40
         assert warning.source_location.end_line == 40  # Single line
+
+
+class TestEmptyFileHandling:
+    """Tests for empty file handling (Issue #145).
+
+    Empty files should create a minimal root section so they can be
+    accessed via the API instead of returning PATH_NOT_FOUND.
+    """
+
+    def test_empty_file_creates_root_section(self, tmp_path):
+        """Empty AsciiDoc file creates a root section with filename as title."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        # Create empty file
+        empty_file = tmp_path / "empty.adoc"
+        empty_file.write_text("")
+
+        parser = AsciidocStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        # Should have exactly one section (the root)
+        assert len(doc.sections) == 1
+        root = doc.sections[0]
+        assert root.title == "empty"  # Filename without extension
+        assert root.level == 0
+        assert root.path == "empty"  # file_prefix
+
+    def test_empty_file_has_valid_source_location(self, tmp_path):
+        """Empty file's root section has valid source location."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        empty_file = tmp_path / "test.adoc"
+        empty_file.write_text("")
+
+        parser = AsciidocStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        root = doc.sections[0]
+        assert root.source_location.file == empty_file
+        assert root.source_location.line == 1
+        # For empty files, end_line is 0 (no lines in file)
+        assert root.source_location.end_line == 0
+
+    def test_whitespace_only_file_treated_as_empty(self, tmp_path):
+        """File with only whitespace is treated as empty."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        whitespace_file = tmp_path / "whitespace.adoc"
+        whitespace_file.write_text("   \n\n  \t  \n")
+
+        parser = AsciidocStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(whitespace_file)
+
+        # Should have root section
+        assert len(doc.sections) == 1
+        assert doc.sections[0].title == "whitespace"
+        assert doc.sections[0].level == 0
+
+    def test_empty_file_in_subdirectory(self, tmp_path):
+        """Empty file in subdirectory has correct path with directory prefix."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        subdir = tmp_path / "docs" / "guide"
+        subdir.mkdir(parents=True)
+        empty_file = subdir / "empty.adoc"
+        empty_file.write_text("")
+
+        parser = AsciidocStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        root = doc.sections[0]
+        assert root.path == "docs/guide/empty"  # Full relative path

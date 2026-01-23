@@ -300,13 +300,27 @@ class MarkdownStructureParser:
         Returns:
             Tuple of (sections list, document title)
         """
+        # Calculate file prefix early for empty file handling (Issue #145)
+        file_prefix = self._get_file_prefix(file_path)
+
+        # Check if file is empty or contains only whitespace (Issue #145)
+        is_empty = not lines or all(line.strip() == "" for line in lines)
+        if is_empty:
+            # Create minimal root section for empty files
+            filename = file_path.stem  # Filename without extension
+            root_section = Section(
+                title=filename,
+                level=0,
+                path=file_prefix,
+                source_location=SourceLocation(file=file_path, line=1, end_line=1),
+            )
+            return [root_section], filename
+
         sections: list[Section] = []
         section_stack: list[Section] = []
         document_title = ""
         # Track used paths for disambiguation (Issue #123)
         used_paths: dict[str, int] = {}
-        # Calculate file prefix for cross-document unique paths (Issue #130, ADR-008)
-        file_prefix = self._get_file_prefix(file_path)
 
         def get_unique_path(base_path: str) -> str:
             """Get a unique path, appending -2, -3 etc. for duplicates."""

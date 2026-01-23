@@ -1790,3 +1790,90 @@ Next paragraph.
         assert len(list_elements) == 1
         assert list_elements[0].source_location.line == 3  # First list item
         assert list_elements[0].source_location.end_line == 5  # Last list item
+
+
+class TestEmptyMarkdownFileHandling:
+    """Tests for empty Markdown file handling (Issue #145).
+
+    Empty files should create a minimal root section so they can be
+    accessed via the API instead of returning PATH_NOT_FOUND.
+    """
+
+    def test_empty_file_creates_root_section(self, tmp_path):
+        """Empty Markdown file creates a root section with filename as title."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        # Create empty file
+        empty_file = tmp_path / "empty.md"
+        empty_file.write_text("")
+
+        parser = MarkdownStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        # Should have exactly one section (the root)
+        assert len(doc.sections) == 1
+        root = doc.sections[0]
+        assert root.title == "empty"  # Filename without extension
+        assert root.level == 0
+        assert root.path == "empty"  # file_prefix
+
+    def test_empty_file_has_valid_source_location(self, tmp_path):
+        """Empty file's root section has valid source location."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        empty_file = tmp_path / "test.md"
+        empty_file.write_text("")
+
+        parser = MarkdownStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        root = doc.sections[0]
+        assert root.source_location.file == empty_file
+        assert root.source_location.line == 1
+        # For empty files, end_line is 0 (no lines in file)
+        assert root.source_location.end_line == 0
+
+    def test_whitespace_only_file_treated_as_empty(self, tmp_path):
+        """File with only whitespace is treated as empty."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        whitespace_file = tmp_path / "whitespace.md"
+        whitespace_file.write_text("   \n\n  \t  \n")
+
+        parser = MarkdownStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(whitespace_file)
+
+        # Should have root section
+        assert len(doc.sections) == 1
+        assert doc.sections[0].title == "whitespace"
+        assert doc.sections[0].level == 0
+
+    def test_empty_file_in_subdirectory(self, tmp_path):
+        """Empty file in subdirectory has correct path with directory prefix."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        subdir = tmp_path / "docs" / "guide"
+        subdir.mkdir(parents=True)
+        empty_file = subdir / "empty.md"
+        empty_file.write_text("")
+
+        parser = MarkdownStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(empty_file)
+
+        root = doc.sections[0]
+        assert root.path == "docs/guide/empty"  # Full relative path
+
+    def test_frontmatter_only_file_not_empty(self, tmp_path):
+        """File with only YAML frontmatter is not treated as empty."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        frontmatter_file = tmp_path / "meta.md"
+        frontmatter_file.write_text("---\ntitle: My Title\n---\n")
+
+        parser = MarkdownStructureParser(base_path=tmp_path)
+        doc = parser.parse_file(frontmatter_file)
+
+        # Should have root section with frontmatter title
+        assert len(doc.sections) == 1
+        # Title from frontmatter or filename
+        assert doc.sections[0].level == 0
