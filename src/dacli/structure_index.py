@@ -196,6 +196,10 @@ class StructureIndex:
     def _calculate_path_similarity(self, requested: str, existing: str) -> int:
         """Calculate similarity score between two paths.
 
+        Handles the file-prefix path format from ADR-008:
+        - file/path:section.subsection
+        - file/path (root sections, no colon)
+
         Args:
             requested: The requested path
             existing: An existing path to compare
@@ -203,31 +207,103 @@ class StructureIndex:
         Returns:
             Similarity score (higher = more similar), 0 = no match
         """
-        requested_parts = requested.split(".")
-        existing_parts = existing.split(".")
         score = 0
 
-        # Prefix matching: paths sharing the same parent
-        if len(requested_parts) > 1 and len(existing_parts) > 1:
-            # Check if parent path matches
-            requested_parent = ".".join(requested_parts[:-1])
-            existing_parent = ".".join(existing_parts[:-1])
-            if requested_parent == existing_parent:
-                score += 10  # Strong match for same parent
+        # Parse paths into file and section components
+        req_file, req_section = self._parse_path_components(requested)
+        ext_file, ext_section = self._parse_path_components(existing)
 
-        # Suffix matching: paths with similar last segment
-        requested_last = requested_parts[-1].lower()
-        existing_last = existing_parts[-1].lower()
-        if requested_last == existing_last:
-            score += 5  # Exact last segment match
-        elif requested_last in existing_last or existing_last in requested_last:
-            score += 3  # Partial last segment match
+        # File path matching (highest priority)
+        if req_file and ext_file:
+            if req_file == ext_file:
+                score += 15  # Exact file match
+            else:
+                # Directory matching
+                req_dirs = req_file.split("/")
+                ext_dirs = ext_file.split("/")
 
-        # First segment matching (same top-level section)
-        if requested_parts[0] == existing_parts[0]:
-            score += 2
+                # Same directory (parent path)
+                if len(req_dirs) > 1 and len(ext_dirs) > 1:
+                    req_parent = "/".join(req_dirs[:-1])
+                    ext_parent = "/".join(ext_dirs[:-1])
+                    if req_parent == ext_parent:
+                        score += 8  # Same directory
+                    elif req_parent in ext_parent or ext_parent in req_parent:
+                        score += 4  # Partial directory match
+
+                # Filename matching
+                req_filename = req_dirs[-1].lower()
+                ext_filename = ext_dirs[-1].lower()
+                if req_filename == ext_filename:
+                    score += 5  # Same filename
+                elif req_filename in ext_filename or ext_filename in req_filename:
+                    score += 3  # Partial filename match
+
+        # Section path matching
+        if req_section and ext_section:
+            req_parts = req_section.split(".")
+            ext_parts = ext_section.split(".")
+
+            # Same section parent
+            if len(req_parts) > 1 and len(ext_parts) > 1:
+                req_parent = ".".join(req_parts[:-1])
+                ext_parent = ".".join(ext_parts[:-1])
+                if req_parent == ext_parent:
+                    score += 6  # Same section parent
+
+            # Section name matching
+            req_last = req_parts[-1].lower()
+            ext_last = ext_parts[-1].lower()
+            if req_last == ext_last:
+                score += 5  # Exact section name match
+            elif req_last in ext_last or ext_last in req_last:
+                score += 3  # Partial section name match
+
+        # Cross-component matching (section name in file, or vice versa)
+        if req_section and not ext_section:
+            # Requested has section, existing is root - check if section name matches filename
+            req_last = req_section.split(".")[-1].lower()
+            ext_filename = ext_file.split("/")[-1].lower() if ext_file else ""
+            if req_last in ext_filename or ext_filename in req_last:
+                score += 2
+
+        if not req_section and ext_section:
+            # Requested is root-like, existing has section - check if filename matches section
+            req_filename = req_file.split("/")[-1].lower() if req_file else requested.lower()
+            ext_last = ext_section.split(".")[-1].lower()
+            if req_filename in ext_last or ext_last in req_filename:
+                score += 2
+
+        # Fallback: simple substring matching for edge cases
+        if score == 0:
+            req_lower = requested.lower()
+            ext_lower = existing.lower()
+            if req_lower in ext_lower or ext_lower in req_lower:
+                score += 1
 
         return score
+
+    def _parse_path_components(self, path: str) -> tuple[str, str]:
+        """Parse a path into file and section components.
+
+        Args:
+            path: Path in format "file/path:section.subsection" or "file/path"
+                  Also handles legacy format "section.subsection" (no colon, no slash)
+
+        Returns:
+            Tuple of (file_component, section_component).
+            For legacy paths without colon or slash, returns ("", path) to treat as section.
+        """
+        if ":" in path:
+            # New format: file:section
+            parts = path.split(":", 1)
+            return parts[0], parts[1]
+        elif "/" in path:
+            # Root section with file path (no colon means no section part)
+            return path, ""
+        else:
+            # Legacy format or simple section name - treat as section, not file
+            return "", path
 
     def get_elements(
         self,

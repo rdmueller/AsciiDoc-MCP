@@ -1364,3 +1364,244 @@ class TestGetSuggestions:
         # Request completely unrelated path
         suggestions = index.get_suggestions("xyz.completely.different.path")
         assert len(suggestions) == 0
+
+
+class TestGetSuggestionsFilePrefixFormat:
+    """Tests for get_suggestions() with file-prefix path format (ADR-008).
+
+    After Issue #130, paths use format: file/path:section.subsection
+    The similarity algorithm must handle this format correctly.
+    """
+
+    def test_suggestions_same_file_different_section(self):
+        """Suggests sections from same file when file prefix matches."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("guides/install.adoc"),
+            title="Installation Guide",
+            sections=[
+                Section(
+                    title="Installation Guide",
+                    level=0,
+                    path="guides/install",
+                    source_location=SourceLocation(
+                        file=Path("guides/install.adoc"), line=1
+                    ),
+                ),
+                Section(
+                    title="Prerequisites",
+                    level=1,
+                    path="guides/install:prerequisites",
+                    source_location=SourceLocation(
+                        file=Path("guides/install.adoc"), line=5
+                    ),
+                ),
+                Section(
+                    title="Steps",
+                    level=1,
+                    path="guides/install:steps",
+                    source_location=SourceLocation(
+                        file=Path("guides/install.adoc"), line=10
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request typo in section name within same file
+        suggestions = index.get_suggestions("guides/install:prereq")
+        assert len(suggestions) > 0
+        # Should suggest the correct section from same file
+        assert "guides/install:prerequisites" in suggestions
+
+    def test_suggestions_same_directory_different_file(self):
+        """Suggests paths from same directory when directory matches."""
+        index = StructureIndex()
+        docs = [
+            Document(
+                file_path=Path("guides/install.adoc"),
+                title="Installation",
+                sections=[
+                    Section(
+                        title="Installation",
+                        level=0,
+                        path="guides/install",
+                        source_location=SourceLocation(
+                            file=Path("guides/install.adoc"), line=1
+                        ),
+                    ),
+                ],
+            ),
+            Document(
+                file_path=Path("guides/config.adoc"),
+                title="Configuration",
+                sections=[
+                    Section(
+                        title="Configuration",
+                        level=0,
+                        path="guides/config",
+                        source_location=SourceLocation(
+                            file=Path("guides/config.adoc"), line=1
+                        ),
+                    ),
+                ],
+            ),
+        ]
+        index.build_from_documents(docs)
+
+        # Request non-existent file in same directory
+        suggestions = index.get_suggestions("guides/setup")
+        assert len(suggestions) > 0
+        # Should suggest files from same directory
+        assert any("guides/" in s for s in suggestions)
+
+    def test_suggestions_root_section_matches_file_path(self):
+        """Root sections (no colon) match against file path components."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("docs/api/reference.adoc"),
+            title="API Reference",
+            sections=[
+                Section(
+                    title="API Reference",
+                    level=0,
+                    path="docs/api/reference",
+                    source_location=SourceLocation(
+                        file=Path("docs/api/reference.adoc"), line=1
+                    ),
+                ),
+                Section(
+                    title="Endpoints",
+                    level=1,
+                    path="docs/api/reference:endpoints",
+                    source_location=SourceLocation(
+                        file=Path("docs/api/reference.adoc"), line=5
+                    ),
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request partial file path
+        suggestions = index.get_suggestions("api/reference")
+        assert len(suggestions) > 0
+        # Should suggest the full path
+        assert "docs/api/reference" in suggestions
+
+    def test_suggestions_section_name_across_files(self):
+        """Suggests sections with same name from different files."""
+        index = StructureIndex()
+        docs = [
+            Document(
+                file_path=Path("guides/install.adoc"),
+                title="Installation",
+                sections=[
+                    Section(
+                        title="Installation",
+                        level=0,
+                        path="guides/install",
+                        source_location=SourceLocation(
+                            file=Path("guides/install.adoc"), line=1
+                        ),
+                    ),
+                    Section(
+                        title="Prerequisites",
+                        level=1,
+                        path="guides/install:prerequisites",
+                        source_location=SourceLocation(
+                            file=Path("guides/install.adoc"), line=5
+                        ),
+                    ),
+                ],
+            ),
+            Document(
+                file_path=Path("guides/advanced.adoc"),
+                title="Advanced",
+                sections=[
+                    Section(
+                        title="Advanced",
+                        level=0,
+                        path="guides/advanced",
+                        source_location=SourceLocation(
+                            file=Path("guides/advanced.adoc"), line=1
+                        ),
+                    ),
+                    Section(
+                        title="Prerequisites",
+                        level=1,
+                        path="guides/advanced:prerequisites",
+                        source_location=SourceLocation(
+                            file=Path("guides/advanced.adoc"), line=5
+                        ),
+                    ),
+                ],
+            ),
+        ]
+        index.build_from_documents(docs)
+
+        # Request section name without file prefix
+        suggestions = index.get_suggestions("prerequisites")
+        assert len(suggestions) > 0
+        # Should suggest both occurrences
+        assert any("prerequisites" in s for s in suggestions)
+
+    def test_suggestions_nested_section_partial_match(self):
+        """Suggests nested sections when partial section path matches."""
+        index = StructureIndex()
+        doc = Document(
+            file_path=Path("api/endpoints.adoc"),
+            title="Endpoints",
+            sections=[
+                Section(
+                    title="Endpoints",
+                    level=0,
+                    path="api/endpoints",
+                    source_location=SourceLocation(
+                        file=Path("api/endpoints.adoc"), line=1
+                    ),
+                ),
+                Section(
+                    title="GET",
+                    level=1,
+                    path="api/endpoints:get",
+                    source_location=SourceLocation(
+                        file=Path("api/endpoints.adoc"), line=5
+                    ),
+                    children=[
+                        Section(
+                            title="Parameters",
+                            level=2,
+                            path="api/endpoints:get.parameters",
+                            source_location=SourceLocation(
+                                file=Path("api/endpoints.adoc"), line=10
+                            ),
+                        ),
+                    ],
+                ),
+                Section(
+                    title="POST",
+                    level=1,
+                    path="api/endpoints:post",
+                    source_location=SourceLocation(
+                        file=Path("api/endpoints.adoc"), line=20
+                    ),
+                    children=[
+                        Section(
+                            title="Parameters",
+                            level=2,
+                            path="api/endpoints:post.parameters",
+                            source_location=SourceLocation(
+                                file=Path("api/endpoints.adoc"), line=25
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
+        index.build_from_documents([doc])
+
+        # Request with typo in nested section
+        suggestions = index.get_suggestions("api/endpoints:get.params")
+        assert len(suggestions) > 0
+        # Should suggest the correct nested section
+        assert "api/endpoints:get.parameters" in suggestions
