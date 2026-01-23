@@ -1347,3 +1347,95 @@ Content B.
                     blank_lines = next_content_idx - i - 1
                     assert blank_lines >= 1, f"Need blank line before heading, got {blank_lines}"
                 break
+
+
+class TestElementsSectionArgument:
+    """Tests for elements command accepting section path as positional argument (Issue #144)."""
+
+    def test_elements_accepts_section_as_positional_argument(self, tmp_path):
+        """dacli elements PATH should work like dacli elements --section PATH."""
+        from dacli.cli import cli
+
+        # Create test document with a code block
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Code Section
+
+[source,python]
+----
+print("hello")
+----
+""")
+
+        runner = CliRunner()
+        # Section path includes document prefix: "test:code-section"
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements", "test:code-section"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["count"] == 1
+        assert data["elements"][0]["type"] == "code"
+
+    def test_elements_section_option_still_works(self, tmp_path):
+        """--section option should still work for backward compatibility."""
+        from dacli.cli import cli
+
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Code Section
+
+[source,python]
+----
+print("hello")
+----
+""")
+
+        runner = CliRunner()
+        # Section path includes document prefix: "test:code-section"
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements",
+             "--section", "test:code-section"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["count"] == 1
+
+    def test_elements_positional_and_type_option_combined(self, tmp_path):
+        """dacli elements --type TYPE PATH should work."""
+        from dacli.cli import cli
+
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Mixed Section
+
+[source,python]
+----
+code here
+----
+
+|===
+| Header
+| Cell
+|===
+""")
+
+        runner = CliRunner()
+        # Section path includes document prefix: "test:mixed-section"
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements",
+             "--type", "code", "test:mixed-section"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        # Should only return code blocks, not tables
+        assert all(e["type"] == "code" for e in data["elements"])

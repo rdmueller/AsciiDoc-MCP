@@ -176,8 +176,11 @@ Lists elements (code blocks, tables, etc.).
 
 [source,bash]
 ----
-dacli elements [--type TYPE] [--section PATH]
+dacli elements [SECTION_PATH] [--type TYPE] [--section PATH]
 ----
+
+The section path can be provided as a positional argument or via the `--section` option.
+Both forms are equivalent: `dacli elements api` and `dacli elements --section api`.
 
 **Type options:** `code`, `table`, `image`, `diagram`, `list`, `admonition`
 

@@ -464,15 +464,20 @@ Examples:
   dacli elements                         # All elements
   dacli elements --type code             # Only code blocks
   dacli elements --type table            # Only tables
-  dacli elements --section api           # Elements in 'api' section
+  dacli elements api                     # Elements in 'api' section
+  dacli elements --section api           # Same as above (--section still works)
   dacli --format json el --type image    # JSON output using alias
 """)
+@click.argument("section_path_arg", required=False, default=None)
 @click.option("--type", "element_type", default=None,
               help="Element type: code, table, image, diagram, list")
-@click.option("--section", "section_path", default=None,
-              help="Filter by section path")
+@click.option("--section", "section_path_opt", default=None,
+              help="Filter by section path (alternative to positional argument)")
 @pass_context
-def elements(ctx: CliContext, element_type: str | None, section_path: str | None):
+def elements(ctx: CliContext, section_path_arg: str | None, element_type: str | None,
+             section_path_opt: str | None):
+    # Use positional argument if provided, otherwise fall back to --section option
+    section_path = section_path_arg or section_path_opt
     """Get elements (code blocks, tables, images) from documentation."""
     elems = ctx.index.get_elements(
         element_type=element_type,
