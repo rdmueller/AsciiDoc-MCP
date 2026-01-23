@@ -111,14 +111,13 @@
                             <small>For LLMs with shell access</small>
                         </div>
                         <div class="card-body">
-                            <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; font-size: 0.85rem;"><code># Install and use
-uvx dacli --docs-root ./docs structure
+                            <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; font-size: 0.85rem;"><code># Install once
+uv tool install dacli
 
-# Search documentation
-uvx dacli search "authentication"
-
-# Read a section
-uvx dacli section api.endpoints</code></pre>
+# Then use anywhere
+dacli --docs-root ./docs structure
+dacli search "authentication"
+dacli section api.endpoints</code></pre>
                         </div>
                     </div>
                 </div>
