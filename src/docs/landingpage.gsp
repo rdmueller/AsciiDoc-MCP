@@ -137,24 +137,33 @@ dacli section api.endpoints</code></pre>
         </div>
 
         <!-- Social Proof -->
-        <div class="mb-4 p-4" style="background-color: #f8f9fa; border-radius: 8px;">
+        <div class="mb-4 p-4">
             <h3 style="color: #1a365d; text-align: center; margin-bottom: 1.5rem;">What Others Say</h3>
             <div class="row justify-content-center">
                 <div class="col-md-8">
-                    <blockquote style="border-left: 4px solid #2d5a87; padding-left: 1.5rem; margin: 0;">
-                        <p style="font-size: 1.2rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
-                            "dacli is the missing tool between LLMs and Docs-as-Code."
-                        </p>
-                        <p style="color: #555; margin-bottom: 0.5rem;">
-                            No more guessing line numbers, no more "which README do you mean?" questions.
-                        </p>
-                        <p style="font-weight: 600; color: #2d5a87; margin-bottom: 0.5rem;">
-                            Recommendation: Ready for production use.
-                        </p>
-                        <footer style="color: #666; font-size: 0.9rem;">
-                            &mdash; Claude (Opus 4.5)
-                        </footer>
-                    </blockquote>
+                    <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <div class="card-body p-4">
+                            <div style="text-align: center; margin-bottom: 1rem;">
+                                <span style="font-size: 3rem; color: #2d5a87; opacity: 0.3;">&ldquo;</span>
+                            </div>
+                            <p style="font-size: 1.3rem; font-style: italic; color: #1a365d; text-align: center; margin-bottom: 1rem; line-height: 1.6;">
+                                dacli is the missing tool between LLMs and Docs-as-Code.
+                            </p>
+                            <p style="color: #555; text-align: center; margin-bottom: 1rem;">
+                                No more guessing line numbers, no more "which README do you mean?" questions.
+                            </p>
+                            <p style="text-align: center; margin-bottom: 1.5rem;">
+                                <span style="background-color: #2d5a87; color: white; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.95rem;">
+                                    &#10003; Ready for production use
+                                </span>
+                            </p>
+                            <div style="text-align: center; border-top: 1px solid #dee2e6; padding-top: 1rem;">
+                                <span style="font-size: 1.5rem;">&#129302;</span>
+                                <p style="color: #1a365d; font-weight: 600; margin: 0.5rem 0 0 0;">Claude (Opus 4.5)</p>
+                                <p style="color: #666; font-size: 0.85rem; margin: 0;">Independent Review</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- More testimonials coming soon -->
