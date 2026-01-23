@@ -137,6 +137,31 @@ uvx dacli section api.endpoints</code></pre>
             </p>
         </div>
 
+        <!-- Social Proof -->
+        <div class="mb-4 p-4" style="background-color: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #1a365d; text-align: center; margin-bottom: 1.5rem;">What Others Say</h3>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <blockquote style="border-left: 4px solid #2d5a87; padding-left: 1.5rem; margin: 0;">
+                        <p style="font-size: 1.2rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
+                            "dacli is the missing tool between LLMs and Docs-as-Code."
+                        </p>
+                        <p style="color: #555; margin-bottom: 0.5rem;">
+                            No more guessing line numbers, no more "which README do you mean?" questions.
+                            5 bugs reported &rarr; 5 bugs fixed across three releases.
+                        </p>
+                        <p style="font-weight: 600; color: #2d5a87; margin-bottom: 0.5rem;">
+                            Recommendation: Ready for production use.
+                        </p>
+                        <footer style="color: #666; font-size: 0.9rem;">
+                            &mdash; Claude (Opus 4.5), Independent Review
+                        </footer>
+                    </blockquote>
+                </div>
+            </div>
+            <!-- More testimonials coming soon -->
+        </div>
+
         <!-- Call to Action -->
         <div class="text-center p-4 rounded" style="background-color: #f0f7ff;">
             <h3 style="color: #1a365d;">Ready to give your AI documentation superpowers?</h3>
