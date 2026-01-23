@@ -1439,3 +1439,119 @@ code here
         data = json.loads(result.output)
         # Should only return code blocks, not tables
         assert all(e["type"] == "code" for e in data["elements"])
+
+
+class TestElementsRecursiveFiltering:
+    """Tests for elements command --recursive flag (Issue #147)."""
+
+    def test_elements_without_recursive_is_exact_match(self, tmp_path):
+        """Without --recursive, section filtering should be exact match only."""
+        from dacli.cli import cli
+
+        # Create document with nested sections
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Parent Section
+
+Some text in parent.
+
+=== Child Section
+
+[source,python]
+----
+print("in child")
+----
+""")
+
+        runner = CliRunner()
+        # Filter by parent section without recursive - should get 0 elements
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements",
+             "--section", "test:parent-section"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        # Code block is in child section, not parent - exact match returns 0
+        assert data["count"] == 0
+
+    def test_elements_with_recursive_includes_children(self, tmp_path):
+        """With --recursive, section filtering should include child sections."""
+        from dacli.cli import cli
+
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Parent Section
+
+Some text in parent.
+
+=== Child Section
+
+[source,python]
+----
+print("in child")
+----
+""")
+
+        runner = CliRunner()
+        # Filter by parent section with recursive - should include child elements
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements",
+             "--section", "test:parent-section", "--recursive"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        # Should find the code block in child section
+        assert data["count"] == 1
+        assert data["elements"][0]["type"] == "code"
+
+    def test_elements_recursive_with_multiple_levels(self, tmp_path):
+        """--recursive should work with deeply nested sections."""
+        from dacli.cli import cli
+
+        doc_file = tmp_path / "test.adoc"
+        doc_file.write_text("""= Test Document
+
+== Level 1
+
+=== Level 2
+
+[source,python]
+----
+level 2 code
+----
+
+==== Level 3
+
+[source,bash]
+----
+level 3 code
+----
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(tmp_path), "--format", "json", "elements",
+             "--section", "test:level-1", "--recursive"],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        # Should find code blocks at level 2 and level 3
+        assert data["count"] == 2
+
+    def test_elements_recursive_flag_in_help(self):
+        """--recursive flag should be shown in help text."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["elements", "--help"])
+
+        assert result.exit_code == 0
+        assert "--recursive" in result.output

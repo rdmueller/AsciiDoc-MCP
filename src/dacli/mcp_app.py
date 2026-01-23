@@ -257,6 +257,7 @@ def create_mcp_server(
     def get_elements(
         element_type: str | None = None,
         section_path: str | None = None,
+        recursive: bool = False,
     ) -> dict:
         """Get elements (code blocks, tables, images) from the documentation.
 
@@ -267,6 +268,8 @@ def create_mcp_server(
             element_type: Filter by type - 'code', 'table', 'image',
                           'diagram', 'list'. None returns all elements.
             section_path: Filter by section path (e.g., '/architecture').
+            recursive: If True, include elements from child sections.
+                       If False (default), only exact section matches.
 
         Returns:
             Dictionary with 'elements' (list of elements with type, location)
@@ -275,6 +278,7 @@ def create_mcp_server(
         elements = index.get_elements(
             element_type=element_type,
             section_path=section_path,
+            recursive=recursive,
         )
 
         # Note: preview field removed in Issue #142 as redundant
