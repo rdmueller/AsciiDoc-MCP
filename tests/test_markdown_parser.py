@@ -146,10 +146,10 @@ Text...
 
 
 class TestHeadingPaths:
-    """Test hierarchical path generation for headings."""
+    """Test hierarchical path generation for headings (with file prefix, Issue #130, ADR-008)."""
 
     def test_root_heading_path(self):
-        """Root heading has correct path."""
+        """Root heading has file prefix as path."""
         from dacli.markdown_parser import MarkdownStructureParser
 
         parser = MarkdownStructureParser()
@@ -159,13 +159,15 @@ class TestHeadingPaths:
         ) as f:
             f.write("# Haupttitel\n")
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
-        # Document title (H1) has empty path per API spec
-        assert doc.sections[0].path == ""
+        # Document title (H1) has file prefix as path (Issue #130, ADR-008)
+        assert doc.sections[0].path == file_prefix
 
     def test_nested_heading_paths(self):
-        """Nested headings have correct hierarchical paths with dot-separation."""
+        """Nested headings have file-prefixed hierarchical paths."""
         from dacli.markdown_parser import MarkdownStructureParser
 
         parser = MarkdownStructureParser()
@@ -183,16 +185,18 @@ class TestHeadingPaths:
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
-        # H1 (document title) has empty path
-        assert root.path == ""
-        # H2 sections have slug-only paths (no document title prefix)
-        assert root.children[0].path == "unterkapitel-1"
-        assert root.children[1].path == "unterkapitel-2"
-        # H3+ sections have parent.slug format with dot-separation
-        assert root.children[1].children[0].path == "unterkapitel-2.sub-unterkapitel"
+        # H1 (document title) has file prefix as path (Issue #130, ADR-008)
+        assert root.path == file_prefix
+        # H2 sections have file-prefix:slug paths
+        assert root.children[0].path == f"{file_prefix}:unterkapitel-1"
+        assert root.children[1].path == f"{file_prefix}:unterkapitel-2"
+        # H3+ sections have file-prefix:parent.slug format
+        assert root.children[1].children[0].path == f"{file_prefix}:unterkapitel-2.sub-unterkapitel"
 
     def test_path_slugification(self):
         """Paths are properly slugified (lowercase, dashes)."""
@@ -205,16 +209,18 @@ class TestHeadingPaths:
         ) as f:
             f.write("# My Great Title!\n")
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
-        # Document title has empty path (per API spec)
-        assert doc.sections[0].path == ""
+        # Document title has file prefix as path (Issue #130, ADR-008)
+        assert doc.sections[0].path == file_prefix
 
     def test_duplicate_heading_titles_get_disambiguated_paths(self):
         """Test that headings with same title at same level get disambiguated paths.
 
         Issue #123: When multiple headings have the same title, paths should
-        be automatically disambiguated as: 'introduction', 'introduction-2', 'introduction-3'.
+        be automatically disambiguated within file-prefixed paths.
         """
         from dacli.markdown_parser import MarkdownStructureParser
 
@@ -242,14 +248,16 @@ Third introduction content.
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
-        # First occurrence keeps original path
-        assert root.children[0].path == "introduction"
+        # First occurrence keeps original path with file prefix
+        assert root.children[0].path == f"{file_prefix}:introduction"
         # Subsequent duplicates get numbered suffix
-        assert root.children[2].path == "introduction-2"
-        assert root.children[3].path == "introduction-3"
+        assert root.children[2].path == f"{file_prefix}:introduction-2"
+        assert root.children[3].path == f"{file_prefix}:introduction-3"
 
     def test_duplicate_nested_heading_paths(self):
         """Test that duplicate titles in nested headings also get disambiguated.
@@ -276,14 +284,16 @@ Second details.
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
         parent = root.children[0]
-        # First occurrence keeps original path
-        assert parent.children[0].path == "parent.details"
+        # First occurrence keeps original path with file prefix
+        assert parent.children[0].path == f"{file_prefix}:parent.details"
         # Second occurrence gets numbered suffix
-        assert parent.children[1].path == "parent.details-2"
+        assert parent.children[1].path == f"{file_prefix}:parent.details-2"
 
     def test_same_title_different_parents_no_conflict(self):
         """Test that same titles under different parents don't conflict.
@@ -312,12 +322,14 @@ Parent 2 details.
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
         # Both 'Details' sections keep their original path (different parents)
-        assert root.children[0].children[0].path == "parent-1.details"
-        assert root.children[1].children[0].path == "parent-2.details"
+        assert root.children[0].children[0].path == f"{file_prefix}:parent-1.details"
+        assert root.children[1].children[0].path == f"{file_prefix}:parent-2.details"
 
 
 class TestSourceLocation:
@@ -631,7 +643,7 @@ plain text
         assert doc.elements[0].attributes.get("language") is None
 
     def test_code_block_parent_section(self):
-        """Code block has correct parent section."""
+        """Code block has correct parent section with file prefix."""
         from dacli.markdown_parser import MarkdownStructureParser
 
         parser = MarkdownStructureParser()
@@ -649,10 +661,13 @@ code
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
         code_block = doc.elements[0]
-        assert code_block.parent_section == "code-section"
+        # Parent section now has file prefix (Issue #130, ADR-008)
+        assert code_block.parent_section == f"{file_prefix}:code-section"
 
     def test_multiple_code_blocks(self):
         """Multiple code blocks are extracted."""
@@ -1220,7 +1235,7 @@ class TestInterfaceMethods:
     """Test get_section and get_elements interface methods."""
 
     def test_get_section_returns_section_by_path(self):
-        """get_section returns correct section."""
+        """get_section returns correct section with file-prefixed path."""
         from dacli.markdown_parser import MarkdownStructureParser
 
         parser = MarkdownStructureParser()
@@ -1234,9 +1249,12 @@ class TestInterfaceMethods:
         ) as f:
             f.write(content)
             f.flush()
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            doc = parser.parse_file(file_path)
 
-        section = parser.get_section(doc, "chapter")
+        # Use file-prefixed path (Issue #130, ADR-008)
+        section = parser.get_section(doc, f"{file_prefix}:chapter")
         assert section is not None
         assert section.title == "Chapter"
 
@@ -1484,3 +1502,164 @@ More content after horizontal rule.
 
         # Warning should suggest ATX style
         assert "ATX" in caplog.text or "#" in caplog.text
+
+
+class TestFilePrefixPaths:
+    """Tests for file-prefix path format (Issue #130, ADR-008).
+
+    According to ADR-008, paths must include the relative file path as prefix:
+    - Document title (level 0): <file-prefix> (e.g., "guides/getting-started")
+    - Sections: <file-prefix>:<section-path> (e.g., "guides/getting-started:installation")
+
+    This ensures unique paths across documents in a project.
+    """
+
+    def test_document_title_path_is_file_prefix(self):
+        """Test that document title path equals relative file path without extension."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Document Title
+
+## Chapter One
+
+Content here.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            test_file = base_path / "test_doc.md"
+            test_file.write_text(content)
+
+            parser = MarkdownStructureParser(base_path=base_path)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            # Document title path should be the file path (relative to base_path, no extension)
+            assert root.path == "test_doc"
+
+    def test_chapter_path_includes_file_prefix(self):
+        """Test that chapter paths include file prefix with colon separator."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Document Title
+
+## Chapter One
+
+First chapter.
+
+## Chapter Two
+
+Second chapter.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            test_file = base_path / "test_doc.md"
+            test_file.write_text(content)
+
+            parser = MarkdownStructureParser(base_path=base_path)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            # Level 2 sections: file-prefix:slug
+            assert root.children[0].path == "test_doc:chapter-one"
+            assert root.children[1].path == "test_doc:chapter-two"
+
+    def test_subsection_path_includes_file_prefix(self):
+        """Test that subsection paths include file prefix and full hierarchy."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Document Title
+
+## Chapter
+
+### Subsection
+
+Content here.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            test_file = base_path / "test_doc.md"
+            test_file.write_text(content)
+
+            parser = MarkdownStructureParser(base_path=base_path)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            subsection = root.children[0].children[0]
+            # Level 3+ sections: file-prefix:parent.child
+            assert subsection.path == "test_doc:chapter.subsection"
+
+    def test_file_prefix_with_subdirectory(self):
+        """Test that file prefix includes subdirectory path."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Nested Document
+
+## Section One
+
+Content here.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            subdir = base_path / "guides"
+            subdir.mkdir()
+            test_file = subdir / "nested_doc.md"
+            test_file.write_text(content)
+
+            parser = MarkdownStructureParser(base_path=base_path)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            # Path should include subdirectory
+            assert root.path == "guides/nested_doc"
+            assert root.children[0].path == "guides/nested_doc:section-one"
+
+    def test_duplicate_sections_still_disambiguated_with_file_prefix(self):
+        """Test that duplicate sections are disambiguated within file-prefixed paths."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Document Title
+
+## Introduction
+
+First intro.
+
+## Introduction
+
+Second intro with same title.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            test_file = base_path / "dup_with_prefix.md"
+            test_file.write_text(content)
+
+            parser = MarkdownStructureParser(base_path=base_path)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            assert root.path == "dup_with_prefix"
+            # Duplicate sections get -2, -3 suffix within file-prefixed path
+            assert root.children[0].path == "dup_with_prefix:introduction"
+            assert root.children[1].path == "dup_with_prefix:introduction-2"
+
+    def test_backwards_compatible_no_base_path(self):
+        """Test that parser without base_path still works (derives from file path)."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        content = """# Document Title
+
+## Chapter
+
+Content.
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "my_doc.md"
+            test_file.write_text(content)
+
+            # Parser without explicit base_path - should derive from file's parent
+            parser = MarkdownStructureParser()
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            # Should still have file-based path
+            assert root.path == "my_doc"
+            assert root.children[0].path == "my_doc:chapter"

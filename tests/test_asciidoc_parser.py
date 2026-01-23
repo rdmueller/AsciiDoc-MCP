@@ -110,33 +110,33 @@ class TestSectionExtraction:
 
 
 class TestSectionPaths:
-    """Tests for hierarchical section paths."""
+    """Tests for hierarchical section paths (with file prefix, Issue #130, ADR-008)."""
 
     def test_root_section_path(self):
-        """Test that root section (document title) has empty path."""
+        """Test that root section (document title) has file prefix as path."""
         from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
         root = doc.sections[0]
-        # Document title (level 0) has empty path per API spec
-        assert root.path == ""
+        # Document title (level 0) has file prefix as path (Issue #130, ADR-008)
+        assert root.path == "simple_sections"
 
     def test_chapter_section_path(self):
-        """Test that chapter sections have paths without document title prefix."""
+        """Test that chapter sections have file-prefixed paths."""
         from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
         root = doc.sections[0]
-        # Level 1 sections have slug-only paths (no document title prefix)
-        assert root.children[0].path == "kapitel-1"
-        assert root.children[1].path == "kapitel-2"
+        # Level 1 sections have file-prefix:slug paths (Issue #130, ADR-008)
+        assert root.children[0].path == "simple_sections:kapitel-1"
+        assert root.children[1].path == "simple_sections:kapitel-2"
 
     def test_subsection_path(self):
-        """Test that subsections have hierarchical paths with dot-separation."""
+        """Test that subsections have file-prefixed hierarchical paths."""
         from dacli.asciidoc_parser import AsciidocStructureParser
 
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
@@ -144,14 +144,14 @@ class TestSectionPaths:
 
         root = doc.sections[0]
         unterkapitel = root.children[1].children[0]
-        # Level 2+ sections have parent.slug format
-        assert unterkapitel.path == "kapitel-2.unterkapitel"
+        # Level 2+ sections have file-prefix:parent.slug format (Issue #130, ADR-008)
+        assert unterkapitel.path == "simple_sections:kapitel-2.unterkapitel"
 
     def test_duplicate_section_titles_get_disambiguated_paths(self):
         """Test that sections with same title at same level get disambiguated paths.
 
         Issue #123: When multiple sections have the same title, paths should
-        be automatically disambiguated as: 'introduction', 'introduction-2', 'introduction-3'.
+        be automatically disambiguated within file-prefixed paths.
         """
         from dacli.asciidoc_parser import AsciidocStructureParser
 
@@ -178,15 +178,17 @@ Third introduction content.
         ) as f:
             f.write(content)
             f.flush()
-            parser = AsciidocStructureParser(base_path=Path(f.name).parent)
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            parser = AsciidocStructureParser(base_path=file_path.parent)
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
-        # First occurrence keeps original path
-        assert root.children[0].path == "introduction"
+        # First occurrence keeps original path with file prefix
+        assert root.children[0].path == f"{file_prefix}:introduction"
         # Subsequent duplicates get numbered suffix
-        assert root.children[2].path == "introduction-2"
-        assert root.children[3].path == "introduction-3"
+        assert root.children[2].path == f"{file_prefix}:introduction-2"
+        assert root.children[3].path == f"{file_prefix}:introduction-3"
 
     def test_duplicate_nested_section_paths(self):
         """Test that duplicate titles in nested sections also get disambiguated.
@@ -212,15 +214,17 @@ Second details.
         ) as f:
             f.write(content)
             f.flush()
-            parser = AsciidocStructureParser(base_path=Path(f.name).parent)
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            parser = AsciidocStructureParser(base_path=file_path.parent)
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
         parent = root.children[0]
-        # First occurrence keeps original path
-        assert parent.children[0].path == "parent.details"
+        # First occurrence keeps original path with file prefix
+        assert parent.children[0].path == f"{file_prefix}:parent.details"
         # Second occurrence gets numbered suffix
-        assert parent.children[1].path == "parent.details-2"
+        assert parent.children[1].path == f"{file_prefix}:parent.details-2"
 
     def test_same_title_different_parents_no_conflict(self):
         """Test that same titles under different parents don't conflict.
@@ -248,13 +252,15 @@ Parent 2 details.
         ) as f:
             f.write(content)
             f.flush()
-            parser = AsciidocStructureParser(base_path=Path(f.name).parent)
-            doc = parser.parse_file(Path(f.name))
+            file_path = Path(f.name)
+            file_prefix = file_path.stem
+            parser = AsciidocStructureParser(base_path=file_path.parent)
+            doc = parser.parse_file(file_path)
 
         root = doc.sections[0]
         # Both 'Details' sections keep their original path (different parents)
-        assert root.children[0].children[0].path == "parent-1.details"
-        assert root.children[1].children[0].path == "parent-2.details"
+        assert root.children[0].children[0].path == f"{file_prefix}:parent-1.details"
+        assert root.children[1].children[0].path == f"{file_prefix}:parent-2.details"
 
 
 class TestSourceLocation:
@@ -640,7 +646,8 @@ class TestInterfaceMethods:
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
-        section = parser.get_section(doc, "kapitel-1")
+        # Use file-prefixed path (Issue #130, ADR-008)
+        section = parser.get_section(doc, "simple_sections:kapitel-1")
         assert section is not None
         assert section.title == "Kapitel 1"
 
@@ -661,7 +668,8 @@ class TestInterfaceMethods:
         parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
         doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
 
-        section = parser.get_section(doc, "kapitel-2.unterkapitel")
+        # Use file-prefixed path (Issue #130, ADR-008)
+        section = parser.get_section(doc, "simple_sections:kapitel-2.unterkapitel")
         assert section is not None
         assert section.title == "Unterkapitel"
 
@@ -975,3 +983,105 @@ class TestEdgeCases:
             assert doc.sections == []
         finally:
             empty_file.unlink()
+
+
+class TestFilePrefixPaths:
+    """Tests for file-prefix path format (Issue #130, ADR-008).
+
+    According to ADR-008, paths must include the relative file path as prefix:
+    - Document title (level 0): <file-prefix> (e.g., "guides/installation")
+    - Sections: <file-prefix>:<section-path> (e.g., "guides/installation:chapter-1")
+
+    This ensures unique paths across documents in a project.
+    """
+
+    def test_document_title_path_is_file_prefix(self):
+        """Test that document title path equals relative file path without extension."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        root = doc.sections[0]
+        # Document title path should be the file path (relative to base_path, no extension)
+        assert root.path == "simple_sections"
+
+    def test_chapter_path_includes_file_prefix(self):
+        """Test that chapter paths include file prefix with colon separator."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        root = doc.sections[0]
+        # Level 1 sections: file-prefix:slug
+        assert root.children[0].path == "simple_sections:kapitel-1"
+        assert root.children[1].path == "simple_sections:kapitel-2"
+
+    def test_subsection_path_includes_file_prefix(self):
+        """Test that subsection paths include file prefix and full hierarchy."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "simple_sections.adoc")
+
+        root = doc.sections[0]
+        unterkapitel = root.children[1].children[0]
+        # Level 2+ sections: file-prefix:parent.child
+        assert unterkapitel.path == "simple_sections:kapitel-2.unterkapitel"
+
+    def test_file_prefix_with_subdirectory(self):
+        """Test that file prefix includes subdirectory path."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        # Create a test file in a subdirectory
+        subdir = FIXTURES_DIR / "subdir"
+        subdir.mkdir(exist_ok=True)
+        test_file = subdir / "nested_doc.adoc"
+        test_file.write_text("""= Nested Document
+
+== Section One
+
+Content here.
+""")
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            # Path should include subdirectory
+            assert root.path == "subdir/nested_doc"
+            assert root.children[0].path == "subdir/nested_doc:section-one"
+        finally:
+            test_file.unlink()
+            subdir.rmdir()
+
+    def test_duplicate_sections_still_disambiguated_with_file_prefix(self):
+        """Test that duplicate sections are disambiguated within file-prefixed paths."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        content = """= Document Title
+
+== Introduction
+
+First intro.
+
+== Introduction
+
+Second intro with same title.
+"""
+        test_file = FIXTURES_DIR / "dup_with_prefix.adoc"
+        test_file.write_text(content)
+
+        try:
+            parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+            doc = parser.parse_file(test_file)
+
+            root = doc.sections[0]
+            assert root.path == "dup_with_prefix"
+            # Duplicate sections get -2, -3 suffix within file-prefixed path
+            assert root.children[0].path == "dup_with_prefix:introduction"
+            assert root.children[1].path == "dup_with_prefix:introduction-2"
+        finally:
+            test_file.unlink()

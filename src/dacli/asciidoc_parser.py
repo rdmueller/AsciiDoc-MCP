@@ -136,6 +136,26 @@ class AsciidocStructureParser:
         self.base_path = base_path
         self.max_include_depth = max_include_depth
 
+    def _get_file_prefix(self, file_path: Path) -> str:
+        """Calculate file prefix for path generation (Issue #130, ADR-008).
+
+        The file prefix is the relative path from base_path to file_path,
+        without the file extension. This ensures unique paths across documents.
+
+        Args:
+            file_path: Path to the document being parsed
+
+        Returns:
+            Relative path without extension (e.g., "guides/installation")
+        """
+        try:
+            relative = file_path.relative_to(self.base_path)
+        except ValueError:
+            # file_path is not relative to base_path, use just the stem
+            relative = Path(file_path.stem)
+        # Remove extension and convert to forward slashes
+        return str(relative.with_suffix("")).replace("\\", "/")
+
     def get_section(
         self, doc: AsciidocDocument, path: str
     ) -> Section | None:
@@ -406,6 +426,8 @@ class AsciidocStructureParser:
         document_title = ""
         # Track used paths for disambiguation (Issue #123)
         used_paths: dict[str, int] = {}
+        # Calculate file prefix for cross-document unique paths (Issue #130, ADR-008)
+        file_prefix = self._get_file_prefix(file_path)
 
         def get_unique_path(base_path: str) -> str:
             """Get a unique path, appending -2, -3 etc. for duplicates."""
@@ -447,7 +469,8 @@ class AsciidocStructureParser:
                 # Document title (level 0)
                 if level == 0:
                     document_title = title
-                    section.path = ""  # Empty path for document title per API spec
+                    # Issue #130, ADR-008: Document title path is the file prefix
+                    section.path = file_prefix
                     sections.append(section)
                     section_stack = [section]
                 else:
@@ -458,18 +481,27 @@ class AsciidocStructureParser:
                     slug = _title_to_slug(title)
                     if section_stack:
                         parent = section_stack[-1]
-                        # If parent is document title (level 0), don't prefix
+                        # Issue #130, ADR-008: Build section path with file prefix
                         if parent.level == 0:
-                            base_path = slug
+                            # Direct child of document title
+                            section_path = slug
                         else:
-                            base_path = f"{parent.path}.{slug}"
+                            # Extract section_path from parent (part after the colon)
+                            if ":" in parent.path:
+                                parent_section_path = parent.path.split(":", 1)[1]
+                            else:
+                                parent_section_path = parent.path
+                            section_path = f"{parent_section_path}.{slug}"
+                        # Full path is file_prefix:section_path
+                        full_path = f"{file_prefix}:{section_path}"
                         # Get unique path (Issue #123: disambiguate duplicates)
-                        section.path = get_unique_path(base_path)
+                        section.path = get_unique_path(full_path)
                         parent.children.append(section)
                     else:
-                        # No parent found, add as top-level
+                        # No parent found, add as top-level with file prefix
+                        full_path = f"{file_prefix}:{slug}"
                         # Get unique path (Issue #123: disambiguate duplicates)
-                        section.path = get_unique_path(slug)
+                        section.path = get_unique_path(full_path)
                         sections.append(section)
 
                     section_stack.append(section)

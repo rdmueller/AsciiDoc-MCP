@@ -99,7 +99,44 @@ class MarkdownStructureParser:
 
     Parses single files or entire folder hierarchies into structured
     documents with sections and extractable elements.
+
+    Attributes:
+        base_path: Optional base path for calculating relative file prefixes.
+                   If not provided, file paths are relative to the file's parent.
     """
+
+    def __init__(self, base_path: Path | None = None):
+        """Initialize the parser.
+
+        Args:
+            base_path: Optional base path for resolving relative file paths.
+                       If not provided, file prefixes will be just the filename stem.
+        """
+        self.base_path = base_path
+
+    def _get_file_prefix(self, file_path: Path) -> str:
+        """Calculate file prefix for path generation (Issue #130, ADR-008).
+
+        The file prefix is the relative path from base_path to file_path,
+        without the file extension. This ensures unique paths across documents.
+
+        Args:
+            file_path: Path to the document being parsed
+
+        Returns:
+            Relative path without extension (e.g., "guides/installation")
+        """
+        if self.base_path is not None:
+            try:
+                relative = file_path.relative_to(self.base_path)
+            except ValueError:
+                # file_path is not relative to base_path, use just the stem
+                relative = Path(file_path.stem)
+        else:
+            # No base_path provided, use just the stem
+            relative = Path(file_path.stem)
+        # Remove extension and convert to forward slashes
+        return str(relative.with_suffix("")).replace("\\", "/")
 
     def parse_file(self, file_path: Path) -> MarkdownDocument:
         """Parse a single Markdown file.
@@ -267,6 +304,8 @@ class MarkdownStructureParser:
         document_title = ""
         # Track used paths for disambiguation (Issue #123)
         used_paths: dict[str, int] = {}
+        # Calculate file prefix for cross-document unique paths (Issue #130, ADR-008)
+        file_prefix = self._get_file_prefix(file_path)
 
         def get_unique_path(base_path: str) -> str:
             """Get a unique path, appending -2, -3 etc. for duplicates."""
@@ -302,8 +341,8 @@ class MarkdownStructureParser:
             if level == 1 and not document_title:
                 document_title = title
 
-            # Build hierarchical path
-            base_path = self._build_path(section_stack, title, level)
+            # Build hierarchical path with file prefix (Issue #130, ADR-008)
+            base_path = self._build_path(section_stack, title, level, file_prefix)
             # Get unique path (Issue #123: disambiguate duplicates)
             path = get_unique_path(base_path)
 
@@ -751,21 +790,24 @@ class MarkdownStructureParser:
         return ""
 
     def _build_path(
-        self, section_stack: list[Section], title: str, level: int
+        self, section_stack: list[Section], title: str, level: int, file_prefix: str
     ) -> str:
-        """Build hierarchical path for a section.
+        """Build hierarchical path for a section with file prefix (Issue #130, ADR-008).
 
         Args:
             section_stack: Current section stack
             title: Section title
             level: Heading level
+            file_prefix: File prefix for cross-document unique paths
 
         Returns:
-            Hierarchical path string (dot-separated, no document title prefix)
+            Hierarchical path string with file prefix
+            - H1 (document title): file_prefix
+            - H2+: file_prefix:section_path (dot-separated hierarchy)
         """
-        # H1 (document title) has empty path per API spec
+        # H1 (document title) path is the file prefix (Issue #130, ADR-008)
         if level == 1:
-            return ""
+            return file_prefix
 
         slug = slugify(title)
 
@@ -777,13 +819,21 @@ class MarkdownStructureParser:
 
         if ancestors:
             parent = ancestors[-1]
-            # If parent is H1 (document title), don't prefix with parent path
+            # If parent is H1 (document title), section path is just the slug
             if parent.level == 1:
-                return slug
+                section_path = slug
             else:
-                return f"{parent.path}.{slug}"
+                # Extract section_path from parent (part after the colon)
+                if ":" in parent.path:
+                    parent_section_path = parent.path.split(":", 1)[1]
+                else:
+                    parent_section_path = parent.path
+                section_path = f"{parent_section_path}.{slug}"
         else:
-            return slug
+            section_path = slug
+
+        # Full path is file_prefix:section_path
+        return f"{file_prefix}:{section_path}"
 
     def _find_section_by_path(
         self, sections: list[Section], path: str
