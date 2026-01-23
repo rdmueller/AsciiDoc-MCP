@@ -489,12 +489,14 @@ class MarkdownStructureParser:
         # Track table state
         in_table = False
         table_start_line = 0
+        table_end_line = 0  # Track last table row line for end_line
         table_columns = 0
         table_rows = 0
         has_separator = False
 
         # Track list state
         current_list_type: str | None = None
+        current_list_element: Element | None = None
 
         for line_num, line in enumerate(lines, start=1 + line_offset):
             # Track current section
@@ -507,7 +509,9 @@ class MarkdownStructureParser:
                             Element(
                                 type="table",
                                 source_location=SourceLocation(
-                                    file=file_path, line=table_start_line
+                                    file=file_path,
+                                    line=table_start_line,
+                                    end_line=table_end_line,
                                 ),
                                 attributes={
                                     "columns": table_columns,
@@ -545,7 +549,9 @@ class MarkdownStructureParser:
                         Element(
                             type="code",
                             source_location=SourceLocation(
-                                file=file_path, line=code_block_start_line
+                                file=file_path,
+                                line=code_block_start_line,
+                                end_line=line_num,  # Closing fence line
                             ),
                             attributes={
                                 "language": code_block_language,
@@ -565,6 +571,7 @@ class MarkdownStructureParser:
             # Handle tables
             table_row_match = TABLE_ROW_PATTERN.match(line)
             if table_row_match:
+                table_end_line = line_num  # Update end_line for each row
                 if not in_table:
                     # Start of table
                     in_table = True
@@ -587,7 +594,9 @@ class MarkdownStructureParser:
                         Element(
                             type="table",
                             source_location=SourceLocation(
-                                file=file_path, line=table_start_line
+                                file=file_path,
+                                line=table_start_line,
+                                end_line=table_end_line,
                             ),
                             attributes={
                                 "columns": table_columns,
@@ -612,12 +621,15 @@ class MarkdownStructureParser:
                 elements.append(
                     Element(
                         type="image",
-                        source_location=SourceLocation(file=file_path, line=line_num),
+                        source_location=SourceLocation(
+                            file=file_path, line=line_num, end_line=line_num
+                        ),
                         attributes=image_attributes,
                         parent_section=current_section_path,
                     )
                 )
                 current_list_type = None  # Reset list tracking
+                current_list_element = None
                 continue
 
             # Handle lists (unordered and ordered)
@@ -626,37 +638,46 @@ class MarkdownStructureParser:
                 if UNORDERED_LIST_PATTERN.match(line):
                     if current_list_type != "unordered":
                         current_list_type = "unordered"
-                        elements.append(
-                            Element(
-                                type="list",
-                                source_location=SourceLocation(
-                                    file=file_path, line=line_num
-                                ),
-                                attributes={"list_type": "unordered"},
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="list",
+                            source_location=SourceLocation(
+                                file=file_path, line=line_num, end_line=line_num
+                            ),
+                            attributes={"list_type": "unordered"},
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_list_element = element
+                    else:
+                        # Update end_line for each list item
+                        if current_list_element is not None:
+                            current_list_element.source_location.end_line = line_num
                     continue
 
                 # Check for ordered list (1., 2., etc.)
                 if ORDERED_LIST_PATTERN.match(line):
                     if current_list_type != "ordered":
                         current_list_type = "ordered"
-                        elements.append(
-                            Element(
-                                type="list",
-                                source_location=SourceLocation(
-                                    file=file_path, line=line_num
-                                ),
-                                attributes={"list_type": "ordered"},
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="list",
+                            source_location=SourceLocation(
+                                file=file_path, line=line_num, end_line=line_num
+                            ),
+                            attributes={"list_type": "ordered"},
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_list_element = element
+                    else:
+                        # Update end_line for each list item
+                        if current_list_element is not None:
+                            current_list_element.source_location.end_line = line_num
                     continue
 
                 # If non-empty, non-list line, reset list tracking
                 if line.strip():
                     current_list_type = None
+                    current_list_element = None
 
         # Handle unclosed code block at end of file
         if in_code_block:
@@ -672,7 +693,9 @@ class MarkdownStructureParser:
                 Element(
                     type="table",
                     source_location=SourceLocation(
-                        file=file_path, line=table_start_line
+                        file=file_path,
+                        line=table_start_line,
+                        end_line=table_end_line,
                     ),
                     attributes={
                         "columns": table_columns,

@@ -1085,3 +1085,86 @@ Second intro with same title.
             assert root.children[1].path == "dup_with_prefix:introduction-2"
         finally:
             test_file.unlink()
+
+
+class TestElementEndLine:
+    """Tests for element end_line calculation (Issue #128).
+
+    Elements should have end_line set correctly for:
+    - Code blocks: end_line is the closing ---- delimiter
+    - Tables: end_line is the closing |=== delimiter
+    - PlantUML/Mermaid/Ditaa: end_line is the closing ---- delimiter
+    - Images: end_line equals start_line (single line)
+    - Admonitions: end_line equals start_line (single line)
+    - Lists: end_line is the last line of the list
+    """
+
+    def test_code_block_has_end_line(self):
+        """Test that code blocks have end_line set (Issue #128)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        code_elements = [e for e in doc.elements if e.type == "code"]
+        assert len(code_elements) == 1
+        assert code_elements[0].source_location.line == 8  # Opening ----
+        assert code_elements[0].source_location.end_line == 11  # Closing ----
+
+    def test_table_has_end_line(self):
+        """Test that tables have end_line set (Issue #128)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        table_elements = [e for e in doc.elements if e.type == "table"]
+        assert len(table_elements) == 1
+        assert table_elements[0].source_location.line == 15  # Opening |===
+        assert table_elements[0].source_location.end_line == 20  # Closing |===
+
+    def test_plantuml_has_end_line(self):
+        """Test that PlantUML blocks have end_line set (Issue #128)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        plantuml_elements = [e for e in doc.elements if e.type == "plantuml"]
+        assert len(plantuml_elements) == 1
+        assert plantuml_elements[0].source_location.line == 29  # Opening ----
+        assert plantuml_elements[0].source_location.end_line == 34  # Closing ----
+
+    def test_image_has_end_line_equal_to_start(self):
+        """Test that images have end_line equal to start_line (Issue #128)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        image_elements = [e for e in doc.elements if e.type == "image"]
+        assert len(image_elements) == 1
+        assert image_elements[0].source_location.line == 24
+        assert image_elements[0].source_location.end_line == 24  # Single line
+
+    def test_admonition_has_end_line_equal_to_start(self):
+        """Test that admonitions have end_line equal to start_line (Issue #128)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        admonition_elements = [e for e in doc.elements if e.type == "admonition"]
+        assert len(admonition_elements) == 2
+        # NOTE is on line 38
+        note = next(
+            e for e in admonition_elements if e.attributes.get("admonition_type") == "NOTE"
+        )
+        assert note.source_location.line == 38
+        assert note.source_location.end_line == 38  # Single line
+        # WARNING is on line 40
+        warning = next(
+            e for e in admonition_elements if e.attributes.get("admonition_type") == "WARNING"
+        )
+        assert warning.source_location.line == 40
+        assert warning.source_location.end_line == 40  # Single line

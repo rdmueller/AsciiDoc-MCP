@@ -4,4 +4,4 @@ Enables LLM interaction with large AsciiDoc/Markdown documentation projects
 through hierarchical, content-aware access via the Model Context Protocol (MCP).
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

@@ -604,6 +604,7 @@ class AsciidocStructureParser:
         in_ditaa_block = False
         in_table = False
         current_list_type: str | None = None  # Track if we're in a list
+        current_block_element: Element | None = None  # Track current block for end_line
 
         for line_text, source_file, line_num, resolved_from in lines:
             # Track current section for parent_section
@@ -672,14 +673,14 @@ class AsciidocStructureParser:
                             attrs["name"] = name
                         if fmt is not None:
                             attrs["format"] = fmt
-                        elements.append(
-                            Element(
-                                type="plantuml",
-                                source_location=source_location,
-                                attributes=attrs,
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="plantuml",
+                            source_location=source_location,
+                            attributes=attrs,
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_block_element = element
                         pending_plantuml_info = None
                     elif pending_mermaid_info is not None:
                         # Start of mermaid block
@@ -695,14 +696,14 @@ class AsciidocStructureParser:
                             attrs["name"] = name
                         if fmt is not None:
                             attrs["format"] = fmt
-                        elements.append(
-                            Element(
-                                type="mermaid",
-                                source_location=source_location,
-                                attributes=attrs,
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="mermaid",
+                            source_location=source_location,
+                            attributes=attrs,
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_block_element = element
                         pending_mermaid_info = None
                     elif pending_ditaa_info is not None:
                         # Start of ditaa block
@@ -718,14 +719,14 @@ class AsciidocStructureParser:
                             attrs["name"] = name
                         if fmt is not None:
                             attrs["format"] = fmt
-                        elements.append(
-                            Element(
-                                type="ditaa",
-                                source_location=source_location,
-                                attributes=attrs,
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="ditaa",
+                            source_location=source_location,
+                            attributes=attrs,
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_block_element = element
                         pending_ditaa_info = None
                     elif pending_code_language is not None:
                         # Start of code block
@@ -735,27 +736,39 @@ class AsciidocStructureParser:
                             line=line_num,
                             resolved_from=resolved_from,
                         )
-                        elements.append(
-                            Element(
-                                type="code",
-                                source_location=source_location,
-                                attributes={"language": pending_code_language},
-                                parent_section=current_section_path,
-                            )
+                        element = Element(
+                            type="code",
+                            source_location=source_location,
+                            attributes={"language": pending_code_language},
+                            parent_section=current_section_path,
                         )
+                        elements.append(element)
+                        current_block_element = element
                     pending_code_language = None
                 elif in_code_block:
                     # End of code block
                     in_code_block = False
+                    if current_block_element is not None:
+                        current_block_element.source_location.end_line = line_num
+                        current_block_element = None
                 elif in_plantuml_block:
                     # End of plantuml block
                     in_plantuml_block = False
+                    if current_block_element is not None:
+                        current_block_element.source_location.end_line = line_num
+                        current_block_element = None
                 elif in_mermaid_block:
                     # End of mermaid block
                     in_mermaid_block = False
+                    if current_block_element is not None:
+                        current_block_element.source_location.end_line = line_num
+                        current_block_element = None
                 elif in_ditaa_block:
                     # End of ditaa block
                     in_ditaa_block = False
+                    if current_block_element is not None:
+                        current_block_element.source_location.end_line = line_num
+                        current_block_element = None
                 continue
 
             # Detect table delimiter |===
@@ -768,17 +781,20 @@ class AsciidocStructureParser:
                         line=line_num,
                         resolved_from=resolved_from,
                     )
-                    elements.append(
-                        Element(
-                            type="table",
-                            source_location=source_location,
-                            attributes={},
-                            parent_section=current_section_path,
-                        )
+                    element = Element(
+                        type="table",
+                        source_location=source_location,
+                        attributes={},
+                        parent_section=current_section_path,
                     )
+                    elements.append(element)
+                    current_block_element = element
                 else:
                     # End of table
                     in_table = False
+                    if current_block_element is not None:
+                        current_block_element.source_location.end_line = line_num
+                        current_block_element = None
                 continue
 
             # Detect image macro
@@ -789,6 +805,7 @@ class AsciidocStructureParser:
                 source_location = SourceLocation(
                     file=source_file,
                     line=line_num,
+                    end_line=line_num,  # Single-line element
                     resolved_from=resolved_from,
                 )
                 elements.append(
@@ -809,6 +826,7 @@ class AsciidocStructureParser:
                 source_location = SourceLocation(
                     file=source_file,
                     line=line_num,
+                    end_line=line_num,  # Single-line element
                     resolved_from=resolved_from,
                 )
                 elements.append(

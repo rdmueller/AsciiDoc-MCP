@@ -1663,3 +1663,99 @@ Content.
             # Should still have file-based path
             assert root.path == "my_doc"
             assert root.children[0].path == "my_doc:chapter"
+
+
+class TestElementEndLine:
+    """Tests for element end_line calculation (Issue #128).
+
+    Elements should have end_line set correctly for:
+    - Code blocks: end_line is the closing fence
+    - Tables: end_line is the last row of the table
+    - Images: end_line equals start_line (single line)
+    - Lists: end_line is the last line of the list
+    """
+
+    def test_code_block_has_end_line(self):
+        """Test that code blocks have end_line set (Issue #128)."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Title
+
+```python
+def hello():
+    print("Hello")
+```
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        code_block = doc.elements[0]
+        assert code_block.source_location.line == 3  # Opening fence
+        assert code_block.source_location.end_line == 6  # Closing fence
+
+    def test_table_has_end_line(self):
+        """Test that tables have end_line set (Issue #128)."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Title
+
+| Col A | Col B |
+|-------|-------|
+| A1    | B1    |
+| A2    | B2    |
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        table_elements = [e for e in doc.elements if e.type == "table"]
+        assert len(table_elements) == 1
+        assert table_elements[0].source_location.line == 3  # First table row
+        assert table_elements[0].source_location.end_line == 6  # Last table row
+
+    def test_image_has_end_line_equal_to_start(self):
+        """Test that images have end_line equal to start_line (Issue #128)."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Title
+
+![Alt text](image.png)
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        image_elements = [e for e in doc.elements if e.type == "image"]
+        assert len(image_elements) == 1
+        assert image_elements[0].source_location.line == 3
+        assert image_elements[0].source_location.end_line == 3  # Single line
+
+    def test_list_has_end_line(self):
+        """Test that lists have end_line set (Issue #128)."""
+        from dacli.markdown_parser import MarkdownStructureParser
+
+        parser = MarkdownStructureParser()
+        content = """# Title
+
+- Item 1
+- Item 2
+- Item 3
+
+Next paragraph.
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            doc = parser.parse_file(Path(f.name))
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        assert len(list_elements) == 1
+        assert list_elements[0].source_location.line == 3  # First list item
+        assert list_elements[0].source_location.end_line == 5  # Last list item
