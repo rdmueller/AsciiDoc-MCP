@@ -114,10 +114,10 @@ class TestGetSection:
 
     async def test_get_section_returns_content(self, mcp_client: Client):
         """get_section returns section with content."""
-        # Note: Paths use dot notation with document title prefix
-        # e.g., "introduction" not "/introduction"
+        # Note: Paths use file prefix format (Issue #130, ADR-008)
+        # e.g., "test:introduction" for section in test.adoc
         result = await mcp_client.call_tool(
-            "get_section", arguments={"path": "introduction"}
+            "get_section", arguments={"path": "test:introduction"}
         )
 
         assert result.data is not None
@@ -260,7 +260,7 @@ class TestUpdateSection:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "== Introduction\n\nUpdated content.\n",
             },
         )
@@ -279,7 +279,7 @@ class TestUpdateSection:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "New body content only.\n",
                 "preserve_title": True,
             },
@@ -303,7 +303,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "position": "after",
                 "content": "== New Section\n\nNew content.\n",
             },
@@ -330,7 +330,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "position": "before",
                 "content": "== Preface\n\nPreface content.\n",
             },
@@ -354,7 +354,7 @@ class TestInsertContent:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "position": "invalid",
                 "content": "Some content",
             },
@@ -380,7 +380,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "constraints",
+                "path": "test:constraints",
                 "position": "after",
                 "content": "== Brand New Section\n\nThis is brand new content.\n",
             },
@@ -391,7 +391,8 @@ class TestIndexRebuildAfterWrite:
         structure = await mcp_client.call_tool("get_structure", arguments={})
         all_paths = self._extract_all_paths(structure.data["sections"])
 
-        assert "brand-new-section" in all_paths
+        # Path includes file prefix (Issue #130, ADR-008)
+        assert "test:brand-new-section" in all_paths
 
     async def test_index_updated_after_update_section(
         self, mcp_client: Client, temp_doc_dir: Path
@@ -405,7 +406,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "Updated introduction with more text.\n\nAnother paragraph.\n",
                 "preserve_title": True,
             },
@@ -418,7 +419,7 @@ class TestIndexRebuildAfterWrite:
 
         # The section should still be accessible
         section = await mcp_client.call_tool(
-            "get_section", arguments={"path": "introduction"}
+            "get_section", arguments={"path": "test:introduction"}
         )
         assert "error" not in section.data
         assert "Updated introduction" in section.data["content"]
@@ -437,7 +438,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "constraints",
+                "path": "test:constraints",
                 "position": "after",
                 "content": "== Another Chapter\n\nChapter content.\n",
             },
@@ -461,7 +462,7 @@ class TestIndexRebuildAfterWrite:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "position": "after",
                 "content": "== Zephyr Unique Title\n\nSome content.\n",
             },
@@ -496,7 +497,7 @@ class TestOptimisticLocking:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "== Introduction\n\nUpdated for hash test.\n",
             },
         )
@@ -514,7 +515,7 @@ class TestOptimisticLocking:
         first_result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "== Introduction\n\nFirst update.\n",
             },
         )
@@ -524,7 +525,7 @@ class TestOptimisticLocking:
         second_result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "== Introduction\n\nSecond update.\n",
                 "expected_hash": current_hash,
             },
@@ -540,7 +541,7 @@ class TestOptimisticLocking:
         result = await mcp_client.call_tool(
             "update_section",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "content": "== Introduction\n\nConflicting update.\n",
                 "expected_hash": "wrong_hash_value",
             },
@@ -558,7 +559,7 @@ class TestOptimisticLocking:
         result = await mcp_client.call_tool(
             "insert_content",
             arguments={
-                "path": "introduction",
+                "path": "test:introduction",
                 "position": "after",
                 "content": "== Hash Test Section\n\nContent.\n",
             },
@@ -593,10 +594,11 @@ class TestGetMetadata:
     async def test_get_metadata_section_returns_details(self, mcp_client: Client):
         """get_metadata with path returns section-level metadata."""
         result = await mcp_client.call_tool(
-            "get_metadata", arguments={"path": "introduction"}
+            "get_metadata", arguments={"path": "test:introduction"}
         )
 
-        assert result.data["path"] == "introduction"
+        # Path includes file prefix (Issue #130, ADR-008)
+        assert result.data["path"] == "test:introduction"
         assert "title" in result.data
         assert "file" in result.data
         assert "word_count" in result.data

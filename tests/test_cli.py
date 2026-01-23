@@ -93,8 +93,9 @@ Architecture description.
         from dacli.cli import cli
 
         runner = CliRunner()
+        # Use file-prefixed path (Issue #130, ADR-008)
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "--format", "json", "sec", "introduction"]
+            cli, ["--docs-root", str(sample_docs), "--format", "json", "sec", "test:introduction"]
         )
 
         assert result.exit_code == 0
@@ -226,7 +227,7 @@ Introduction content here.
         runner = CliRunner()
         result = runner.invoke(
             cli,
-            ["--docs-root", str(sample_docs), "--format", "json", "section", "introduction"],
+            ["--docs-root", str(sample_docs), "--format", "json", "section", "test:introduction"],
         )
 
         # Exit code 0 for found, 3 for not found
@@ -314,7 +315,8 @@ Content.
 
         runner = CliRunner()
         result = runner.invoke(
-            cli, ["--docs-root", str(sample_docs), "--format", "json", "metadata", "section-one"]
+            cli,
+            ["--docs-root", str(sample_docs), "--format", "json", "metadata", "test:section-one"],
         )
 
         # Exit code 0 for found, 3 for not found
@@ -870,7 +872,7 @@ Final thoughts.
             [
                 "--docs-root", str(sample_docs),
                 "--format", "json",
-                "insert", "introduction",
+                "insert", "test:introduction",
                 "--position", "after",
                 "--content", "== New Section\\n\\nNew content here.\\n",
             ],
@@ -898,7 +900,7 @@ Final thoughts.
             [
                 "--docs-root", str(sample_docs),
                 "--format", "json",
-                "insert", "components",
+                "insert", "test:components",
                 "--position", "append",
                 "--content", "=== Testing\\n\\nTesting details.\\n",
             ],
@@ -932,7 +934,7 @@ Final thoughts.
             [
                 "--docs-root", str(sample_docs),
                 "--format", "json",
-                "insert", "components",
+                "insert", "test:components",
                 "--position", "before",
                 "--content", "== Prerequisites\\n\\nBefore components.\\n",
             ],
@@ -960,7 +962,7 @@ Final thoughts.
             [
                 "--docs-root", str(sample_docs),
                 "--format", "json",
-                "insert", "introduction",
+                "insert", "test:introduction",
                 "--position", "after",
                 "--content", "== Goals\\n\\nProject goals.\\n",
             ],
@@ -992,7 +994,7 @@ Final thoughts.
             [
                 "--docs-root", str(sample_docs),
                 "--format", "json",
-                "insert", "introduction",
+                "insert", "test:introduction",
                 "--position", "after",
                 "--content", "-",
             ],
@@ -1022,7 +1024,7 @@ Final thoughts.
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "insert", "section-a",
+                "insert", "test:section-a",
                 "--position", "after",
                 "--content", "## New Section\\n\\nNew content.\\n",
             ],
@@ -1061,7 +1063,7 @@ class TestCliUpdateCommand:
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "update", "parent",
+                "update", "test:parent",
                 "--content", "New content.",
             ],
         )
@@ -1089,7 +1091,7 @@ class TestCliUpdateCommand:
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "update", "parent",
+                "update", "test:parent",
                 "--content", "New content.",
             ],
         )
@@ -1117,7 +1119,7 @@ class TestCliUpdateCommand:
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "update", "section",
+                "update", "test:section",
                 "--content", "-",
             ],
             input=stdin_content,
@@ -1148,7 +1150,7 @@ class TestCliUpdateCommand:
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "update", "original-section",
+                "update", "test:original-section",
                 "--content", "-",
             ],
             input=stdin_content,
@@ -1177,7 +1179,7 @@ class TestCliUpdateCommand:
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "update", "original-section",
+                "update", "test:original-section",
                 "--content", "-",
             ],
             input=stdin_content,
@@ -1224,7 +1226,7 @@ Content B.
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "insert", "section-a",
+                "insert", "test:section-a",
                 "--position", "after",
                 "--content", "Additional text without heading.",
             ],
@@ -1274,7 +1276,7 @@ Content B.
             [
                 "--docs-root", str(tmp_path),
                 "--format", "json",
-                "insert", "section-a",
+                "insert", "test:section-a",
                 "--position", "after",
                 "--content", "Additional text without heading.",
             ],
