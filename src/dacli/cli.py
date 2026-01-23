@@ -621,6 +621,19 @@ def validate(ctx: CliContext):
                 "message": "File is not included in any document",
             })
 
+    # Collect parse warnings from all documents (Issue #148)
+    for doc in ctx.index._documents:
+        for pw in doc.parse_warnings:
+            try:
+                rel_path = pw.file.relative_to(ctx.docs_root.resolve())
+            except ValueError:
+                rel_path = pw.file
+            warnings.append({
+                "type": pw.type,
+                "path": f"{rel_path}:{pw.line}",
+                "message": pw.message,
+            })
+
     elapsed_ms = int((time.time() - start_time) * 1000)
 
     is_valid = len(errors) == 0

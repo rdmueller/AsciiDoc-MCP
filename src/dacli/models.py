@@ -105,6 +105,25 @@ class CrossReference:
 
 
 @dataclass
+class ParseWarning:
+    """A warning detected during document parsing.
+
+    Represents structural issues like unclosed blocks or malformed tables.
+
+    Attributes:
+        type: Warning type (unclosed_code_block, unclosed_table, etc.)
+        file: Path to the file containing the issue
+        line: Line number where the issue starts
+        message: Human-readable description of the issue
+    """
+
+    type: str
+    file: Path
+    line: int
+    message: str
+
+
+@dataclass
 class Document:
     """Base class for parsed documents.
 
@@ -115,12 +134,14 @@ class Document:
         title: Document title
         sections: List of top-level sections
         elements: List of extractable elements
+        parse_warnings: Structural issues detected during parsing
     """
 
     file_path: Path
     title: str
     sections: list[Section] = field(default_factory=list)
     elements: list[Element] = field(default_factory=list)
+    parse_warnings: list[ParseWarning] = field(default_factory=list)
 
 
 def model_to_dict(obj: Any) -> Any:
