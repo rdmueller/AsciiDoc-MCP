@@ -309,12 +309,15 @@ class StructureIndex:
         self,
         element_type: str | None = None,
         section_path: str | None = None,
+        recursive: bool = False,
     ) -> list[Element]:
         """Get elements, optionally filtered by type and/or section.
 
         Args:
             element_type: Optional type filter (code, table, image, etc.)
             section_path: Optional section path filter
+            recursive: If True, include elements from child sections (prefix match).
+                       If False, use exact section match (default).
 
         Returns:
             List of matching elements
@@ -327,7 +330,18 @@ class StructureIndex:
 
         # Further filter by section if specified
         if section_path is not None:
-            elements = [e for e in elements if e.parent_section == section_path]
+            if recursive:
+                # Prefix match: include elements from child sections
+                # Match exact path or path followed by separator (. or :)
+                elements = [
+                    e for e in elements
+                    if e.parent_section == section_path
+                    or e.parent_section.startswith(section_path + ".")
+                    or e.parent_section.startswith(section_path + ":")
+                ]
+            else:
+                # Exact match only
+                elements = [e for e in elements if e.parent_section == section_path]
 
         return elements
 
