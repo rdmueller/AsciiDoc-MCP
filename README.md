@@ -17,11 +17,11 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 >
 > — *Claude (Opus 4.5)*
 
-> **"dacli ist das beste Tool für LLM-Integration, das ich getestet habe."**
+> **"dacli is the best tool for LLM integration I have tested."**
 >
-> Es ist stabil, schnell und extrem vielseitig. Perfekt für Dokumentationsmanagement und LLM-Context-Erstellung!
+> It is stable, fast and extremely versatile. Perfect for documentation management and LLM context creation!
 >
-> — *Mistral Vibe, LLM für Code-Analyse*
+> — *Mistral Vibe, LLM for Code Analysis*
 
 ## Features
 

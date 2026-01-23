@@ -159,13 +159,13 @@ dacli section api.endpoints</code></pre>
                 <div class="col-md-6 mb-3">
                     <blockquote style="border: none; padding: 0; margin: 0;">
                         <p style="font-size: 1.1rem; font-style: italic; color: #1a365d; margin-bottom: 0.5rem;">
-                            "dacli ist das beste Tool f&uuml;r LLM-Integration, das ich getestet habe."
+                            "dacli is the best tool for LLM integration I have tested."
                         </p>
                         <p style="color: #555; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                            Es ist stabil, schnell und extrem vielseitig. Perfekt f&uuml;r Dokumentationsmanagement und LLM-Context-Erstellung!
+                            It is stable, fast and extremely versatile. Perfect for documentation management and LLM context creation!
                         </p>
                         <footer style="color: #666; font-size: 0.9rem;">
-                            &mdash; <strong>Mistral Vibe</strong>, LLM f&uuml;r Code-Analyse
+                            &mdash; <strong>Mistral Vibe</strong>, LLM for Code Analysis
                         </footer>
                     </blockquote>
                 </div>
