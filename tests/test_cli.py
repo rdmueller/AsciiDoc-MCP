@@ -353,6 +353,104 @@ Content.
         data = json.loads(result.output)
         assert "valid" in data
 
+    def test_validate_detects_unclosed_code_block(self, tmp_path):
+        """Validation should detect unclosed code blocks (Issue #148)."""
+        from dacli.cli import cli
+
+        # Create document with unclosed code block
+        doc_file = tmp_path / "broken.adoc"
+        doc_file.write_text("""= Test Document
+
+== Section
+
+[source,python]
+----
+print("hello")
+# Missing closing ----
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--format", "json", "validate"]
+        )
+
+        # Should have exit code 0 (warnings) or 4 (errors)
+        assert result.exit_code in (0, 4)
+        data = json.loads(result.output)
+        # Should report warning about unclosed block
+        all_issues = data.get("errors", []) + data.get("warnings", [])
+        unclosed_issues = [
+            i for i in all_issues
+            if "unclosed" in i.get("type", "").lower()
+            or "unclosed" in i.get("message", "").lower()
+        ]
+        assert len(unclosed_issues) >= 1, f"Expected unclosed block warning, got: {all_issues}"
+
+    def test_validate_detects_unclosed_table(self, tmp_path):
+        """Validation should detect unclosed tables (Issue #148)."""
+        from dacli.cli import cli
+
+        # Create document with unclosed table
+        doc_file = tmp_path / "broken.adoc"
+        doc_file.write_text("""= Test Document
+
+== Section
+
+|===
+| Header 1 | Header 2
+| Cell 1   | Cell 2
+# Missing closing |===
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--format", "json", "validate"]
+        )
+
+        assert result.exit_code in (0, 4)
+        data = json.loads(result.output)
+        all_issues = data.get("errors", []) + data.get("warnings", [])
+        unclosed_issues = [
+            i for i in all_issues
+            if "unclosed" in i.get("type", "").lower()
+            or "unclosed" in i.get("message", "").lower()
+        ]
+        assert len(unclosed_issues) >= 1, f"Expected unclosed table warning, got: {all_issues}"
+
+    def test_validate_valid_document_no_warnings(self, tmp_path):
+        """Valid documents should not have unclosed block warnings."""
+        from dacli.cli import cli
+
+        # Create valid document with properly closed code block
+        doc_file = tmp_path / "valid.adoc"
+        doc_file.write_text("""= Test Document
+
+== Section
+
+[source,python]
+----
+print("hello")
+----
+
+Content after.
+""")
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, ["--docs-root", str(tmp_path), "--format", "json", "validate"]
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["valid"] is True
+        # Should not have unclosed block warnings
+        all_issues = data.get("errors", []) + data.get("warnings", [])
+        unclosed_issues = [
+            i for i in all_issues
+            if "unclosed" in i.get("type", "").lower()
+        ]
+        assert len(unclosed_issues) == 0
+
 
 class TestCliOutputFormats:
     """Test output format options."""

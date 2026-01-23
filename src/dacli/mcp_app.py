@@ -582,12 +582,13 @@ def create_mcp_server(
         """Validate the document structure.
 
         Use this tool to check the documentation for structural issues
-        like unresolved includes, circular includes, or orphaned files.
+        like unresolved includes, circular includes, orphaned files,
+        or malformed content (unclosed code blocks, tables).
 
         Returns:
             'valid': True if no errors, False otherwise.
             'errors': List of error objects (unresolved_include, circular_include).
-            'warnings': List of warning objects (orphaned_file).
+            'warnings': List of warning objects (orphaned_file, unclosed_block, unclosed_table).
             'validation_time_ms': Time taken for validation in milliseconds.
         """
         start_time = time.time()
@@ -617,6 +618,19 @@ def create_mcp_server(
                         "message": "File is not included in any document",
                     }
                 )
+
+        # Collect parse warnings from all documents (Issue #148)
+        for doc in index._documents:
+            for pw in doc.parse_warnings:
+                try:
+                    rel_path = pw.file.relative_to(docs_root)
+                except ValueError:
+                    rel_path = pw.file
+                warnings.append({
+                    "type": pw.type,
+                    "path": f"{rel_path}:{pw.line}",
+                    "message": pw.message,
+                })
 
         # Calculate validation time
         elapsed_ms = int((time.time() - start_time) * 1000)

@@ -14,6 +14,7 @@ from dacli.models import (
     CrossReference,
     Document,
     Element,
+    ParseWarning,
     Section,
     SourceLocation,
 )
@@ -262,7 +263,7 @@ class AsciidocStructureParser:
         self._compute_end_lines(sections, expanded_lines)
 
         # Parse elements with section context
-        elements = self._parse_elements(expanded_lines, sections, attributes)
+        elements, parse_warnings = self._parse_elements(expanded_lines, sections, attributes)
 
         # Parse cross-references
         cross_references = self._parse_cross_references(expanded_lines)
@@ -272,6 +273,7 @@ class AsciidocStructureParser:
             title=title,
             sections=sections,
             elements=elements,
+            parse_warnings=parse_warnings,
             attributes=attributes,
             cross_references=cross_references,
             includes=includes,
@@ -592,7 +594,7 @@ class AsciidocStructureParser:
         lines: list[tuple[str, Path, int, SourceLocation | None]],
         sections: list[Section],
         attributes: dict[str, str],
-    ) -> list[Element]:
+    ) -> tuple[list[Element], list[ParseWarning]]:
         """Parse elements from document lines.
 
         Args:
@@ -601,8 +603,9 @@ class AsciidocStructureParser:
             attributes: Document attributes for substitution
 
         Returns:
-            List of extracted elements
+            Tuple of (elements, parse_warnings)
         """
+        warnings: list[ParseWarning] = []
         elements: list[Element] = []
         current_section_path = ""
         pending_code_language: str | None = None
@@ -925,7 +928,24 @@ class AsciidocStructureParser:
             )
             current_block_element.source_location.end_line = max_line
 
-        return elements
+            # Add warning for unclosed block (Issue #148)
+            block_type = current_block_element.type
+            block_line = current_block_element.source_location.line
+            if block_type == "table":
+                warning_type = "unclosed_table"
+                warning_msg = f"Table starting at line {block_line} is not properly closed"
+            else:
+                warning_type = "unclosed_block"
+                warning_msg = f"{block_type.capitalize()} block starting at line {block_line} is not properly closed"
+
+            warnings.append(ParseWarning(
+                type=warning_type,
+                file=source_file,
+                line=block_line,
+                message=warning_msg,
+            ))
+
+        return elements, warnings
 
     def _find_section_path(self, sections: list[Section], title: str) -> str:
         """Find the path of a section by its title.
