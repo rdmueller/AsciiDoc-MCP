@@ -25,8 +25,6 @@ class FileReadError(Exception):
     - Encoding errors
     """
 
-    pass
-
 
 class FileWriteError(Exception):
     """Error during file write operation.
@@ -36,8 +34,6 @@ class FileWriteError(Exception):
     - Disk full
     - Atomic operation failures
     """
-
-    pass
 
 
 class FileSystemHandler:

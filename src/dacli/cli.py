@@ -18,9 +18,11 @@ Commands (with aliases):
     insert             Insert content relative to a section
 """
 
+import hashlib
 import json
 import logging
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -254,6 +256,18 @@ def _format_as_text(data: dict, indent: int = 0) -> str:
         else:
             lines.append(f"{prefix}{key}: {value}")
     return "\n".join(lines)
+
+
+def _compute_hash(content: str) -> str:
+    """Compute 8-character MD5 hash for optimistic locking.
+
+    Args:
+        content: The content to hash
+
+    Returns:
+        8-character hexadecimal hash string
+    """
+    return hashlib.md5(content.encode("utf-8")).hexdigest()[:8]
 
 
 pass_context = click.make_pass_decorator(CliContext)
@@ -518,8 +532,6 @@ Examples:
 @pass_context
 def metadata(ctx: CliContext, path: str | None):
     """Get metadata about the project or a specific section."""
-    from datetime import UTC, datetime
-
     if path is None:
         # Project-level metadata
         stats = ctx.index.stats()
@@ -572,7 +584,6 @@ def metadata(ctx: CliContext, path: str | None):
         file_path = section_obj.source_location.file
         last_modified = None
         if file_path.exists():
-            from datetime import UTC, datetime
             mtime = file_path.stat().st_mtime
             last_modified = datetime.fromtimestamp(mtime, tz=UTC).isoformat()
 
@@ -629,7 +640,7 @@ def validate(ctx: CliContext):
             except ValueError:
                 rel_path = pw.file
             warnings.append({
-                "type": pw.type,
+                "type": pw.type.value,
                 "path": f"{rel_path}:{pw.line}",
                 "message": pw.message,
             })
@@ -658,8 +669,6 @@ def validate(ctx: CliContext):
 def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
            expected_hash: str | None):
     """Update the content of a section."""
-    import hashlib
-
     normalized_path = path.lstrip("/")
     preserve_title = not no_preserve_title
 
@@ -677,7 +686,7 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
         file_content = ctx.file_handler.read_file(file_path)
         lines = file_content.splitlines(keepends=True)
         current_content = "".join(lines[start_line - 1 : end_line])
-        previous_hash = hashlib.md5(current_content.encode("utf-8")).hexdigest()[:8]
+        previous_hash = _compute_hash(current_content)
     except FileReadError:
         previous_hash = ""
 
@@ -719,7 +728,7 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
     if not new_content.endswith("\n"):
         new_content += "\n"
 
-    new_hash = hashlib.md5(new_content.encode("utf-8")).hexdigest()[:8]
+    new_hash = _compute_hash(new_content)
 
     try:
         ctx.file_handler.update_section(
@@ -750,8 +759,6 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
 @pass_context
 def insert(ctx: CliContext, path: str, position: str, content: str):
     """Insert content relative to a section."""
-    import hashlib
-
     normalized_path = path.lstrip("/")
 
     section_obj = ctx.index.get_section(normalized_path)
@@ -774,7 +781,7 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
 
     try:
         file_content = ctx.file_handler.read_file(file_path)
-        previous_hash = hashlib.md5(file_content.encode("utf-8")).hexdigest()[:8]
+        previous_hash = _compute_hash(file_content)
         lines = file_content.splitlines(keepends=True)
 
         # Ensure blank line before headings when inserting after content
@@ -831,7 +838,7 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
             new_lines = lines[:append_line] + [insert_content] + lines[append_line:]
 
         new_file_content = "".join(new_lines)
-        new_hash = hashlib.md5(new_file_content.encode("utf-8")).hexdigest()[:8]
+        new_hash = _compute_hash(new_file_content)
 
         ctx.file_handler.write_file(file_path, new_file_content)
 

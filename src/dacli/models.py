@@ -13,8 +13,16 @@ Models:
 """
 
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
+
+
+class WarningType(Enum):
+    """Types of warnings that can be detected during parsing."""
+
+    UNCLOSED_BLOCK = "unclosed_block"
+    UNCLOSED_TABLE = "unclosed_table"
 
 
 @dataclass
@@ -111,13 +119,13 @@ class ParseWarning:
     Represents structural issues like unclosed blocks or malformed tables.
 
     Attributes:
-        type: Warning type (unclosed_code_block, unclosed_table, etc.)
+        type: Warning type (from WarningType enum)
         file: Path to the file containing the issue
         line: Line number where the issue starts
         message: Human-readable description of the issue
     """
 
-    type: str
+    type: WarningType
     file: Path
     line: int
     message: str
@@ -176,6 +184,8 @@ def _convert_value(value: Any) -> Any:
     """
     if isinstance(value, Path):
         return str(value)
+    elif isinstance(value, Enum):
+        return value.value
     elif isinstance(value, dict):
         return {k: _convert_value(v) for k, v in value.items()}
     elif isinstance(value, list):

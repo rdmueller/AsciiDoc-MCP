@@ -17,6 +17,7 @@ from dacli.models import (
     ParseWarning,
     Section,
     SourceLocation,
+    WarningType,
 )
 
 # Regex patterns from specification
@@ -948,12 +949,12 @@ class AsciidocStructureParser:
             block_type = unclosed_block.type
             block_line = unclosed_block.source_location.line
             if block_type == "table":
-                warning_type = "unclosed_table"
+                warning_type = WarningType.UNCLOSED_TABLE
                 warning_msg = (
                     f"Table starting at line {block_line} is not properly closed"
                 )
             else:
-                warning_type = "unclosed_block"
+                warning_type = WarningType.UNCLOSED_BLOCK
                 warning_msg = (
                     f"{block_type.capitalize()} block starting at line {block_line} "
                     "is not properly closed"

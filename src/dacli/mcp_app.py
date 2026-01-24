@@ -627,7 +627,7 @@ def create_mcp_server(
                 except ValueError:
                     rel_path = pw.file
                 warnings.append({
-                    "type": pw.type,
+                    "type": pw.type.value,
                     "path": f"{rel_path}:{pw.line}",
                     "message": pw.message,
                 })
