@@ -19,6 +19,11 @@ from typing import Any
 import yaml
 
 from dacli.models import Element, Section, SourceLocation
+from dacli.parser_utils import (
+    collect_all_sections,
+    find_section_by_path,
+    slugify,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,23 +44,6 @@ ORDERED_LIST_PATTERN = re.compile(r"^[\s]*\d+\.\s+.+$")
 SETEXT_H1_UNDERLINE = re.compile(r"^={3,}\s*$")
 # H2: line of text followed by line of -'s (at least 3)
 SETEXT_H2_UNDERLINE = re.compile(r"^-{3,}\s*$")
-
-
-def slugify(text: str) -> str:
-    """Convert text to URL-friendly slug.
-
-    Args:
-        text: Text to slugify
-
-    Returns:
-        Lowercase, hyphenated slug with Unicode characters preserved
-    """
-    # Remove special characters but preserve Unicode word characters (umlauts, etc.)
-    # Note: No re.ASCII flag to allow Unicode \w matching (consistent with AsciiDoc parser)
-    slug = re.sub(r"[^\w\s-]", "", text.lower())
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = re.sub(r"-+", "-", slug)
-    return slug.strip("-")
 
 
 @dataclass
@@ -239,7 +227,7 @@ class MarkdownStructureParser:
         Returns:
             Section if found, None otherwise
         """
-        return self._find_section_by_path(doc.sections, path)
+        return find_section_by_path(doc.sections, path)
 
     def get_elements(
         self, doc: MarkdownDocument, element_type: str | None = None
@@ -443,7 +431,7 @@ class MarkdownStructureParser:
         """
         # Collect all sections into a flat list
         all_sections: list[Section] = []
-        self._collect_all_sections(sections, all_sections)
+        collect_all_sections(sections, all_sections)
 
         if not all_sections:
             return
@@ -460,19 +448,6 @@ class MarkdownStructureParser:
             else:
                 # Last section ends at file end
                 section.source_location.end_line = total_lines
-
-    def _collect_all_sections(
-        self, sections: list[Section], result: list[Section]
-    ) -> None:
-        """Recursively collect all sections into a flat list.
-
-        Args:
-            sections: List of sections to process
-            result: List to append sections to (modified in place)
-        """
-        for section in sections:
-            result.append(section)
-            self._collect_all_sections(section.children, result)
 
     def _parse_elements(
         self,
@@ -872,23 +847,3 @@ class MarkdownStructureParser:
 
         # Full path is file_prefix:section_path
         return f"{file_prefix}:{section_path}"
-
-    def _find_section_by_path(
-        self, sections: list[Section], path: str
-    ) -> Section | None:
-        """Recursively find a section by path.
-
-        Args:
-            sections: Sections to search
-            path: Path to find
-
-        Returns:
-            Section if found, None otherwise
-        """
-        for section in sections:
-            if section.path == path:
-                return section
-            found = self._find_section_by_path(section.children, path)
-            if found:
-                return found
-        return None

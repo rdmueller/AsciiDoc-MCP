@@ -18,6 +18,11 @@ from dacli.models import (
     Section,
     SourceLocation,
 )
+from dacli.parser_utils import (
+    collect_all_sections,
+    find_section_by_path,
+    slugify,
+)
 
 # Regex patterns from specification
 SECTION_PATTERN = re.compile(r"^(={1,6})\s+(.+?)(?:\s+=*)?$")
@@ -65,21 +70,6 @@ class CircularIncludeError(Exception):
         chain_str = " -> ".join(str(p.name) for p in include_chain)
         super().__init__(f"Circular include detected: {chain_str} -> {file_path.name}")
 
-
-def _title_to_slug(title: str) -> str:
-    """Convert a section title to a URL-friendly slug.
-
-    Args:
-        title: The section title
-
-    Returns:
-        A lowercase slug with spaces replaced by dashes
-    """
-    # Remove special characters, convert to lowercase, replace spaces with dashes
-    slug = title.lower()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"\s+", "-", slug)
-    return slug
 
 
 @dataclass
@@ -169,28 +159,7 @@ class AsciidocStructureParser:
         Returns:
             The section if found, None otherwise
         """
-        return self._find_section_by_path(doc.sections, path)
-
-    def _find_section_by_path(
-        self, sections: list[Section], path: str
-    ) -> Section | None:
-        """Recursively find a section by path.
-
-        Args:
-            sections: List of sections to search
-            path: Section path to find
-
-        Returns:
-            The section if found, None otherwise
-        """
-        for section in sections:
-            if section.path == path:
-                return section
-            # Search in children
-            result = self._find_section_by_path(section.children, path)
-            if result:
-                return result
-        return None
+        return find_section_by_path(doc.sections, path)
 
     def get_elements(
         self, doc: AsciidocDocument, element_type: str | None = None
@@ -491,7 +460,7 @@ class AsciidocStructureParser:
                     while section_stack and section_stack[-1].level >= level:
                         section_stack.pop()
 
-                    slug = _title_to_slug(title)
+                    slug = slugify(title)
                     if section_stack:
                         parent = section_stack[-1]
                         # Issue #130, ADR-008: Build section path with file prefix
@@ -537,7 +506,7 @@ class AsciidocStructureParser:
         """
         # Collect all sections with their file paths and start lines
         all_sections: list[Section] = []
-        self._collect_all_sections(sections, all_sections)
+        collect_all_sections(sections, all_sections)
 
         if not all_sections:
             return
@@ -575,19 +544,6 @@ class AsciidocStructureParser:
                 else:
                     # Last section in file, ends at file end
                     section.source_location.end_line = max_line
-
-    def _collect_all_sections(
-        self, sections: list[Section], result: list[Section]
-    ) -> None:
-        """Recursively collect all sections into a flat list.
-
-        Args:
-            sections: List of sections to process
-            result: List to append sections to (modified in place)
-        """
-        for section in sections:
-            result.append(section)
-            self._collect_all_sections(section.children, result)
 
     def _create_diagram_element(
         self,
