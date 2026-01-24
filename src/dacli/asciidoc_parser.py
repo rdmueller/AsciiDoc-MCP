@@ -625,6 +625,7 @@ class AsciidocStructureParser:
         source_location = SourceLocation(
             file=source_file,
             line=line_num,
+            end_line=line_num,  # Initialize end_line to start (Issue #136)
             resolved_from=resolved_from,
         )
         return Element(
@@ -663,6 +664,7 @@ class AsciidocStructureParser:
         in_ditaa_block = False
         in_table = False
         current_list_type: str | None = None  # Track if we're in a list
+        current_list_element: Element | None = None  # Track list for end_line (#136)
         # Track ALL open blocks for end_line (Issue #157: use stack instead of single element)
         open_blocks: list[Element] = []
 
@@ -859,10 +861,14 @@ class AsciidocStructureParser:
                 if current_list_type != "unordered":
                     # Start of a new unordered list
                     current_list_type = "unordered"
-                    elements.append(self._create_list_element(
+                    current_list_element = self._create_list_element(
                         "unordered", source_file, line_num,
                         resolved_from, current_section_path,
-                    ))
+                    )
+                    elements.append(current_list_element)
+                elif current_list_element is not None:
+                    # Continue list - update end_line (Issue #136)
+                    current_list_element.source_location.end_line = line_num
                 continue
 
             # Check for ordered list (. item)
@@ -870,10 +876,14 @@ class AsciidocStructureParser:
                 if current_list_type != "ordered":
                     # Start of a new ordered list
                     current_list_type = "ordered"
-                    elements.append(self._create_list_element(
+                    current_list_element = self._create_list_element(
                         "ordered", source_file, line_num,
                         resolved_from, current_section_path,
-                    ))
+                    )
+                    elements.append(current_list_element)
+                elif current_list_element is not None:
+                    # Continue list - update end_line (Issue #136)
+                    current_list_element.source_location.end_line = line_num
                 continue
 
             # Check for description list (term:: definition)
@@ -881,15 +891,20 @@ class AsciidocStructureParser:
                 if current_list_type != "description":
                     # Start of a new description list
                     current_list_type = "description"
-                    elements.append(self._create_list_element(
+                    current_list_element = self._create_list_element(
                         "description", source_file, line_num,
                         resolved_from, current_section_path,
-                    ))
+                    )
+                    elements.append(current_list_element)
+                elif current_list_element is not None:
+                    # Continue list - update end_line (Issue #136)
+                    current_list_element.source_location.end_line = line_num
                 continue
 
             # If line is not a list item, reset list tracking
             if line_text.strip():
                 current_list_type = None
+                current_list_element = None
 
         # Handle ALL unclosed blocks - set end_line to last line of their source file
         # Issue #146: unclosed code blocks should have proper end_line

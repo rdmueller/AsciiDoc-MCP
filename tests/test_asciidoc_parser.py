@@ -587,6 +587,56 @@ Alice -> Bob: Test
         for elem in list_elements:
             assert "listen" in elem.parent_section
 
+    def test_list_has_end_line(self):
+        """Test that list elements have correct end_line (Issue #136)."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+        assert len(list_elements) >= 3, "Expected at least 3 lists"
+
+        # All lists should have end_line set (not None)
+        for elem in list_elements:
+            assert elem.source_location.end_line is not None, (
+                f"List element at line {elem.source_location.line} has no end_line"
+            )
+            # end_line should be >= start line
+            assert elem.source_location.end_line >= elem.source_location.line, (
+                f"end_line {elem.source_location.end_line} < line "
+                f"{elem.source_location.line}"
+            )
+
+    def test_list_end_line_spans_all_items(self):
+        """Test that end_line includes all list items."""
+        from dacli.asciidoc_parser import AsciidocStructureParser
+
+        parser = AsciidocStructureParser(base_path=FIXTURES_DIR)
+        doc = parser.parse_file(FIXTURES_DIR / "with_elements.adoc")
+
+        list_elements = [e for e in doc.elements if e.type == "list"]
+
+        # Unordered list: lines 46-48 (3 items)
+        unordered = [e for e in list_elements
+                     if e.attributes.get("list_type") == "unordered"]
+        assert len(unordered) >= 1
+        ul = unordered[0]
+        assert ul.source_location.line == 46
+        assert ul.source_location.end_line == 48, (
+            f"Unordered list should end at line 48, got {ul.source_location.end_line}"
+        )
+
+        # Ordered list: lines 52-54 (3 items)
+        ordered = [e for e in list_elements
+                   if e.attributes.get("list_type") == "ordered"]
+        assert len(ordered) >= 1
+        ol = ordered[0]
+        assert ol.source_location.line == 52
+        assert ol.source_location.end_line == 54, (
+            f"Ordered list should end at line 54, got {ol.source_location.end_line}"
+        )
+
 
 class TestCrossReferences:
     """Tests for cross-reference extraction (AC-ADOC-08)."""
