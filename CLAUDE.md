@@ -17,6 +17,19 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 - **MCP Framework:** FastMCP (https://github.com/jlowin/fastmcp)
 - **MCP SDK:** mcp[cli]
 
+## Branching Strategy
+
+- **`main`** - Stable, production-ready code. Only merge via PRs.
+- **`develop`** - Active development branch. Create feature branches from here.
+- **Feature branches** - Use format `feature/description-issue-number` or `fix/description-issue-number`
+
+**Workflow:**
+1. Create feature branch from `develop`
+2. Implement changes with tests
+3. Create PR to `develop`
+4. After review/CI, merge to `develop`
+5. Periodically merge `develop` to `main` for releases
+
 ## Conventions
 
 - Documentation, Issues, Pull-Requests etc. is always written in english
