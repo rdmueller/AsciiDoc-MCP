@@ -26,9 +26,16 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 **Workflow:**
 1. Create feature branch from `develop`
 2. Implement changes with tests
-3. Create PR to `develop`
+3. Create PR to `develop` (use `Fixes #123` in PR body)
 4. After review/CI, merge to `develop`
-5. For releases: merge `develop` to `main` and tag new version
+5. Add label `fixed-in-develop` to the issue
+6. For releases: merge `develop` to `main` and tag new version
+
+**Issue Handling:**
+- GitHub auto-closes issues only when merged to **default branch** (main)
+- Since we merge to `develop`, issues stay open until release
+- Use label `fixed-in-develop` to mark issues that are done but awaiting release
+- Issues auto-close when `develop` → `main` merge happens
 
 **Important:** Keep `main` as default branch so users get stable versions when installing.
 
