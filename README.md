@@ -170,3 +170,9 @@ For detailed architecture documentation, see [src/docs/arc42/](src/docs/arc42/).
 ## License
 
 MIT
+
+## Stars
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=docToolchain/dacli&type=date&legend=top-left)](https://www.star-history.com/#docToolchain/dacli&type=date&legend=top-left)
