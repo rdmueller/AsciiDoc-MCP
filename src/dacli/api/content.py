@@ -118,6 +118,10 @@ def get_elements(
         default=None,
         description="Optional section path to filter elements",
     ),
+    recursive: bool = Query(
+        default=False,
+        description="Include elements from child sections (requires path)",
+    ),
 ) -> ElementsResponse:
     """Get elements filtered by type and optionally by section path."""
     # Validate element type
@@ -146,6 +150,7 @@ def get_elements(
         elements = index.get_elements(
             element_type=internal_type,
             section_path=path,
+            recursive=recursive,
         )
         all_elements.extend(elements)
 
