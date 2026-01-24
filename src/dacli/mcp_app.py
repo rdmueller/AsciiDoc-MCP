@@ -13,11 +13,8 @@ Tools:
     - get_metadata: Get project or section metadata
 """
 
-import hashlib
 import logging
 import sys
-import time
-from datetime import UTC, datetime
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -27,7 +24,19 @@ from dacli.asciidoc_parser import AsciidocStructureParser
 from dacli.file_handler import FileReadError, FileSystemHandler, FileWriteError
 from dacli.file_utils import find_doc_files
 from dacli.markdown_parser import MarkdownStructureParser
-from dacli.models import Document, Section
+from dacli.models import Document
+from dacli.services import (
+    compute_hash,
+    get_project_metadata,
+    get_section_metadata,
+)
+from dacli.services import (
+    update_section as service_update_section,
+)
+from dacli.services import (
+    validate_structure as service_validate_structure,
+)
+from dacli.services.content_service import _get_section_end_line
 from dacli.structure_index import StructureIndex
 
 # Configure logging to stderr (stdout is reserved for MCP protocol)
@@ -326,85 +335,18 @@ def create_mcp_server(
             Success status with 'success', 'path', 'location', 'previous_hash',
             and 'new_hash' for optimistic locking support.
         """
-        # The index uses paths without leading slash
-        normalized_path = path.lstrip("/")
-
-        section = index.get_section(normalized_path)
-        if section is None:
-            return {"success": False, "error": f"Section '{normalized_path}' not found"}
-
-        file_path = section.source_location.file
-        start_line = section.source_location.line
-        end_line = _get_section_end_line(section, file_path, file_handler)
-
-        # Read current content and compute hash for optimistic locking
-        try:
-            file_content = file_handler.read_file(file_path)
-            lines = file_content.splitlines(keepends=True)
-            current_content = "".join(lines[start_line - 1 : end_line])
-            previous_hash = hashlib.md5(current_content.encode("utf-8")).hexdigest()[:8]
-        except FileReadError:
-            previous_hash = ""
-            current_content = ""
-
-        # Check for conflict if expected_hash is provided
-        if expected_hash is not None and expected_hash != previous_hash:
-            return {
-                "success": False,
-                "error": (
-                    f"Hash conflict: expected '{expected_hash}', but current is '{previous_hash}'"
-                ),
-                "current_hash": previous_hash,
-            }
-
-        # Prepare content
-        new_content = content
-        if preserve_title:
-            stripped_content = new_content.lstrip()
-            has_explicit_title = stripped_content.startswith("=") or stripped_content.startswith(
-                "#"
-            )
-            if not has_explicit_title:
-                # Prepend the original title line
-                file_ext = file_path.suffix.lower()
-                if file_ext in (".adoc", ".asciidoc"):
-                    level_markers = "=" * (section.level + 1)
-                else:
-                    level_markers = "#" * (section.level + 1)
-                new_content = f"{level_markers} {section.title}\n\n{new_content}"
-
-        # Ensure content ends with newline
-        if not new_content.endswith("\n"):
-            new_content += "\n"
-
-        # Compute new hash
-        new_hash = hashlib.md5(new_content.encode("utf-8")).hexdigest()[:8]
-
-        # Perform update
-        try:
-            file_handler.update_section(
-                path=file_path,
-                start_line=start_line,
-                end_line=end_line,
-                new_content=new_content,
-            )
-            # Rebuild index to reflect file changes
+        result = service_update_section(
+            index=index,
+            file_handler=file_handler,
+            path=path,
+            content=content,
+            preserve_title=preserve_title,
+            expected_hash=expected_hash,
+        )
+        # Rebuild index to reflect file changes if update was successful
+        if result.get("success", False):
             rebuild_index()
-            return {
-                "success": True,
-                "path": normalized_path,
-                "location": {
-                    "file": str(file_path),
-                    "line": start_line,
-                },
-                "previous_hash": previous_hash,
-                "new_hash": new_hash,
-            }
-        except FileWriteError as e:
-            return {
-                "success": False,
-                "error": f"Failed to write changes: {e}",
-            }
+        return result
 
     @mcp.tool()
     def insert_content(
@@ -454,7 +396,7 @@ def create_mcp_server(
         try:
             file_content = file_handler.read_file(file_path)
             # Compute hash of file before modification
-            previous_hash = hashlib.md5(file_content.encode("utf-8")).hexdigest()[:8]
+            previous_hash = compute_hash(file_content)
 
             lines = file_content.splitlines(keepends=True)
 
@@ -470,7 +412,7 @@ def create_mcp_server(
 
             new_file_content = "".join(new_lines)
             # Compute hash of file after modification
-            new_hash = hashlib.md5(new_file_content.encode("utf-8")).hexdigest()[:8]
+            new_hash = compute_hash(new_file_content)
 
             file_handler.write_file(file_path, new_file_content)
 
@@ -508,74 +450,9 @@ def create_mcp_server(
             'last_modified', 'subsection_count'.
         """
         if path is None:
-            # Project-level metadata
-            stats = index.stats()
-            files = set(index._file_to_sections.keys())
-
-            # Calculate total words from all section content
-            total_words = 0
-            for content in index._section_content.values():
-                total_words += len(content.split())
-
-            # Find latest modification time
-            last_modified = None
-            for file_path in files:
-                if file_path.exists():
-                    mtime = file_path.stat().st_mtime
-                    if last_modified is None or mtime > last_modified:
-                        last_modified = mtime
-
-            # Detect formats from file extensions
-            formats = set()
-            for file_path in files:
-                ext = file_path.suffix.lower()
-                if ext == ".adoc":
-                    formats.add("asciidoc")
-                elif ext == ".md":
-                    formats.add("markdown")
-
-            return {
-                "path": None,
-                "total_files": len(files),
-                "total_sections": stats["total_sections"],
-                "total_words": total_words,
-                "last_modified": (
-                    datetime.fromtimestamp(last_modified, tz=UTC).isoformat()
-                    if last_modified
-                    else None
-                ),
-                "formats": sorted(formats),
-            }
+            return get_project_metadata(index)
         else:
-            # Section-level metadata
-            normalized_path = path.lstrip("/")
-            section = index.get_section(normalized_path)
-
-            if section is None:
-                return {"error": f"Section '{normalized_path}' not found"}
-
-            # Get word count from section content
-            content = index._section_content.get(normalized_path, "")
-            word_count = len(content.split())
-
-            # Get file modification time
-            file_path = section.source_location.file
-            last_modified = None
-            if file_path.exists():
-                mtime = file_path.stat().st_mtime
-                last_modified = datetime.fromtimestamp(mtime, tz=UTC).isoformat()
-
-            # Count subsections
-            subsection_count = len(section.children)
-
-            return {
-                "path": normalized_path,
-                "title": section.title,
-                "file": str(file_path),
-                "word_count": word_count,
-                "last_modified": last_modified,
-                "subsection_count": subsection_count,
-            }
+            return get_section_metadata(index, path)
 
     @mcp.tool()
     def validate_structure() -> dict:
@@ -591,56 +468,7 @@ def create_mcp_server(
             'warnings': List of warning objects (orphaned_file, unclosed_block, unclosed_table).
             'validation_time_ms': Time taken for validation in milliseconds.
         """
-        start_time = time.time()
-
-        errors: list[dict] = []
-        warnings: list[dict] = []
-
-        # Get all indexed files
-        indexed_files = set(index._file_to_sections.keys())
-
-        # Get all doc files in docs_root (respecting gitignore)
-        all_doc_files: set[Path] = set()
-        for adoc_file in find_doc_files(docs_root, "*.adoc"):
-            all_doc_files.add(adoc_file.resolve())
-        for md_file in find_doc_files(docs_root, "*.md"):
-            all_doc_files.add(md_file.resolve())
-
-        # Check for orphaned files (files not indexed)
-        indexed_resolved = {f.resolve() for f in indexed_files}
-        for doc_file in all_doc_files:
-            if doc_file not in indexed_resolved:
-                rel_path = doc_file.relative_to(docs_root)
-                warnings.append(
-                    {
-                        "type": "orphaned_file",
-                        "path": str(rel_path),
-                        "message": "File is not included in any document",
-                    }
-                )
-
-        # Collect parse warnings from all documents (Issue #148)
-        for doc in index._documents:
-            for pw in doc.parse_warnings:
-                try:
-                    rel_path = pw.file.relative_to(docs_root)
-                except ValueError:
-                    rel_path = pw.file
-                warnings.append({
-                    "type": pw.type.value,
-                    "path": f"{rel_path}:{pw.line}",
-                    "message": pw.message,
-                })
-
-        # Calculate validation time
-        elapsed_ms = int((time.time() - start_time) * 1000)
-
-        return {
-            "valid": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings,
-            "validation_time_ms": elapsed_ms,
-        }
+        return service_validate_structure(index, docs_root)
 
     return mcp
 
@@ -700,27 +528,3 @@ def _build_index(
         logger.warning("Index: %s", warning)
 
 
-def _get_section_end_line(
-    section: Section,
-    file_path: Path,
-    file_handler: FileSystemHandler,
-) -> int:
-    """Get the end line of a section.
-
-    Args:
-        section: The section to get end line for
-        file_path: Path to the file containing the section
-        file_handler: File handler for reading files
-
-    Returns:
-        The end line number (1-based)
-    """
-    if section.source_location.end_line is not None:
-        return section.source_location.end_line
-
-    # Fallback: read file to get total lines
-    try:
-        content = file_handler.read_file(file_path)
-        return len(content.splitlines())
-    except FileReadError:
-        return section.source_location.line + 10  # Last resort fallback

@@ -18,11 +18,9 @@ Commands (with aliases):
     insert             Insert content relative to a section
 """
 
-import hashlib
 import json
 import logging
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -30,9 +28,20 @@ import click
 from dacli import __version__
 from dacli.asciidoc_parser import AsciidocStructureParser
 from dacli.file_handler import FileReadError, FileSystemHandler, FileWriteError
-from dacli.file_utils import find_doc_files
 from dacli.markdown_parser import MarkdownStructureParser
-from dacli.mcp_app import _build_index, _get_section_end_line
+from dacli.mcp_app import _build_index
+from dacli.services import (
+    compute_hash,
+    get_project_metadata,
+    get_section_metadata,
+)
+from dacli.services import (
+    update_section as service_update_section,
+)
+from dacli.services import (
+    validate_structure as service_validate_structure,
+)
+from dacli.services.content_service import _get_section_end_line
 from dacli.structure_index import Section, StructureIndex
 
 
@@ -256,18 +265,6 @@ def _format_as_text(data: dict, indent: int = 0) -> str:
         else:
             lines.append(f"{prefix}{key}: {value}")
     return "\n".join(lines)
-
-
-def _compute_hash(content: str) -> str:
-    """Compute 8-character MD5 hash for optimistic locking.
-
-    Args:
-        content: The content to hash
-
-    Returns:
-        8-character hexadecimal hash string
-    """
-    return hashlib.md5(content.encode("utf-8")).hexdigest()[:8]
 
 
 pass_context = click.make_pass_decorator(CliContext)
@@ -533,71 +530,13 @@ Examples:
 def metadata(ctx: CliContext, path: str | None):
     """Get metadata about the project or a specific section."""
     if path is None:
-        # Project-level metadata
-        stats = ctx.index.stats()
-        files = set(ctx.index._file_to_sections.keys())
-
-        total_words = 0
-        for content in ctx.index._section_content.values():
-            total_words += len(content.split())
-
-        last_modified = None
-        for file_path in files:
-            if file_path.exists():
-                mtime = file_path.stat().st_mtime
-                if last_modified is None or mtime > last_modified:
-                    last_modified = mtime
-
-        formats = set()
-        for file_path in files:
-            ext = file_path.suffix.lower()
-            if ext == ".adoc":
-                formats.add("asciidoc")
-            elif ext == ".md":
-                formats.add("markdown")
-
-        result = {
-            "path": None,
-            "total_files": len(files),
-            "total_sections": stats["total_sections"],
-            "total_words": total_words,
-            "last_modified": (
-                datetime.fromtimestamp(last_modified, tz=UTC).isoformat()
-                if last_modified
-                else None
-            ),
-            "formats": sorted(formats),
-        }
-        click.echo(format_output(ctx, result))
+        result = get_project_metadata(ctx.index)
     else:
-        normalized_path = path.lstrip("/")
-        section_obj = ctx.index.get_section(normalized_path)
-
-        if section_obj is None:
-            result = {"error": f"Section '{normalized_path}' not found"}
+        result = get_section_metadata(ctx.index, path)
+        if "error" in result:
             click.echo(format_output(ctx, result))
             sys.exit(EXIT_PATH_NOT_FOUND)
-
-        content = ctx.index._section_content.get(normalized_path, "")
-        word_count = len(content.split())
-
-        file_path = section_obj.source_location.file
-        last_modified = None
-        if file_path.exists():
-            mtime = file_path.stat().st_mtime
-            last_modified = datetime.fromtimestamp(mtime, tz=UTC).isoformat()
-
-        subsection_count = len(section_obj.children)
-
-        result = {
-            "path": normalized_path,
-            "title": section_obj.title,
-            "file": str(file_path),
-            "word_count": word_count,
-            "last_modified": last_modified,
-            "subsection_count": subsection_count,
-        }
-        click.echo(format_output(ctx, result))
+    click.echo(format_output(ctx, result))
 
 
 @cli.command(epilog="""
@@ -608,55 +547,10 @@ Examples:
 @pass_context
 def validate(ctx: CliContext):
     """Validate the document structure."""
-    import time
-
-    start_time = time.time()
-    errors: list[dict] = []
-    warnings: list[dict] = []
-
-    indexed_files = set(ctx.index._file_to_sections.keys())
-
-    all_doc_files: set[Path] = set()
-    for adoc_file in find_doc_files(ctx.docs_root, "*.adoc"):
-        all_doc_files.add(adoc_file.resolve())
-    for md_file in find_doc_files(ctx.docs_root, "*.md"):
-        all_doc_files.add(md_file.resolve())
-
-    indexed_resolved = {f.resolve() for f in indexed_files}
-    for doc_file in all_doc_files:
-        if doc_file not in indexed_resolved:
-            rel_path = doc_file.relative_to(ctx.docs_root.resolve())
-            warnings.append({
-                "type": "orphaned_file",
-                "path": str(rel_path),
-                "message": "File is not included in any document",
-            })
-
-    # Collect parse warnings from all documents (Issue #148)
-    for doc in ctx.index._documents:
-        for pw in doc.parse_warnings:
-            try:
-                rel_path = pw.file.relative_to(ctx.docs_root.resolve())
-            except ValueError:
-                rel_path = pw.file
-            warnings.append({
-                "type": pw.type.value,
-                "path": f"{rel_path}:{pw.line}",
-                "message": pw.message,
-            })
-
-    elapsed_ms = int((time.time() - start_time) * 1000)
-
-    is_valid = len(errors) == 0
-    result = {
-        "valid": is_valid,
-        "errors": errors,
-        "warnings": warnings,
-        "validation_time_ms": elapsed_ms,
-    }
+    result = service_validate_structure(ctx.index, ctx.docs_root)
     click.echo(format_output(ctx, result))
 
-    if not is_valid:
+    if not result["valid"]:
         sys.exit(EXIT_VALIDATION_ERROR)
 
 
@@ -669,86 +563,29 @@ def validate(ctx: CliContext):
 def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
            expected_hash: str | None):
     """Update the content of a section."""
-    normalized_path = path.lstrip("/")
-    preserve_title = not no_preserve_title
-
-    section_obj = ctx.index.get_section(normalized_path)
-    if section_obj is None:
-        result = {"success": False, "error": f"Section '{normalized_path}' not found"}
-        click.echo(format_output(ctx, result))
-        sys.exit(EXIT_PATH_NOT_FOUND)
-
-    file_path = section_obj.source_location.file
-    start_line = section_obj.source_location.line
-    end_line = _get_section_end_line(section_obj, file_path, ctx.file_handler)
-
-    try:
-        file_content = ctx.file_handler.read_file(file_path)
-        lines = file_content.splitlines(keepends=True)
-        current_content = "".join(lines[start_line - 1 : end_line])
-        previous_hash = _compute_hash(current_content)
-    except FileReadError:
-        previous_hash = ""
-
-    if expected_hash is not None and expected_hash != previous_hash:
-        result = {
-            "success": False,
-            "error": f"Hash conflict: expected '{expected_hash}', got '{previous_hash}'",
-            "current_hash": previous_hash,
-        }
-        click.echo(format_output(ctx, result))
-        sys.exit(EXIT_ERROR)
-
-    # Process content: read from stdin if "-", otherwise process escape sequences
+    # CLI-specific: read from stdin if "-", otherwise process escape sequences
     if content == "-":
-        new_content = sys.stdin.read()
+        processed_content = sys.stdin.read()
     else:
-        new_content = content.encode("utf-8").decode("unicode_escape")
-    if preserve_title:
-        stripped_content = new_content.lstrip()
-        has_explicit_title = stripped_content.startswith("=") or stripped_content.startswith("#")
+        processed_content = content.encode("utf-8").decode("unicode_escape")
 
-        # If content has a heading, strip it (we always use the original title when preserve_title)
-        if has_explicit_title:
-            lines = stripped_content.split("\n", 1)
-            if len(lines) > 1:
-                # Keep content after heading, strip leading newlines
-                new_content = lines[1].lstrip("\n")
-            else:
-                new_content = ""  # Content was just the heading
+    result = service_update_section(
+        index=ctx.index,
+        file_handler=ctx.file_handler,
+        path=path,
+        content=processed_content,
+        preserve_title=not no_preserve_title,
+        expected_hash=expected_hash,
+    )
+    click.echo(format_output(ctx, result))
 
-        # Always prepend the original title
-        file_ext = file_path.suffix.lower()
-        if file_ext in (".adoc", ".asciidoc"):
-            level_markers = "=" * (section_obj.level + 1)
+    if not result.get("success", False):
+        if "not found" in result.get("error", ""):
+            sys.exit(EXIT_PATH_NOT_FOUND)
+        elif "Hash conflict" in result.get("error", ""):
+            sys.exit(EXIT_ERROR)
         else:
-            level_markers = "#" * section_obj.level
-        new_content = f"{level_markers} {section_obj.title}\n\n{new_content}"
-
-    if not new_content.endswith("\n"):
-        new_content += "\n"
-
-    new_hash = _compute_hash(new_content)
-
-    try:
-        ctx.file_handler.update_section(
-            path=file_path,
-            start_line=start_line,
-            end_line=end_line,
-            new_content=new_content,
-        )
-        result = {
-            "success": True,
-            "path": normalized_path,
-            "location": {"file": str(file_path), "line": start_line},
-            "previous_hash": previous_hash,
-            "new_hash": new_hash,
-        }
-        click.echo(format_output(ctx, result))
-    except FileWriteError as e:
-        result = {"success": False, "error": f"Failed to write: {e}"}
-        click.echo(format_output(ctx, result))
-        sys.exit(EXIT_WRITE_ERROR)
+            sys.exit(EXIT_WRITE_ERROR)
 
 
 @cli.command()
@@ -781,7 +618,7 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
 
     try:
         file_content = ctx.file_handler.read_file(file_path)
-        previous_hash = _compute_hash(file_content)
+        previous_hash = compute_hash(file_content)
         lines = file_content.splitlines(keepends=True)
 
         # Ensure blank line before headings when inserting after content
@@ -838,7 +675,7 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
             new_lines = lines[:append_line] + [insert_content] + lines[append_line:]
 
         new_file_content = "".join(new_lines)
-        new_hash = _compute_hash(new_file_content)
+        new_hash = compute_hash(new_file_content)
 
         ctx.file_handler.write_file(file_path, new_file_content)
 
