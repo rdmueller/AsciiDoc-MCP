@@ -39,6 +39,22 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 
 **Important:** Keep `main` as default branch so users get stable versions when installing.
 
+## AI-Assisted Development Setup
+
+When working with Claude Code on this repository:
+
+**Git Remotes (Fork Workflow):**
+- `origin` → `raifdmueller/dacli` (fork for AI-assisted work)
+- `upstream` → `docToolchain/dacli` (original repository)
+
+**Git User for AI commits:**
+- Name: `R{AI}f D. Müller`
+- Email: `ralf.d.mueller+AI@gmail.com`
+
+**Authentication:**
+- GitHub CLI (`gh`) configured with `gh auth setup-git`
+- PRs are created from fork to upstream
+
 ## Conventions
 
 - Documentation, Issues, Pull-Requests etc. is always written in english
