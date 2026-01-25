@@ -22,7 +22,7 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 Development happens on a fork to keep `upstream/main` stable for `uv tool install`.
 
 **Git Remotes:**
-- `origin` → `raifdmueller/dacli` (fork for development)
+- `origin` → your fork (for development)
 - `upstream` → `docToolchain/dacli` (stable, production-ready)
 
 **Branches:**
@@ -37,14 +37,6 @@ Development happens on a fork to keep `upstream/main` stable for `uv tool instal
 5. Create PR from fork to `upstream/main` (use `Fixes #123` in PR body)
 6. CI runs on PR, review, then merge
 7. Issues auto-close when merged to main
-
-**Git User for AI commits:**
-- Name: `R{AI}f D. Müller`
-- Email: `ralf.d.mueller+AI@gmail.com`
-
-**Authentication:**
-- GitHub CLI (`gh`) configured with `gh auth setup-git`
-- Remotes use HTTPS (not SSH) for gh credential helper
 
 ## Conventions
 
