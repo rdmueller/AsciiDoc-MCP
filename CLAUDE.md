@@ -17,35 +17,26 @@ Part of the [docToolchain](https://doctoolchain.org/) ecosystem.
 - **MCP Framework:** FastMCP (https://github.com/jlowin/fastmcp)
 - **MCP SDK:** mcp[cli]
 
-## Branching Strategy
+## Fork-Based Development Workflow
 
-- **`main`** - Stable, production-ready code. **Default branch** (used by `uv tool install`).
-- **`develop`** - Active development branch. Create feature branches from here.
-- **Feature branches** - Use format `feature/description-issue-number` or `fix/description-issue-number`
+Development happens on a fork to keep `upstream/main` stable for `uv tool install`.
+
+**Git Remotes:**
+- `origin` → `raifdmueller/dacli` (fork for development)
+- `upstream` → `docToolchain/dacli` (stable, production-ready)
+
+**Branches:**
+- `upstream/main` - Stable, production-ready. **Default branch** (used by `uv tool install`).
+- Feature branches on fork - Use format `feature/description-issue-number` or `fix/description-issue-number`
 
 **Workflow:**
-1. Create feature branch from `develop`
-2. Implement changes with tests
-3. Create PR to `develop` (use `Fixes #123` in PR body)
-4. After review/CI, merge to `develop`
-5. Add label `fixed-in-develop` to the issue
-6. For releases: merge `develop` to `main` and tag new version
-
-**Issue Handling:**
-- GitHub auto-closes issues only when merged to **default branch** (main)
-- Since we merge to `develop`, issues stay open until release
-- Use label `fixed-in-develop` to mark issues that are done but awaiting release
-- Issues auto-close when `develop` → `main` merge happens
-
-**Important:** Keep `main` as default branch so users get stable versions when installing.
-
-## AI-Assisted Development Setup
-
-When working with Claude Code on this repository:
-
-**Git Remotes (Fork Workflow):**
-- `origin` → `raifdmueller/dacli` (fork for AI-assisted work)
-- `upstream` → `docToolchain/dacli` (original repository)
+1. Sync fork: `git fetch upstream`
+2. Create feature branch: `git checkout -b feature/xyz upstream/main`
+3. Implement changes with tests
+4. Push to fork: `git push origin feature/xyz`
+5. Create PR from fork to `upstream/main` (use `Fixes #123` in PR body)
+6. CI runs on PR, review, then merge
+7. Issues auto-close when merged to main
 
 **Git User for AI commits:**
 - Name: `R{AI}f D. Müller`
@@ -53,7 +44,7 @@ When working with Claude Code on this repository:
 
 **Authentication:**
 - GitHub CLI (`gh`) configured with `gh auth setup-git`
-- PRs are created from fork to upstream
+- Remotes use HTTPS (not SSH) for gh credential helper
 
 ## Conventions
 
