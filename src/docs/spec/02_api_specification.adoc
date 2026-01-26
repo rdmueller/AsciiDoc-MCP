@@ -345,7 +345,7 @@ Searches documentation content.
 | Restriction to path prefix (e.g., "/architecture")
 
 | `max_results` (int, optional)
-| Maximum results to return (default: 50)
+| Maximum results to return (default: 20)
 |===
 
 **Response 200:**

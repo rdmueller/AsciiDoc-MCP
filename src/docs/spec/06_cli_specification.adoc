@@ -154,13 +154,18 @@ Searches the documentation.
 
 [source,bash]
 ----
-dacli search <QUERY> [--scope PATH] [--max-results N]
+dacli search <QUERY> [--scope PATH] [--max-results N] [--limit N]
 ----
+
+**Options:**
+
+* `--max-results N`, `--limit N`: Maximum results to return (default: 20, aliases)
+* `--scope PATH`: Restrict search to path prefix
 
 **Example:**
 [source,bash]
 ----
-$ dacli search "authentication" --max-results 5
+$ dacli search "authentication" --limit 5
 {
   "query": "authentication",
   "results": [

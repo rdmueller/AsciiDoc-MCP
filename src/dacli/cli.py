@@ -439,12 +439,15 @@ def sections_at_level(ctx: CliContext, level: int):
 Examples:
   dacli search "authentication"              # Search all docs
   dacli search "API" --scope api             # Search within 'api' section
-  dacli search "error" --max-results 5       # Limit results
+  dacli search "error" --limit 5             # Limit results
   dacli --format json s "database"           # JSON output using alias
 """)
 @click.argument("query")
 @click.option("--scope", default=None, help="Path prefix to limit search scope")
-@click.option("--max-results", type=int, default=50, help="Maximum results to return")
+@click.option(
+    "--max-results", "--limit", type=int, default=20,
+    help="Maximum results to return (default: 20)"
+)
 @pass_context
 def search(ctx: CliContext, query: str, scope: str | None, max_results: int):
     """Search for content in the documentation."""

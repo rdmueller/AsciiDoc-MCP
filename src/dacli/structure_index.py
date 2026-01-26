@@ -350,7 +350,7 @@ class StructureIndex:
         query: str,
         scope: str | None = None,
         case_sensitive: bool = False,
-        max_results: int = 50,
+        max_results: int = 20,
     ) -> list[SearchResult]:
         """Search for content matching query.
 
@@ -360,7 +360,7 @@ class StructureIndex:
             query: Search query string
             scope: Optional path prefix to limit search scope
             case_sensitive: Whether search is case-sensitive
-            max_results: Maximum number of results to return
+            max_results: Maximum number of results to return (default: 20)
 
         Returns:
             List of SearchResult objects

@@ -280,6 +280,40 @@ This section covers authentication topics.
         assert "query" in data
         assert "results" in data
 
+    def test_search_limit_alias_works(self, sample_docs):
+        """--limit should work as alias for --max-results."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs), "--format", "json",
+                "search", "authentication", "--limit", "1"
+            ],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert len(data["results"]) <= 1
+
+    def test_search_max_results_still_works(self, sample_docs):
+        """--max-results should still work (backward compatibility)."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--docs-root", str(sample_docs), "--format", "json",
+                "search", "authentication", "--max-results", "1"
+            ],
+        )
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert len(data["results"]) <= 1
+
 
 class TestCliMetadataCommand:
     """Test the 'metadata' command."""

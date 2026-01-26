@@ -224,7 +224,7 @@ def create_mcp_server(
     def search(
         query: str,
         scope: str | None = None,
-        max_results: int = 50,
+        max_results: int = 20,
     ) -> dict:
         """Search for content in the documentation.
 
@@ -235,7 +235,7 @@ def create_mcp_server(
             query: Search query string (case-insensitive by default).
             scope: Optional path prefix to limit search scope
                    (e.g., '/architecture' to search only in that section).
-            max_results: Maximum number of results to return (default: 50).
+            max_results: Maximum number of results to return (default: 20).
 
         Returns:
             Search results with 'query', 'results' (list of matches with

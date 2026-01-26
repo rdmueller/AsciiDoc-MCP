@@ -87,7 +87,7 @@ class SearchRequest(BaseModel):
     query: str = Field(min_length=1, description="Search query string")
     scope: str | None = Field(default=None, description="Restrict search to path prefix")
     case_sensitive: bool = Field(default=False, description="Case-sensitive search")
-    max_results: int = Field(default=50, ge=1, le=1000, description="Maximum results")
+    max_results: int = Field(default=20, ge=1, le=1000, description="Maximum results (default: 20)")
 
 
 class SearchResultItem(BaseModel):
