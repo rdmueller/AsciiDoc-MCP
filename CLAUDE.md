@@ -33,18 +33,24 @@ Development happens on a fork to keep `upstream/main` stable for `uv tool instal
 1. Sync fork: `git fetch upstream`
 2. Create feature branch: `git checkout -b feature/xyz upstream/main`
 3. Implement changes with tests
-4. Push to fork: `git push origin feature/xyz`
-5. Create PR from fork to `upstream/main` (use `Fixes #123` in PR body)
-6. CI runs on PR, review, then merge
-7. Issues auto-close when merged to main
-8. **After merge:** Sync fork main with upstream to prevent duplicates:
+4. **Bump version in `pyproject.toml`** (semantic versioning):
+   - MAJOR: Breaking changes (e.g., 1.0.0 → 2.0.0)
+   - MINOR: New features, backwards-compatible (e.g., 0.4.0 → 0.5.0)
+   - PATCH: Bug fixes only (e.g., 0.4.0 → 0.4.1)
+5. Push to fork: `git push origin feature/xyz`
+6. Create PR from fork to `upstream/main` (use `Fixes #123` in PR body)
+7. CI runs on PR, review, then merge
+8. Issues auto-close when merged to main
+9. **After merge:** Sync fork main with upstream to prevent duplicates:
    ```bash
    git checkout main
    git reset --hard upstream/main
    git push origin main --force-with-lease
    ```
 
-**IMPORTANT:** Always create feature branches from `upstream/main`, never from fork `main`. This ensures clean, linear history and avoids duplicate commits.
+**IMPORTANT:**
+- Always create feature branches from `upstream/main`, never from fork `main`. This ensures clean, linear history and avoids duplicate commits.
+- Always bump the version number in `pyproject.toml` for every PR (even small bug fixes get a PATCH bump).
 
 ## Conventions
 
