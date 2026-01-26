@@ -37,6 +37,14 @@ Development happens on a fork to keep `upstream/main` stable for `uv tool instal
 5. Create PR from fork to `upstream/main` (use `Fixes #123` in PR body)
 6. CI runs on PR, review, then merge
 7. Issues auto-close when merged to main
+8. **After merge:** Sync fork main with upstream to prevent duplicates:
+   ```bash
+   git checkout main
+   git reset --hard upstream/main
+   git push origin main --force-with-lease
+   ```
+
+**IMPORTANT:** Always create feature branches from `upstream/main`, never from fork `main`. This ensures clean, linear history and avoids duplicate commits.
 
 ## Conventions
 
