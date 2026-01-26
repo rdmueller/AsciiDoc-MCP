@@ -3,11 +3,6 @@
 Tests the full flow: finding files, scanning includes, filtering, parsing, indexing.
 """
 
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from dacli.asciidoc_parser import AsciidocStructureParser
 from dacli.markdown_parser import MarkdownStructureParser
 from dacli.mcp_app import _build_index
