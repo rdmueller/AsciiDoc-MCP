@@ -240,7 +240,14 @@ def create_mcp_server(
         Returns:
             Search results with 'query', 'results' (list of matches with
             path, line, context, score), and 'total_results'.
+
+        Raises:
+            ValueError: If query is empty or whitespace-only.
         """
+        # Validate query is not empty
+        if not query or not query.strip():
+            raise ValueError("Search query cannot be empty")
+
         results = index.search(
             query=query,
             scope=scope,

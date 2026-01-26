@@ -314,6 +314,32 @@ This section covers authentication topics.
         data = json.loads(result.output)
         assert len(data["results"]) <= 1
 
+    def test_search_empty_query_returns_error(self, sample_docs):
+        """search command should reject empty query with exit code 2."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(sample_docs), "search", ""],
+        )
+
+        assert result.exit_code == 2  # EXIT_INVALID_ARGS
+        assert "Error: Search query cannot be empty" in result.output
+
+    def test_search_whitespace_only_query_returns_error(self, sample_docs):
+        """search command should reject whitespace-only query with exit code 2."""
+        from dacli.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["--docs-root", str(sample_docs), "search", "   "],
+        )
+
+        assert result.exit_code == 2  # EXIT_INVALID_ARGS
+        assert "Error: Search query cannot be empty" in result.output
+
 
 class TestCliMetadataCommand:
     """Test the 'metadata' command."""

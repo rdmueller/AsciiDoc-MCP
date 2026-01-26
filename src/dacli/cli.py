@@ -451,6 +451,11 @@ Examples:
 @pass_context
 def search(ctx: CliContext, query: str, scope: str | None, max_results: int):
     """Search for content in the documentation."""
+    # Validate query is not empty
+    if not query or not query.strip():
+        click.echo("Error: Search query cannot be empty", err=True)
+        sys.exit(EXIT_INVALID_ARGS)
+
     results = ctx.index.search(
         query=query,
         scope=scope,

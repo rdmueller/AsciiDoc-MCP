@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from fastmcp.client import Client
+from fastmcp.exceptions import ToolError
 
 from dacli.mcp_app import create_mcp_server
 
@@ -213,6 +214,16 @@ class TestSearch:
         )
 
         assert len(result.data["results"]) <= 1
+
+    async def test_search_empty_query_raises_error(self, mcp_client: Client):
+        """search should raise ToolError for empty query."""
+        with pytest.raises(ToolError, match="Search query cannot be empty"):
+            await mcp_client.call_tool("search", arguments={"query": ""})
+
+    async def test_search_whitespace_query_raises_error(self, mcp_client: Client):
+        """search should raise ToolError for whitespace-only query."""
+        with pytest.raises(ToolError, match="Search query cannot be empty"):
+            await mcp_client.call_tool("search", arguments={"query": "   "})
 
 
 class TestGetElements:
