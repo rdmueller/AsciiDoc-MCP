@@ -37,3 +37,9 @@ build/
 # Serena/Vibe working directories
 .serena/
 .vibe/
+
+# Playwright MCP screenshots
+.playwright-mcp/
+
+# Test reports
+report.html
