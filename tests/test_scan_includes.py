@@ -4,11 +4,6 @@ Tests the scan_includes() method that identifies which files are included
 by others, preventing them from being parsed as separate root documents.
 """
 
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from dacli.asciidoc_parser import AsciidocStructureParser
 
 
