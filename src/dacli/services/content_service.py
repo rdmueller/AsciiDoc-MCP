@@ -139,9 +139,13 @@ def update_section(
             level_markers = "#" * section.level
         new_content = f"{level_markers} {section.title}\n\n{new_content}"
 
-    # Ensure content ends with newline
-    if not new_content.endswith("\n"):
-        new_content += "\n"
+    # Ensure content ends with blank line (two newlines) to separate from next section
+    # Issue #194: Preserve blank lines between sections
+    if not new_content.endswith("\n\n"):
+        if new_content.endswith("\n"):
+            new_content += "\n"
+        else:
+            new_content += "\n\n"
 
     # Compute new hash
     new_hash = compute_hash(new_content)

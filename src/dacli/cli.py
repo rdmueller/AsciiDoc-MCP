@@ -45,6 +45,32 @@ from dacli.services.content_service import _get_section_end_line
 from dacli.structure_index import Section, StructureIndex
 
 
+def _process_escape_sequences(content: str) -> str:
+    """Process common escape sequences without corrupting non-ASCII characters.
+
+    Handles \\n, \\t, \\r, and \\\\ escape sequences. Unlike decode('unicode_escape'),
+    this preserves non-ASCII characters like umlauts (äöü) correctly.
+
+    Args:
+        content: Input string potentially containing escape sequences
+
+    Returns:
+        String with escape sequences processed
+
+    Issue #193: Fixed encoding problem with umlauts
+    """
+    # Process escape sequences in order (most specific first)
+    # Must process \\\\ first to avoid double-processing
+    return (
+        content
+        .replace('\\\\', '\x00')  # Temp marker for literal backslash
+        .replace('\\n', '\n')
+        .replace('\\t', '\t')
+        .replace('\\r', '\r')
+        .replace('\x00', '\\')  # Restore literal backslash
+    )
+
+
 def _get_section_append_line(
     section: Section,
     index: StructureIndex,
@@ -66,13 +92,23 @@ def _get_section_append_line(
     file_path = section.source_location.file
     all_sections = index.get_sections_by_file(file_path)
 
-    # Find all descendants (sections whose path starts with parent path + ".")
+    # Find all descendants (sections whose path starts with parent path)
+    # Issue #197: Handle both ":" separator (doc:section) and "." (section.subsection)
     parent_path = section.path
-    descendants = [
-        s for s in all_sections
-        if s.path.startswith(parent_path + ".") or
-           (parent_path == "" and s.path != "" and "." not in s.path)
-    ]
+    descendants = []
+    for s in all_sections:
+        # Skip the parent itself
+        if s.path == parent_path:
+            continue
+        # Check if this is a descendant
+        # Level 1 children use ":" separator (e.g., "doc:child")
+        # Nested children use "." separator (e.g., "doc:child.grandchild")
+        if parent_path == "":
+            # Root document - all sections are descendants
+            if s.path != "":
+                descendants.append(s)
+        elif s.path.startswith(parent_path + ":") or s.path.startswith(parent_path + "."):
+            descendants.append(s)
 
     if not descendants:
         # No children, use section's own end line
@@ -589,7 +625,7 @@ def update(ctx: CliContext, path: str, content: str, no_preserve_title: bool,
     if content == "-":
         processed_content = sys.stdin.read()
     else:
-        processed_content = content.encode("utf-8").decode("unicode_escape")
+        processed_content = _process_escape_sequences(content)
 
     result = service_update_section(
         index=ctx.index,
@@ -634,7 +670,7 @@ def insert(ctx: CliContext, path: str, position: str, content: str):
     if content == "-":
         insert_content = sys.stdin.read()
     else:
-        insert_content = content.encode("utf-8").decode("unicode_escape")
+        insert_content = _process_escape_sequences(content)
     if not insert_content.endswith("\n"):
         insert_content += "\n"
 
