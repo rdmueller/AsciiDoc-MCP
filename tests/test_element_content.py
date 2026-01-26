@@ -200,7 +200,9 @@ class TestCliContentFlags:
 echo "test"
 ----
 """)
-        result = cli_runner.invoke(["--docs-root", str(temp_docs_dir), "elements", "--type", "code"])
+        result = cli_runner.invoke(
+            ["--docs-root", str(temp_docs_dir), "elements", "--type", "code"]
+        )
         assert result.exit_code == 0
         assert "attributes" not in result.output
 
@@ -254,6 +256,7 @@ line 5
 def cli_runner():
     """Create a CLI runner for testing."""
     from click.testing import CliRunner
+
     from dacli.cli import cli
 
     runner = CliRunner()
@@ -268,8 +271,8 @@ def cli_runner():
 @pytest.fixture
 def temp_docs_dir():
     """Create a temporary directory for test documents."""
-    import tempfile
     import shutil
+    import tempfile
 
     temp_dir = Path(tempfile.mkdtemp())
     yield temp_dir
