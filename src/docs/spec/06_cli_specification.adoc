@@ -176,16 +176,16 @@ Lists elements (code blocks, tables, etc.).
 
 [source,bash]
 ----
-dacli elements [SECTION_PATH] [--type TYPE] [--section PATH] [--recursive]
+dacli elements [SECTION_PATH] [--type TYPE] [--recursive]
 ----
 
-The section path can be provided as a positional argument or via the `--section` option.
-Both forms are equivalent: `dacli elements api` and `dacli elements --section api`.
+**Arguments:**
+
+* `SECTION_PATH`: Optional section path to filter elements (positional argument)
 
 **Options:**
 
 * `--type TYPE`: Element type filter - `code`, `table`, `image`, `diagram`, `list`, `admonition`
-* `--section PATH`: Filter by section path (alternative to positional argument)
 * `--recursive`: Include elements from child sections (default: exact match only)
 
 == Meta-Information Commands

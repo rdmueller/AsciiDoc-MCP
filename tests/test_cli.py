@@ -1543,33 +1543,6 @@ print("hello")
         assert data["count"] == 1
         assert data["elements"][0]["type"] == "code"
 
-    def test_elements_section_option_still_works(self, tmp_path):
-        """--section option should still work for backward compatibility."""
-        from dacli.cli import cli
-
-        doc_file = tmp_path / "test.adoc"
-        doc_file.write_text("""= Test Document
-
-== Code Section
-
-[source,python]
-----
-print("hello")
-----
-""")
-
-        runner = CliRunner()
-        # Section path includes document prefix: "test:code-section"
-        result = runner.invoke(
-            cli,
-            ["--docs-root", str(tmp_path), "--format", "json", "elements",
-             "--section", "test:code-section"],
-        )
-
-        assert result.exit_code == 0
-        data = json.loads(result.output)
-        assert data["count"] == 1
-
     def test_elements_positional_and_type_option_combined(self, tmp_path):
         """dacli elements --type TYPE PATH should work."""
         from dacli.cli import cli
@@ -1632,7 +1605,7 @@ print("in child")
         result = runner.invoke(
             cli,
             ["--docs-root", str(tmp_path), "--format", "json", "elements",
-             "--section", "test:parent-section"],
+             "test:parent-section"],
         )
 
         assert result.exit_code == 0
@@ -1664,7 +1637,7 @@ print("in child")
         result = runner.invoke(
             cli,
             ["--docs-root", str(tmp_path), "--format", "json", "elements",
-             "--section", "test:parent-section", "--recursive"],
+             "test:parent-section", "--recursive"],
         )
 
         assert result.exit_code == 0
@@ -1701,7 +1674,7 @@ level 3 code
         result = runner.invoke(
             cli,
             ["--docs-root", str(tmp_path), "--format", "json", "elements",
-             "--section", "test:level-1", "--recursive"],
+             "test:level-1", "--recursive"],
         )
 
         assert result.exit_code == 0
