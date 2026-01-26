@@ -521,10 +521,30 @@ def _build_index(
     """
     documents: list[Document] = []
 
-    # Find and parse AsciiDoc files
-    for adoc_file in find_doc_files(
-        docs_root, "*.adoc", respect_gitignore=respect_gitignore, include_hidden=include_hidden
-    ):
+    # Find all AsciiDoc files first (Issue #184)
+    all_adoc_files = list(
+        find_doc_files(
+            docs_root, "*.adoc", respect_gitignore=respect_gitignore, include_hidden=include_hidden
+        )
+    )
+
+    # Scan for include directives to identify included files (Issue #184)
+    # Included files should not be parsed as separate root documents
+    included_files: set[Path] = set()
+    for adoc_file in all_adoc_files:
+        included_files.update(AsciidocStructureParser.scan_includes(adoc_file))
+
+    # Filter: only parse files that are NOT included by others (Issue #184)
+    root_adoc_files = [f for f in all_adoc_files if f not in included_files]
+
+    logger.info(
+        f"Found {len(all_adoc_files)} AsciiDoc files, "
+        f"{len(included_files)} included, "
+        f"{len(root_adoc_files)} root documents"
+    )
+
+    # Parse root AsciiDoc files only
+    for adoc_file in root_adoc_files:
         try:
             doc = asciidoc_parser.parse_file(adoc_file)
             documents.append(doc)
