@@ -4,7 +4,7 @@ These models define the JSON response structure for the Navigation API
 and Content Access API as specified in 02_api_specification.adoc.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -123,6 +123,10 @@ class ElementItem(BaseModel):
     path: str = Field(description="Section path containing this element")
     index: int = Field(description="Index of element within its section")
     location: ElementLocation
+    attributes: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Element-specific attributes and content (Issue #159)",
+    )
     # Note: preview field removed in Issue #142 as redundant
 
 

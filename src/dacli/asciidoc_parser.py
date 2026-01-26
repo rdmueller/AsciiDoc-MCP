@@ -667,6 +667,13 @@ class AsciidocStructureParser:
         current_list_element: Element | None = None  # Track list for end_line (#136)
         # Track ALL open blocks for end_line (Issue #157: use stack instead of single element)
         open_blocks: list[Element] = []
+        # Content tracking for Issue #159
+        code_block_content: list[str] = []
+        plantuml_content: list[str] = []
+        mermaid_content: list[str] = []
+        ditaa_content: list[str] = []
+        table_content: list[str] = []
+        list_content: list[str] = []
 
         for line_text, source_file, line_num, resolved_from in lines:
             # Track current section for parent_section
@@ -723,6 +730,7 @@ class AsciidocStructureParser:
                     if pending_plantuml_info is not None:
                         # Start of plantuml block
                         in_plantuml_block = True
+                        plantuml_content = []  # Initialize content tracking (Issue #159)
                         name, fmt = pending_plantuml_info
                         element = self._create_diagram_element(
                             "plantuml", name, fmt, source_file, line_num,
@@ -734,6 +742,7 @@ class AsciidocStructureParser:
                     elif pending_mermaid_info is not None:
                         # Start of mermaid block
                         in_mermaid_block = True
+                        mermaid_content = []  # Initialize content tracking (Issue #159)
                         name, fmt = pending_mermaid_info
                         element = self._create_diagram_element(
                             "mermaid", name, fmt, source_file, line_num,
@@ -745,6 +754,7 @@ class AsciidocStructureParser:
                     elif pending_ditaa_info is not None:
                         # Start of ditaa block
                         in_ditaa_block = True
+                        ditaa_content = []  # Initialize content tracking (Issue #159)
                         name, fmt = pending_ditaa_info
                         element = self._create_diagram_element(
                             "ditaa", name, fmt, source_file, line_num,
@@ -756,6 +766,7 @@ class AsciidocStructureParser:
                     elif pending_code_language is not None:
                         # Start of code block
                         in_code_block = True
+                        code_block_content = []  # Initialize content tracking (Issue #159)
                         source_location = SourceLocation(
                             file=source_file,
                             line=line_num,
@@ -771,19 +782,27 @@ class AsciidocStructureParser:
                         open_blocks.append(element)
                     pending_code_language = None
                 elif in_code_block:
-                    # End of code block
+                    # End of code block - save content (Issue #159)
+                    if open_blocks:
+                        open_blocks[-1].attributes["content"] = "\n".join(code_block_content)
                     in_code_block = False
                     self._close_open_block(open_blocks, line_num)
                 elif in_plantuml_block:
-                    # End of plantuml block
+                    # End of plantuml block - save content (Issue #159)
+                    if open_blocks:
+                        open_blocks[-1].attributes["content"] = "\n".join(plantuml_content)
                     in_plantuml_block = False
                     self._close_open_block(open_blocks, line_num)
                 elif in_mermaid_block:
-                    # End of mermaid block
+                    # End of mermaid block - save content (Issue #159)
+                    if open_blocks:
+                        open_blocks[-1].attributes["content"] = "\n".join(mermaid_content)
                     in_mermaid_block = False
                     self._close_open_block(open_blocks, line_num)
                 elif in_ditaa_block:
-                    # End of ditaa block
+                    # End of ditaa block - save content (Issue #159)
+                    if open_blocks:
+                        open_blocks[-1].attributes["content"] = "\n".join(ditaa_content)
                     in_ditaa_block = False
                     self._close_open_block(open_blocks, line_num)
                 continue
@@ -793,6 +812,7 @@ class AsciidocStructureParser:
                 if not in_table:
                     # Start of table
                     in_table = True
+                    table_content = []  # Initialize content tracking (Issue #159)
                     source_location = SourceLocation(
                         file=source_file,
                         line=line_num,
@@ -807,7 +827,9 @@ class AsciidocStructureParser:
                     elements.append(element)
                     open_blocks.append(element)
                 else:
-                    # End of table
+                    # End of table - save content (Issue #159)
+                    if open_blocks:
+                        open_blocks[-1].attributes["content"] = "\n".join(table_content)
                     in_table = False
                     self._close_open_block(open_blocks, line_num)
                 continue
@@ -852,21 +874,31 @@ class AsciidocStructureParser:
                         parent_section=current_section_path,
                     )
                 )
+                # Save list content before reset (Issue #159)
+                if current_list_element is not None and list_content:
+                    current_list_element.attributes["content"] = "\n".join(list_content)
                 current_list_type = None  # Reset list tracking
+                current_list_element = None
                 continue
 
             # Detect lists (unordered, ordered, description)
             # Check for unordered list (* item)
             if UNORDERED_LIST_PATTERN.match(line_text):
                 if current_list_type != "unordered":
+                    # Save previous list content if any (Issue #159)
+                    if current_list_element is not None and list_content:
+                        current_list_element.attributes["content"] = "\n".join(list_content)
                     # Start of a new unordered list
                     current_list_type = "unordered"
+                    list_content = []  # Initialize content tracking (Issue #159)
                     current_list_element = self._create_list_element(
                         "unordered", source_file, line_num,
                         resolved_from, current_section_path,
                     )
                     elements.append(current_list_element)
-                elif current_list_element is not None:
+                # Collect list item content (Issue #159)
+                list_content.append(line_text)
+                if current_list_element is not None:
                     # Continue list - update end_line (Issue #136)
                     current_list_element.source_location.end_line = line_num
                 continue
@@ -874,14 +906,20 @@ class AsciidocStructureParser:
             # Check for ordered list (. item)
             if ORDERED_LIST_PATTERN.match(line_text):
                 if current_list_type != "ordered":
+                    # Save previous list content if any (Issue #159)
+                    if current_list_element is not None and list_content:
+                        current_list_element.attributes["content"] = "\n".join(list_content)
                     # Start of a new ordered list
                     current_list_type = "ordered"
+                    list_content = []  # Initialize content tracking (Issue #159)
                     current_list_element = self._create_list_element(
                         "ordered", source_file, line_num,
                         resolved_from, current_section_path,
                     )
                     elements.append(current_list_element)
-                elif current_list_element is not None:
+                # Collect list item content (Issue #159)
+                list_content.append(line_text)
+                if current_list_element is not None:
                     # Continue list - update end_line (Issue #136)
                     current_list_element.source_location.end_line = line_num
                 continue
@@ -903,8 +941,23 @@ class AsciidocStructureParser:
 
             # If line is not a list item, reset list tracking
             if line_text.strip():
+                # Save list content before reset (Issue #159)
+                if current_list_element is not None and list_content:
+                    current_list_element.attributes["content"] = "\n".join(list_content)
                 current_list_type = None
                 current_list_element = None
+
+            # Collect content for open blocks (Issue #159)
+            if in_code_block:
+                code_block_content.append(line_text)
+            elif in_plantuml_block:
+                plantuml_content.append(line_text)
+            elif in_mermaid_block:
+                mermaid_content.append(line_text)
+            elif in_ditaa_block:
+                ditaa_content.append(line_text)
+            elif in_table:
+                table_content.append(line_text)
 
         # Handle ALL unclosed blocks - set end_line to last line of their source file
         # Issue #146: unclosed code blocks should have proper end_line
@@ -937,6 +990,10 @@ class AsciidocStructureParser:
                 line=block_line,
                 message=warning_msg,
             ))
+
+        # Save list content if list is still open at end of file (Issue #159)
+        if current_list_element is not None and list_content:
+            current_list_element.attributes["content"] = "\n".join(list_content)
 
         return elements, warnings
 

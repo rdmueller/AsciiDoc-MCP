@@ -295,21 +295,34 @@ Retrieves elements of a specific type.
 [source,json]
 ----
 {
-  "type": "diagram",
+  "type": "code",
   "elements": [
     {
-      "type": "diagram",
-      "path": "context.technical",
+      "type": "code",
+      "path": "architecture.decisions",
       "index": 0,
       "location": {
-        "file": "chapters/03_context.adoc",
+        "file": "chapters/09_decisions.adoc",
         "start_line": 25,
-        "end_line": 45
+        "end_line": 35
+      },
+      "attributes": {
+        "language": "python",
+        "content": "def example():\n    return 'hello world'"
       }
     }
   ],
-  "count": 8
+  "count": 1
 }
+----
+
+NOTE: The `attributes` field contains element-specific data including content (Issue #159).
+For `code` elements, it includes `language` and `content` fields.
+For `table` elements, it includes `columns`, `rows`, and `content` (raw table text).
+For `list` elements, it includes `list_type` and `content` (all list items).
+For `image` elements, it includes `alt`, `src`/`target`, and optionally `title`.
+For `plantuml`/diagram elements, it includes `format`, optionally `name`, and `content` (diagram source).
+For `admonition` elements, it includes `admonition_type` and `content`.
 ----
 
 **Response 400:**

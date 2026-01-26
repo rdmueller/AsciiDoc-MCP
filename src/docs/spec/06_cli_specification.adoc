@@ -181,7 +181,7 @@ Lists elements (code blocks, tables, etc.).
 
 [source,bash]
 ----
-dacli elements [SECTION_PATH] [--type TYPE] [--recursive]
+dacli elements [SECTION_PATH] [--type TYPE] [--recursive] [--include-content] [--content-limit N]
 ----
 
 **Arguments:**
@@ -192,6 +192,25 @@ dacli elements [SECTION_PATH] [--type TYPE] [--recursive]
 
 * `--type TYPE`: Element type filter - `code`, `table`, `image`, `diagram`, `list`, `admonition`
 * `--recursive`: Include elements from child sections (default: exact match only)
+* `--include-content`: Include element content and attributes (Issue #159)
+* `--content-limit N`: Limit content to first N lines (requires `--include-content`)
+
+**Examples:**
+
+[source,bash]
+----
+# Get code blocks without content (metadata only)
+$ dacli elements --type code
+
+# Get code blocks with full content
+$ dacli elements --type code --include-content
+
+# Get code blocks with first 5 lines only
+$ dacli elements --type code --include-content --content-limit 5
+
+# Get all elements in a section with content
+$ dacli elements api --recursive --include-content
+----
 
 == Meta-Information Commands
 
