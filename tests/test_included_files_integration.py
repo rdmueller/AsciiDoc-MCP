@@ -339,3 +339,59 @@ No duplicates here.
         assert len(structure["sections"]) == 2
         titles = {s["title"] for s in structure["sections"]}
         assert titles == {"Guide 1", "Guide 2"}
+
+    def test_update_included_content(self, tmp_path):
+        """Test that updates to included content target the correct physical file."""
+        # Create included file
+        intro = tmp_path / "chapters" / "intro.adoc"
+        intro.parent.mkdir()
+        intro.write_text("""== Introduction
+
+Original content here.
+""")
+
+        # Main file includes it
+        main = tmp_path / "main.adoc"
+        main.write_text("""= Main
+
+include::chapters/intro.adoc[]
+""")
+
+        # Build index
+        from dacli.file_handler import FileSystemHandler
+        from dacli.services.content_service import update_section
+
+        index = StructureIndex()
+        asciidoc_parser = AsciidocStructureParser(tmp_path)
+        markdown_parser = MarkdownStructureParser(tmp_path)
+        file_handler = FileSystemHandler()
+
+        _build_index(
+            tmp_path,
+            index,
+            asciidoc_parser,
+            markdown_parser,
+            respect_gitignore=False,
+            include_hidden=False,
+        )
+
+        # Update the Introduction section
+        result = update_section(
+            index,
+            file_handler,
+            "main:introduction",
+            "Updated content from test.",
+            preserve_title=True,
+        )
+
+        assert result["success"] is True
+
+        # Verify the UPDATE went to the included file, NOT main.adoc
+        intro_content = intro.read_text()
+        assert "Updated content from test" in intro_content
+        assert "Original content" not in intro_content
+
+        # Main file should be unchanged (still has include directive)
+        main_content = main.read_text()
+        assert "include::chapters/intro.adoc[]" in main_content
+        assert "Updated content" not in main_content
