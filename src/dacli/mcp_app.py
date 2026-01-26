@@ -274,6 +274,8 @@ def create_mcp_server(
         element_type: str | None = None,
         section_path: str | None = None,
         recursive: bool = False,
+        include_content: bool = False,
+        content_limit: int | None = None,
     ) -> dict:
         """Get elements (code blocks, tables, images) from the documentation.
 
@@ -286,10 +288,13 @@ def create_mcp_server(
             section_path: Filter by section path (e.g., '/architecture').
             recursive: If True, include elements from child sections.
                        If False (default), only exact section matches.
+            include_content: If True, include element content and attributes (Issue #159).
+                             If False (default), only return metadata.
+            content_limit: Limit content to first N lines (requires include_content=True).
 
         Returns:
-            Dictionary with 'elements' (list of elements with type, location)
-            and 'count'.
+            Dictionary with 'elements' (list of elements with type, location, and
+            optionally attributes/content) and 'count'.
         """
         elements = index.get_elements(
             element_type=element_type,
@@ -297,22 +302,37 @@ def create_mcp_server(
             recursive=recursive,
         )
 
-        # Note: preview field removed in Issue #142 as redundant
-        # The type field is sufficient to identify element kind
+        # Build element dicts with optional content (Issue #159)
+        element_dicts = []
+        for e in elements:
+            elem_dict = {
+                "type": e.type,
+                "parent_section": e.parent_section,
+                "location": {
+                    "file": str(e.source_location.file),
+                    "start_line": e.source_location.line,
+                    "end_line": e.source_location.end_line,
+                },
+            }
+
+            # Include attributes if requested (Issue #159)
+            if include_content:
+                attributes = dict(e.attributes)  # Copy attributes
+
+                # Apply content limit if specified
+                if content_limit is not None and "content" in attributes:
+                    content = attributes["content"]
+                    lines = content.split("\n")
+                    if len(lines) > content_limit:
+                        attributes["content"] = "\n".join(lines[:content_limit])
+
+                elem_dict["attributes"] = attributes
+
+            element_dicts.append(elem_dict)
+
         return {
-            "elements": [
-                {
-                    "type": e.type,
-                    "parent_section": e.parent_section,
-                    "location": {
-                        "file": str(e.source_location.file),
-                        "start_line": e.source_location.line,
-                        "end_line": e.source_location.end_line,
-                    },
-                }
-                for e in elements
-            ],
-            "count": len(elements),
+            "elements": element_dicts,
+            "count": len(element_dicts),
         }
 
     @mcp.tool()

@@ -488,6 +488,10 @@ class MarkdownStructureParser:
         current_list_type: str | None = None
         current_list_element: Element | None = None
 
+        # Content tracking for Issue #159
+        table_content: list[str] = []
+        list_content: list[str] = []
+
         for line_num, line in enumerate(lines, start=1 + line_offset):
             # Track current section
             heading_match = HEADING_PATTERN.match(line)
@@ -506,6 +510,7 @@ class MarkdownStructureParser:
                                 attributes={
                                     "columns": table_columns,
                                     "rows": table_rows,
+                                    "content": "\n".join(table_content),  # Issue #159
                                 },
                                 parent_section=current_section_path,
                             )
@@ -566,6 +571,7 @@ class MarkdownStructureParser:
                     # Start of table
                     in_table = True
                     table_start_line = line_num
+                    table_content = []  # Initialize content tracking (Issue #159)
                     # Count columns from header row
                     cells = table_row_match.group(1).split("|")
                     table_columns = len(cells)
@@ -576,6 +582,8 @@ class MarkdownStructureParser:
                 elif has_separator:
                     # Data row after separator
                     table_rows += 1
+                # Collect table line (Issue #159)
+                table_content.append(line)
                 continue
             elif in_table:
                 # End of table (non-table line)
@@ -591,6 +599,7 @@ class MarkdownStructureParser:
                             attributes={
                                 "columns": table_columns,
                                 "rows": table_rows,
+                                "content": "\n".join(table_content),  # Issue #159
                             },
                             parent_section=current_section_path,
                         )
@@ -618,6 +627,9 @@ class MarkdownStructureParser:
                         parent_section=current_section_path,
                     )
                 )
+                # Save list content before reset (Issue #159)
+                if current_list_element is not None and list_content:
+                    current_list_element.attributes["content"] = "\n".join(list_content)
                 current_list_type = None  # Reset list tracking
                 current_list_element = None
                 continue
@@ -627,7 +639,11 @@ class MarkdownStructureParser:
                 # Check for unordered list (*, -, +)
                 if UNORDERED_LIST_PATTERN.match(line):
                     if current_list_type != "unordered":
+                        # Save previous list content if any (Issue #159)
+                        if current_list_element is not None and list_content:
+                            current_list_element.attributes["content"] = "\n".join(list_content)
                         current_list_type = "unordered"
+                        list_content = []  # Initialize content tracking (Issue #159)
                         element = Element(
                             type="list",
                             source_location=SourceLocation(
@@ -638,16 +654,21 @@ class MarkdownStructureParser:
                         )
                         elements.append(element)
                         current_list_element = element
-                    else:
-                        # Update end_line for each list item
-                        if current_list_element is not None:
-                            current_list_element.source_location.end_line = line_num
+                    # Collect list item content (Issue #159)
+                    list_content.append(line)
+                    # Update end_line for each list item
+                    if current_list_element is not None:
+                        current_list_element.source_location.end_line = line_num
                     continue
 
                 # Check for ordered list (1., 2., etc.)
                 if ORDERED_LIST_PATTERN.match(line):
                     if current_list_type != "ordered":
+                        # Save previous list content if any (Issue #159)
+                        if current_list_element is not None and list_content:
+                            current_list_element.attributes["content"] = "\n".join(list_content)
                         current_list_type = "ordered"
+                        list_content = []  # Initialize content tracking (Issue #159)
                         element = Element(
                             type="list",
                             source_location=SourceLocation(
@@ -658,14 +679,18 @@ class MarkdownStructureParser:
                         )
                         elements.append(element)
                         current_list_element = element
-                    else:
-                        # Update end_line for each list item
-                        if current_list_element is not None:
-                            current_list_element.source_location.end_line = line_num
+                    # Collect list item content (Issue #159)
+                    list_content.append(line)
+                    # Update end_line for each list item
+                    if current_list_element is not None:
+                        current_list_element.source_location.end_line = line_num
                     continue
 
                 # If non-empty, non-list line, reset list tracking
                 if line.strip():
+                    # Save list content before reset (Issue #159)
+                    if current_list_element is not None and list_content:
+                        current_list_element.attributes["content"] = "\n".join(list_content)
                     current_list_type = None
                     current_list_element = None
 
@@ -690,10 +715,15 @@ class MarkdownStructureParser:
                     attributes={
                         "columns": table_columns,
                         "rows": table_rows,
+                        "content": "\n".join(table_content),  # Issue #159
                     },
                     parent_section=current_section_path,
                 )
             )
+
+        # Save list content if list is still open at end of file (Issue #159)
+        if current_list_element is not None and list_content:
+            current_list_element.attributes["content"] = "\n".join(list_content)
 
         return elements
 

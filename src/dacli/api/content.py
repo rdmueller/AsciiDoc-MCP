@@ -178,6 +178,7 @@ def get_elements(
                     start_line=elem.source_location.line,
                     end_line=elem.source_location.end_line or elem.source_location.line,
                 ),
+                attributes=elem.attributes,  # Issue #159: Include element attributes
             )
         )
 

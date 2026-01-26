@@ -480,21 +480,25 @@ def search(ctx: CliContext, query: str, scope: str | None, max_results: int):
 
 @cli.command(epilog="""
 Examples:
-  dacli elements                         # All elements
-  dacli elements --type code             # Only code blocks
-  dacli elements --type table            # Only tables
-  dacli elements api                     # Elements in 'api' section
-  dacli elements api --recursive         # Elements in 'api' and all subsections
-  dacli --format json el --type image    # JSON output using alias
+  dacli elements                             # All elements (metadata only)
+  dacli elements --type code                 # Only code blocks
+  dacli elements --include-content           # Include element content
+  dacli elements --include-content --content-limit 10  # First 10 lines only
+  dacli elements api --recursive             # Elements in 'api' and subsections
+  dacli --format json el --type image        # JSON output using alias
 """)
 @click.argument("section_path", required=False, default=None)
 @click.option("--type", "element_type", default=None,
               help="Element type: code, table, image, diagram, list")
 @click.option("--recursive", is_flag=True, default=False,
               help="Include elements from child sections")
+@click.option("--include-content", is_flag=True, default=False,
+              help="Include element content (Issue #159)")
+@click.option("--content-limit", type=int, default=None,
+              help="Limit content to first N lines (requires --include-content)")
 @pass_context
 def elements(ctx: CliContext, section_path: str | None, element_type: str | None,
-             recursive: bool):
+             recursive: bool, include_content: bool, content_limit: int | None):
     """Get elements (code blocks, tables, images) from documentation."""
     elems = ctx.index.get_elements(
         element_type=element_type,
@@ -502,22 +506,37 @@ def elements(ctx: CliContext, section_path: str | None, element_type: str | None
         recursive=recursive,
     )
 
-    # Note: preview field removed in Issue #142 as redundant
-    # The type field is sufficient to identify element kind
+    # Build element dicts with optional content (Issue #159)
+    element_dicts = []
+    for e in elems:
+        elem_dict = {
+            "type": e.type,
+            "parent_section": e.parent_section,
+            "location": {
+                "file": str(e.source_location.file),
+                "start_line": e.source_location.line,
+                "end_line": e.source_location.end_line,
+            },
+        }
+
+        # Include attributes if requested (Issue #159)
+        if include_content:
+            attributes = dict(e.attributes)  # Copy attributes
+
+            # Apply content limit if specified
+            if content_limit is not None and "content" in attributes:
+                content = attributes["content"]
+                lines = content.split("\n")
+                if len(lines) > content_limit:
+                    attributes["content"] = "\n".join(lines[:content_limit])
+
+            elem_dict["attributes"] = attributes
+
+        element_dicts.append(elem_dict)
+
     result = {
-        "elements": [
-            {
-                "type": e.type,
-                "parent_section": e.parent_section,
-                "location": {
-                    "file": str(e.source_location.file),
-                    "start_line": e.source_location.line,
-                    "end_line": e.source_location.end_line,
-                },
-            }
-            for e in elems
-        ],
-        "count": len(elems),
+        "elements": element_dicts,
+        "count": len(element_dicts),
     }
     click.echo(format_output(ctx, result))
 
