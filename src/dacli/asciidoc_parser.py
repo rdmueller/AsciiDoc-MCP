@@ -128,6 +128,50 @@ class AsciidocStructureParser:
         self.base_path = base_path
         self.max_include_depth = max_include_depth
 
+    @staticmethod
+    def scan_includes(file_path: Path) -> set[Path]:
+        """Scan file for include directives and return set of included file paths.
+
+        This is a lightweight scan that does NOT fully parse the file. It only
+        extracts include:: directives to determine which files are included by others.
+
+        Args:
+            file_path: Path to the AsciiDoc file to scan
+
+        Returns:
+            Set of absolute paths to files included by this file.
+            Returns empty set if file cannot be read or has no includes.
+
+        Note:
+            - Paths are resolved relative to the file containing the include
+            - Handles conditional includes (ifdef/ifndef) - all includes are collected
+            - Does NOT check if included files exist (that's handled during parsing)
+            - Does NOT resolve nested includes (that's handled during full parsing)
+        """
+        included_files: set[Path] = set()
+
+        try:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    line = line.strip()
+                    match = INCLUDE_PATTERN.match(line)
+                    if match:
+                        include_path_str = match.group(1)
+                        # Resolve path relative to file containing the include
+                        try:
+                            included_path = (file_path.parent / include_path_str).resolve()
+                            included_files.add(included_path)
+                        except (ValueError, OSError):
+                            # Invalid path or resolution error - skip it
+                            # The full parser will handle this properly
+                            pass
+        except (OSError, UnicodeDecodeError):
+            # File cannot be read - return empty set
+            # The full parser will handle the error
+            pass
+
+        return included_files
+
     def _get_file_prefix(self, file_path: Path) -> str:
         """Calculate file prefix for path generation (Issue #130, ADR-008).
 
