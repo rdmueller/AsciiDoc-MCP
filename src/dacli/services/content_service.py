@@ -150,7 +150,7 @@ def update_section(
                 "success": False,
                 "error": (
                     "Content must include a section title when preserve_title is false. "
-                    f"Expected content to start with '=' (AsciiDoc) or '#' (Markdown)."
+                    "Expected content to start with '=' (AsciiDoc) or '#' (Markdown)."
                 ),
             }
 
