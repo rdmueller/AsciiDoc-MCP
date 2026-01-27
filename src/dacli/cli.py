@@ -405,17 +405,32 @@ def section(ctx: CliContext, path: str):
     """Read the content of a specific section."""
     normalized_path = path.lstrip("/")
 
+    # Check for path format issues (Issue #198)
+    corrected_path, had_extra_colons = ctx.index.normalize_path(normalized_path)
+
     section_obj = ctx.index.get_section(normalized_path)
     if section_obj is None:
         suggestions = ctx.index.get_suggestions(normalized_path)
+
+        error_details = {
+            "requested_path": normalized_path,
+            "suggestions": suggestions,
+        }
+
+        # Add hint if user used multiple colons (Issue #198)
+        if had_extra_colons:
+            error_details["corrected_path"] = corrected_path
+            error_details["hint"] = (
+                "Use colon (:) only once to separate document from section. "
+                "Use dots (.) for nested sections. "
+                f"Example: {corrected_path}"
+            )
+
         result = {
             "error": {
                 "code": "PATH_NOT_FOUND",
                 "message": f"Section '{normalized_path}' not found",
-                "details": {
-                    "requested_path": normalized_path,
-                    "suggestions": suggestions,
-                },
+                "details": error_details,
             }
         }
         click.echo(format_output(ctx, result))
