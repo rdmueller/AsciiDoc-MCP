@@ -121,10 +121,21 @@ uv run pytest tests/path/to/test.py::test_function_name
 
 ### Path Format Convention
 
-Section paths use dot-notation without document title prefix:
-- Level 0 (document title): empty path `""`
-- Level 1 (chapters): slug only, e.g., `"introduction"`
-- Level 2+ (nested): parent.slug, e.g., `"introduction.goals"`
+Section paths use **hybrid notation** combining colons and dots:
+- **Colon (`:`)** - Separates document slug from first-level section
+- **Dot (`.`)** - Separates nested sections
+
+**Examples:**
+- Level 0 (document root): `"doc"` (document slug only)
+- Level 1 (chapter): `"doc:introduction"` (document:section)
+- Level 2 (subsection): `"doc:introduction.goals"` (document:section.subsection)
+- Level 3 (nested): `"doc:introduction.goals.technical"` (document:section.subsection.detail)
+
+**Important:** Use colon only **once** to separate document from section. Use dots for all nested levels.
+
+**Common mistakes:**
+- ❌ `"doc:section:subsection"` - Multiple colons (wrong)
+- ✅ `"doc:section.subsection"` - Colon once, then dots (correct)
 
 ## Documentation Structure
 

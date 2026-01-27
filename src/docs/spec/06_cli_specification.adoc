@@ -125,15 +125,46 @@ Reads the content of a section.
 dacli section <PATH>
 ----
 
-**Example:**
+**Path Format:**
+
+Section paths use hybrid notation:
+- **Colon (`:`)** separates document from section: `doc:section`
+- **Dot (`.`)** separates nested sections: `doc:section.subsection`
+
+**Examples:**
 [source,bash]
 ----
-$ dacli section introduction.goals
+# Read a chapter (Level 1)
+$ dacli section my-doc:introduction
 {
-  "path": "introduction.goals",
-  "title": "Goals",
-  "content": "== Goals\n\nThis section...",
+  "path": "my-doc:introduction",
+  "title": "Introduction",
+  "content": "== Introduction\n\nThis section...",
   "format": "asciidoc"
+}
+
+# Read a nested section (Level 2)
+$ dacli section my-doc:introduction.goals
+{
+  "path": "my-doc:introduction.goals",
+  "title": "Goals",
+  "content": "=== Goals\n\nThese are...",
+  "format": "asciidoc"
+}
+
+# Error: Path not found with helpful hint (Issue #198)
+$ dacli section my-doc:intro:goals
+{
+  "error": {
+    "code": "PATH_NOT_FOUND",
+    "message": "Section 'my-doc:intro:goals' not found",
+    "details": {
+      "requested_path": "my-doc:intro:goals",
+      "corrected_path": "my-doc:intro.goals",
+      "hint": "Use colon (:) only once to separate document from section. Use dots (.) for nested sections. Example: my-doc:intro.goals",
+      "suggestions": ["my-doc:introduction", "my-doc:introduction.goals"]
+    }
+  }
 }
 ----
 

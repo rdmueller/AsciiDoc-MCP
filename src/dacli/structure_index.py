@@ -283,6 +283,36 @@ class StructureIndex:
 
         return score
 
+    @staticmethod
+    def normalize_path(path: str) -> tuple[str, bool]:
+        """Normalize a path by converting extra colons to dots.
+
+        The correct path format is:
+        - Colon (:) separates document from first-level section
+        - Dot (.) separates nested sections
+        Example: doc:section.subsection.detail
+
+        Args:
+            path: Path that may contain multiple colons
+
+        Returns:
+            Tuple of (normalized_path, had_extra_colons)
+            - normalized_path: Path with extra colons converted to dots
+            - had_extra_colons: True if path had more than one colon
+        """
+        if path.count(":") <= 1:
+            return path, False
+
+        # Split at first colon only
+        parts = path.split(":", 1)
+        if len(parts) == 2:
+            # Convert additional colons in section part to dots
+            file_part = parts[0]
+            section_part = parts[1].replace(":", ".")
+            return f"{file_part}:{section_part}", True
+
+        return path, False
+
     def _parse_path_components(self, path: str) -> tuple[str, str]:
         """Parse a path into file and section components.
 

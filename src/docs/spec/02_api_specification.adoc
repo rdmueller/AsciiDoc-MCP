@@ -144,6 +144,86 @@ Standardized error response.
 }
 ----
 
+== Path Format Convention
+
+Section paths use **hybrid notation** combining colons and dots:
+
+* **Colon (`:`)** - Separates document slug from first-level section
+* **Dot (`.`)** - Separates nested sections within the same document
+
+=== Format Rules
+
+[cols="1,2,2"]
+|===
+| Level | Format | Example
+
+| 0 (Document root)
+| `document-slug`
+| `"my-doc"`
+
+| 1 (First-level section)
+| `document:section`
+| `"my-doc:introduction"`
+
+| 2 (Subsection)
+| `document:section.subsection`
+| `"my-doc:introduction.goals"`
+
+| 3+ (Deeper nesting)
+| `document:section.sub.subsub`
+| `"my-doc:intro.goals.technical"`
+|===
+
+=== Important Notes
+
+* **Use colon only once** to separate document from section
+* **Use dots for all nested levels** (Level 2+)
+* Paths are **case-insensitive** and slugified (lowercase, hyphens)
+
+=== Common Mistakes
+
+[cols="1,2"]
+|===
+| ❌ Incorrect | ✅ Correct
+
+| `doc:section:subsection`
+| `doc:section.subsection`
+
+| `doc.section.subsection`
+| `doc:section.subsection`
+
+| `doc/section/subsection`
+| `doc:section.subsection`
+|===
+
+=== Error Handling for Invalid Paths
+
+When a path with multiple colons is provided (e.g., `doc:a:b`), the system:
+
+1. Normalizes the path by converting extra colons to dots (`doc:a.b`)
+2. Returns `PATH_NOT_FOUND` error with:
+   - `requested_path`: The original malformed path
+   - `corrected_path`: The normalized path
+   - `hint`: Explanation of correct format
+   - `suggestions`: Similar valid paths
+
+**Example error response:**
+[source,json]
+----
+{
+  "error": {
+    "code": "PATH_NOT_FOUND",
+    "message": "Section 'doc:intro:goals' not found",
+    "details": {
+      "requested_path": "doc:intro:goals",
+      "corrected_path": "doc:intro.goals",
+      "hint": "Use colon (:) only once to separate document from section. Use dots (.) for nested sections. Example: doc:intro.goals",
+      "suggestions": ["doc:introduction", "doc:introduction.goals"]
+    }
+  }
+}
+----
+
 == MCP Tools
 
 === Navigation Tools
