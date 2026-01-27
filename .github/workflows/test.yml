@@ -25,19 +25,34 @@ jobs:
         run: uv run ruff check
 
       - name: Run tests with HTML report and coverage
-        run: uv run pytest --tb=short -v --html=report.html --self-contained-html --cov=src/dacli --cov-report=term-missing --cov-report=html --cov-report=json
+        run: |
+          uv run pytest --tb=short -v --html=report.html --self-contained-html --cov=src/dacli --cov-report=term-missing --cov-report=html --cov-report=json 2>&1 | tee pytest-output.txt
+          exit ${PIPESTATUS[0]}
 
-      - name: Generate coverage badge
+      - name: Generate badges
         if: success()
-        run: uv run python scripts/update_coverage_badge.py
+        run: |
+          # Install coverage-badge for local badge generation
+          uv pip install coverage-badge
 
-      - name: Commit coverage badge
+          # Generate coverage badge locally (no external API)
+          uv run coverage-badge -o .github/coverage-badge.svg -f
+
+          # Extract test count from pytest output and generate test count badge
+          TEST_COUNT=$(grep -oP '\d+(?= passed)' pytest-output.txt | tail -1)
+          if [ -n "$TEST_COUNT" ]; then
+            uv run python scripts/generate_test_badge.py "$TEST_COUNT"
+          else
+            echo "Warning: Could not extract test count from pytest output"
+          fi
+
+      - name: Commit badges
         if: success()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add .github/coverage-badge.svg
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update coverage badge" && git push)
+          git add .github/coverage-badge.svg .github/tests-badge.svg
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update coverage and test count badges" && git push)
         continue-on-error: true
 
       - name: Upload test report

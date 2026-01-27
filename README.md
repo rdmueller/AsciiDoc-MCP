@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/docToolchain/dacli/actions/workflows/test.yml/badge.svg)](https://github.com/docToolchain/dacli/actions/workflows/test.yml)
 [![Coverage](.github/coverage-badge.svg)](https://github.com/docToolchain/dacli/actions/workflows/test.yml)
+[![Tests](.github/tests-badge.svg)](https://github.com/docToolchain/dacli/actions/workflows/test.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
