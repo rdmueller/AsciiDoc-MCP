@@ -56,8 +56,7 @@ Content B
         assert section_a.children[0].title == "Subsection A1"
 
         # Insert after Section A
-        from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_with_children
+        from dacli.api.manipulation import _file_handler, _get_section_end_with_children
 
         test_file = tmp_path / "test.adoc"
 
@@ -69,7 +68,6 @@ Content B
         lines = content.splitlines(keepends=True)
 
         new_content = "\n== Section A.5\n\nInserted section\n"
-        insert_line = end_with_children + 1
 
         new_lines = (
             lines[:end_with_children]
@@ -132,8 +130,7 @@ Very deep
         section_a = index.get_section("test:section-a")
         assert section_a is not None
 
-        from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_with_children
+        from dacli.api.manipulation import _file_handler, _get_section_end_with_children
 
         # Insert after Section A (which has deeply nested children)
         end_with_children = _get_section_end_with_children(section_a, test_file)
@@ -202,8 +199,7 @@ Content 3
         section_a = index.get_section("test:section-a")
         assert len(section_a.children) == 3
 
-        from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_with_children
+        from dacli.api.manipulation import _file_handler, _get_section_end_with_children
 
         end_with_children = _get_section_end_with_children(section_a, test_file)
 
@@ -261,8 +257,7 @@ Content B
         assert section_a is not None
         assert len(section_a.children) == 0
 
-        from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_with_children
+        from dacli.api.manipulation import _file_handler, _get_section_end_with_children
 
         # Insert after Section A (no children)
         end_with_children = _get_section_end_with_children(section_a, test_file)
@@ -319,7 +314,6 @@ Child
         section_a = index.get_section("test:section-a")
 
         from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_line
 
         # Insert BEFORE Section A (should use start_line, not end_line)
         start_line = section_a.source_location.line
@@ -374,8 +368,7 @@ Child
 
         section_a = index.get_section("test:section-a")
 
-        from dacli.api.manipulation import _file_handler
-        from dacli.api.manipulation import _get_section_end_line
+        from dacli.api.manipulation import _file_handler, _get_section_end_line
 
         # Append to Section A (should add before children)
         end_line = _get_section_end_line(section_a, test_file)
