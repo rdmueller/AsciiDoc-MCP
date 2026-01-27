@@ -138,6 +138,21 @@ def update_section(
             # Markdown: level 1 = "#", level 2 = "##", etc.
             level_markers = "#" * section.level
         new_content = f"{level_markers} {section.title}\n\n{new_content}"
+    else:
+        # Issue #195: When preserve_title is False, content must include a title
+        # to maintain document structure
+        stripped_content = new_content.lstrip()
+        has_title = (
+            stripped_content.startswith("=") or stripped_content.startswith("#")
+        )
+        if not has_title:
+            return {
+                "success": False,
+                "error": (
+                    "Content must include a section title when preserve_title is false. "
+                    f"Expected content to start with '=' (AsciiDoc) or '#' (Markdown)."
+                ),
+            }
 
     # Ensure content ends with blank line (two newlines) to separate from next section
     # Issue #194: Preserve blank lines between sections

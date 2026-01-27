@@ -404,7 +404,7 @@ Updates the content of a section.
 | New section content
 
 | `preserve_title` (bool, optional)
-| Keep original title (default: true)
+| Whether to preserve the original section title (default: true). When true, the original title is kept regardless of content. When false, the title from the provided content is used (content must include a section title starting with `=` or `#`, otherwise the update fails with error).
 
 | `expected_hash` (string, optional)
 | Hash for optimistic locking - update fails if current content hash doesn't match

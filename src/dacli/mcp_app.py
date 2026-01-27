@@ -353,7 +353,8 @@ def create_mcp_server(
             content: New section content. If preserve_title is True and content
                      doesn't start with a heading, the original title is preserved.
             preserve_title: Whether to preserve the original section title
-                            (default: True). Set to False to replace everything.
+                            (default: True). Set to False to use the title from the
+                            provided content (content must then include a title).
             expected_hash: Optional hash for optimistic locking. If provided,
                           the update will fail if the current content hash
                           doesn't match (indicating a conflicting modification).

@@ -142,6 +142,32 @@ Feature: Update section
     Then I receive HTTP Status 200
     And the title "1.1 Goals" is preserved
 
+  Scenario: Change section title with preserve_title false
+    Given the section has the title "1.1 Goals"
+    When I call PUT /section/introduction.goals with:
+      """
+      {
+        "content": "=== New Title\n\nNew content with new title.",
+        "preserve_title": false
+      }
+      """
+    Then I receive HTTP Status 200
+    And the title "New Title" is in the file
+    And the old title "1.1 Goals" is not in the file
+
+  Scenario: Reject update with preserve_title false when content has no title (Issue #195)
+    Given the section has the title "1.1 Goals"
+    When I call PUT /section/introduction.goals with:
+      """
+      {
+        "content": "Content without a section title",
+        "preserve_title": false
+      }
+      """
+    Then I receive HTTP Status 400
+    And the error message contains "must include a section title"
+    And the original file is unchanged
+
   Scenario: Update non-existing section
     When I call PUT /section/nonexistent with:
       """

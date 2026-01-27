@@ -287,6 +287,11 @@ dacli update <PATH> --content "..." [--no-preserve-title] [--expected-hash HASH]
 * Escape sequences: `--content "Line 1\nLine 2"` (converts `\n` to actual newlines)
 * From stdin: `--content -` (reads from stdin)
 
+**Options:**
+
+* `--no-preserve-title` - Use title from provided content instead of preserving original title. When this flag is set, the content *must* include a section title (starting with `=` for AsciiDoc or `#` for Markdown), otherwise the update will fail. This allows changing the section title while maintaining document structure.
+* `--expected-hash HASH` - Hash for optimistic locking (see examples below)
+
 **Examples:**
 [source,bash]
 ----
@@ -304,6 +309,20 @@ $ cat new_content.txt | dacli update introduction --content -
 
 # Pipe from another command
 $ echo "Updated via stdin" | dacli update introduction --content -
+
+# Change section title (requires --no-preserve-title)
+$ dacli update introduction --content "== New Title\n\nUpdated content." --no-preserve-title
+{
+  "success": true,
+  "path": "introduction"
+}
+
+# Error: --no-preserve-title requires content with title
+$ dacli update introduction --content "Content without title" --no-preserve-title
+{
+  "success": false,
+  "error": "Content must include a section title when preserve_title is false. Expected content to start with '=' (AsciiDoc) or '#' (Markdown)."
+}
 ----
 
 === insert
