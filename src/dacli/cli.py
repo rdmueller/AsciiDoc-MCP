@@ -467,7 +467,10 @@ def section(ctx: CliContext, path: str):
         sys.exit(EXIT_ERROR)
 
 
-@cli.command("sections-at-level", context_settings={"ignore_unknown_options": True, "allow_interspersed_args": False}, epilog="""
+@cli.command(
+    "sections-at-level",
+    context_settings={"ignore_unknown_options": True, "allow_interspersed_args": False},
+    epilog="""
 Examples:
   dacli sections-at-level 1        # All top-level chapters
   dacli sections-at-level 2        # All second-level sections
